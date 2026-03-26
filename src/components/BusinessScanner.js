@@ -6,6 +6,52 @@ import './BusinessScanner.css';
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '').trim();
 const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '').trim();
 
+// Helper to normalize scanned data from AppSheet
+const normalizeScanData = (rowData) => {
+  if (!rowData) return null;
+
+  const normalized = {
+    ID: rowData.ID || rowData.id || rowData._RowNumber, // Keep original ID for tracking
+    "Tên Doanh Nghiệp": "Chưa xác định",
+    "Số Điện Thoại": "Không tìm thấy",
+    "Trạng Thái": "Processing",
+    "Ảnh Card": "",
+    "Ngày Quét": "",
+    ...rowData // Keep all other original properties, but prioritize explicit normalized keys
+  };
+
+  // Normalize Company Name
+  const companyKeys = ['Tên Doanh Nghiệp', 'Ten Doanh Nghiep', 'Company Name', 'Company'];
+  for (const key of companyKeys) {
+    if (rowData[key]) { normalized["Tên Doanh Nghiệp"] = rowData[key]; break; }
+  }
+
+  // Normalize Phone Number
+  const phoneKeys = ['Số Điện Thoại', 'So Dien Thoai', 'Phone Number', 'Phone', 'SDT'];
+  for (const key of phoneKeys) {
+    if (rowData[key]) { normalized["Số Điện Thoại"] = rowData[key]; break; }
+  }
+
+  // Normalize Status
+  const statusKeys = ['Trạng Thái', 'Trang Thai', 'Status'];
+  for (const key of statusKeys) {
+    if (rowData[key]) { normalized["Trạng Thái"] = rowData[key]; break; }
+  }
+
+  // Normalize Image URL
+  const imageKeys = ['Ảnh Card', 'Anh Card', 'Image URL', 'Image'];
+  for (const key of imageKeys) {
+    if (rowData[key]) { normalized["Ảnh Card"] = rowData[key]; break; }
+  }
+
+  // Normalize Ngay Quet
+  const dateKeys = ['Ngày Quét', 'Ngay Quet', 'Scan Date', 'Date'];
+  for (const key of dateKeys) {
+    if (rowData[key]) { normalized["Ngày Quét"] = rowData[key]; break; }
+  }
+  return normalized;
+};
+
 function BusinessScanner({ showToast }) {
   const [uploading, setUploading] = useState(false);
   const [latestScan, setLatestScan] = useState(null);
@@ -30,10 +76,11 @@ function BusinessScanner({ showToast }) {
             (r._RowNumber && r._RowNumber === latestScan._RowNumber) // Fallback to _RowNumber if ID isn't reliable
           );
 
-          if (updatedRow && updatedRow.TrangThai === "Completed") {
-            setLatestScan(updatedRow);
+          const normalizedUpdatedRow = normalizeScanData(updatedRow);
+          if (normalizedUpdatedRow && normalizedUpdatedRow["Trạng Thái"] === "Completed") {
+            setLatestScan(normalizedUpdatedRow); // <--- This is where latestScan is updated
             setPolling(false);
-            showToast("AI đã trích xuất xong!", "success");
+            showToast("AI đã trích xuất xong!", "success"); //
           }
         }
       }, 3000); // Kiểm tra mỗi 3 giây
@@ -67,7 +114,7 @@ function BusinessScanner({ showToast }) {
 
         const sheetRes = await addRowToSheet("DanhBa", rowData, APP_ID);
         if (sheetRes.success) {
-          setLatestScan(rowData);
+          setLatestScan(normalizeScanData(rowData)); // Normalize initial data as well
           setPolling(true);
           showToast("Đã gửi ảnh. Vui lòng chờ AI trong giây lát.", "info");
         }
