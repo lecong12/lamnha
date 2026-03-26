@@ -31,48 +31,55 @@ const BusinessScanner = () => {
     setScannedData(null);
     setCameraActive(false);
 
-    // Dừng tất cả các luồng cũ để giải phóng thiết bị
-    if (window.localStream) {
+    try {
+      // 1. Dừng các luồng cũ
+      if (window.localStream) {
         window.localStream.getTracks().forEach(track => track.stop());
-    }
-
-    // Danh sách các cấu hình thử nghiệm (từ gắt đến lỏng dần)
-    const constraintsList = [
-      { video: { facingMode: { exact: "environment" } } },
-      { video: { facingMode: "environment" } },
-      { video: true }
-    ];
-
-    let stream = null;
-
-    for (const constraint of constraintsList) {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia(constraint);
-        if (stream) break; // Nếu lấy được stream thì thoát vòng lặp
-      } catch (e) {
-        console.warn("Thử cấu hình tiếp theo do lỗi:", e.name);
       }
-    }
 
-    if (stream && videoRef.current) {
-      window.localStream = stream; // Lưu lại để xóa sau này
-      videoRef.current.srcObject = stream;
+      // 2. Lấy danh sách tất cả các camera trên máy
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
       
-      // Đợi metadata load xong mới cho chạy
-      videoRef.current.onloadedmetadata = () => {
-        videoRef.current.play()
-          .then(() => setCameraActive(true))
-          .catch(err => alert("Không thể phát video: " + err.message));
-      };
-    } else {
-      alert("Trình duyệt không cho phép mở Camera hoặc thiết bị bận. Anh hãy tải lại trang (F5) nhé!");
+      // 3. Tìm camera có nhãn "back" hoặc "rear" hoặc "environment"
+      let backCamera = videoDevices.find(device => 
+        device.label.toLowerCase().includes('back') || 
+        device.label.toLowerCase().includes('rear') ||
+        device.label.toLowerCase().includes('sau')
+      );
+
+      // Nếu không tìm thấy bằng nhãn, lấy cái cuối cùng trong danh sách (thường là cam sau)
+      const targetDeviceId = backCamera ? backCamera.deviceId : (videoDevices.length > 0 ? videoDevices[videoDevices.length - 1].deviceId : null);
+
+      const constraints = targetDeviceId 
+        ? { video: { deviceId: { exact: targetDeviceId } } }
+        : { video: { facingMode: "environment" } };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      if (videoRef.current) {
+        window.localStream = stream;
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play().then(() => setCameraActive(true));
+        };
+      }
+    } catch (err) {
+      console.error("Lỗi mở cam:", err);
+      // Phương án cuối cùng nếu lọc ID thất bại
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        videoRef.current.srcObject = fallbackStream;
+        setCameraActive(true);
+      } catch (e) {
+        alert("Không thể mở camera sau. Anh hãy kiểm tra quyền truy cập của trình duyệt.");
+      }
     }
   };
 
   const captureAndScan = async () => {
     if (!videoRef.current || !cameraActive) return;
     setLoading(true);
-
     const canvas = canvasRef.current;
     const video = videoRef.current;
     canvas.width = video.videoWidth;
@@ -80,10 +87,7 @@ const BusinessScanner = () => {
     canvas.getContext('2d').drawImage(video, 0, 0);
     const imageData = canvas.toDataURL('image/jpeg', 0.8);
 
-    // Dừng cam ngay
-    if (window.localStream) {
-        window.localStream.getTracks().forEach(track => track.stop());
-    }
+    if (window.localStream) window.localStream.getTracks().forEach(t => t.stop());
     setCameraActive(false);
 
     const result = await callGeminiOCR(imageData);
@@ -94,56 +98,32 @@ const BusinessScanner = () => {
   return (
     <div className="scanner-wrapper">
       <div className="scanner-main-card">
-        <h4 style={{margin: '0 0 10px 0', color: '#1e293b'}}>QUÉT CARD & BẢNG HIỆU</h4>
-        
-        <div className="scan-display" style={{ background: '#000', position: 'relative' }}>
-          {/* Luôn render thẻ video, điều khiển hiển thị bằng opacity để tránh lag */}
+        <h4 style={{margin: '0 0 10px 0'}}>QUÉT CARD & BẢNG HIỆU</h4>
+        <div className="scan-display" style={{ background: '#000' }}>
           <video 
             ref={videoRef} 
             autoPlay 
             playsInline 
             muted 
-            style={{ 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'cover',
-                display: cameraActive ? 'block' : 'none'
-            }} 
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: cameraActive ? 'block' : 'none' }} 
           />
-          
-          {scannedData && !cameraActive && (
-            <img src={scannedData.img} className="card-thumb" alt="Card" />
-          )}
-
-          {!cameraActive && !scannedData && (
-            <div style={{color: '#94a3b8', textAlign: 'center', padding: '20px'}}>
-               <i className="fas fa-video-slash fa-2x"></i>
-               <p>Đang kết nối Cam Sau...</p>
-            </div>
-          )}
+          {scannedData && !cameraActive && <img src={scannedData.img} className="card-thumb" alt="Card" />}
+          {!cameraActive && !scannedData && <div style={{color: '#94a3b8'}}>Đang tìm Camera Sau...</div>}
         </div>
 
         {scannedData && (
           <div className="scan-result">
             <div style={{flex: 1}}>
-              <strong style={{fontSize: '15px'}}>{scannedData.name}</strong><br/>
+              <strong>{scannedData.name}</strong><br/>
               <span style={{color: '#10b981', fontWeight: 'bold', fontSize: '18px'}}>{scannedData.phone}</span>
             </div>
-            {scannedData.phone && (
-              <a href={`tel:${scannedData.phone.replace(/\s/g, '')}`} className="call-now-btn">GỌI</a>
-            )}
+            {scannedData.phone && <a href={`tel:${scannedData.phone.replace(/\s/g, '')}`} className="call-now-btn">GỌI</a>}
           </div>
         )}
 
-        <button 
-          className="capture-btn" 
-          onClick={cameraActive ? captureAndScan : startCamera} 
-          disabled={loading}
-          style={{marginTop: '10px'}}
-        >
-          {loading ? "ĐANG ĐỌC CHỮ..." : (cameraActive ? "BẤM CHỤP NGAY" : "MỞ CAMERA SAU")}
+        <button className="capture-btn" onClick={cameraActive ? captureAndScan : startCamera} disabled={loading}>
+          {loading ? "ĐANG ĐỌC CHỮ..." : (cameraActive ? "CHỤP & TRÍCH XUẤT" : "MỞ CAMERA SAU")}
         </button>
-
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
     </div>
