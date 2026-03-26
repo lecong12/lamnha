@@ -9,34 +9,47 @@ const BusinessScanner = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  // Hàm mở luồng soi Camera
   const startCamera = async () => {
     try {
-      setScannedData(null); 
-      const stream = await navigator.mediaDevices.getUserMedia({
+      setScannedData(null);
+      setCameraActive(false);
+
+      // Cấu hình ép dùng camera sau với độ phân giải cao để trích xuất chuẩn
+      const constraints = {
         video: { 
-          facingMode: "environment", // Ưu tiên camera sau
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          facingMode: { exact: "environment" }, // Ép buộc dùng cam sau
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
         }
-      });
+      };
+
+      // Nếu ép cam sau bị lỗi (một số máy Android đời cũ), thử lại với chế độ ưu tiên
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e) {
+        console.log("Thử lại với chế độ ưu tiên cam sau...");
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      }
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Ép video phải Play thì mới hiện hình soi
+        
+        // Quan trọng: Đợi video sẵn sàng mới hiển thị
         videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play();
-          setCameraActive(true);
+          videoRef.current.play()
+            .then(() => setCameraActive(true))
+            .catch(err => alert("Lỗi phát hình: " + err.message));
         };
       }
     } catch (err) {
-      alert("Lỗi mở Cam: " + err.message + ". Anh hãy dùng Chrome/Safari và cấp quyền nhé!");
+      alert("Không tìm thấy cam sau hoặc chưa cấp quyền. Anh thử mở bằng Chrome/Safari nhé!");
+      console.error(err);
     }
   };
 
-  // Hàm chụp đứng khung hình và trích xuất
   const captureCard = async () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || !cameraActive) return;
     setLoading(true);
 
     try {
@@ -48,23 +61,20 @@ const BusinessScanner = () => {
 
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
 
-      // --- PHẦN GỬI ĐI QUÉT (OCR) ---
-      // Anh thay phần mock này bằng logic gọi Gemini của anh
-      const result = {
-        name: "Vật Liệu Xây Dựng Số 1",
-        phone: "0905556677",
+      // Giả lập kết quả trích xuất
+      setScannedData({
+        name: "Đang phân tích...",
+        phone: "Đang lấy số...",
         img: imageData
-      };
+      });
 
-      setScannedData(result);
-
-      // Tắt camera để rảnh tay
+      // Tắt cam để tiết kiệm pin
       const tracks = video.srcObject.getTracks();
       tracks.forEach(track => track.stop());
       setCameraActive(false);
 
     } catch (error) {
-      alert("Lỗi khi chụp: " + error.message);
+      alert("Lỗi chụp: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -73,18 +83,24 @@ const BusinessScanner = () => {
   return (
     <div className="scanner-wrapper">
       <div className="scanner-main-card">
-        <h3 style={{color: '#1e293b'}}>QUÉT CARD & BẢNG HIỆU</h3>
+        <h3>QUÉT CARD & BẢNG HIỆU</h3>
 
-        <div className="scan-display">
-          {cameraActive ? (
-            <video ref={videoRef} autoPlay playsInline muted />
-          ) : scannedData ? (
-            <img src={scannedData.img} className="card-thumb" alt="Card đã chụp" />
-          ) : (
-            <div style={{ color: '#94a3b8', padding: '20px' }}>
-              <i className="fas fa-camera fa-2x"></i>
-              <p>Bấm Mở Camera để soi Card</p>
-            </div>
+        <div className="scan-display" style={{ background: '#000' }}>
+          {/* Luôn giữ thẻ video trong DOM nhưng chỉ hiện khi active */}
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline 
+            muted 
+            style={{ display: cameraActive ? 'block' : 'none', width: '100%', height: '100%' }}
+          />
+          
+          {scannedData && !cameraActive && (
+            <img src={scannedData.img} className="card-thumb" alt="Card" />
+          )}
+
+          {!cameraActive && !scannedData && (
+            <div style={{ color: '#fff' }}>Màn hình đang chờ soi...</div>
           )}
         </div>
 
@@ -94,25 +110,21 @@ const BusinessScanner = () => {
               <p className="biz-name">{scannedData.name}</p>
               <p className="biz-phone">{scannedData.phone}</p>
             </div>
-            <a href={`tel:${scannedData.phone}`} className="call-now-btn">
-              <i className="fas fa-phone"></i> Gọi ngay
-            </a>
+            <a href={`tel:${scannedData.phone}`} className="call-now-btn">Gọi ngay</a>
           </div>
         )}
 
         <div style={{ marginTop: '15px' }}>
           {cameraActive ? (
-            <button className={`capture-btn ${loading ? 'disabled' : ''}`} onClick={captureCard} disabled={loading}>
-              {loading ? <i className="fas fa-spinner spin"></i> : <i className="fas fa-camera"></i>}
-              {loading ? " Đang trích xuất..." : " Chụp & Lưu Sheet"}
+            <button className="capture-btn" onClick={captureCard} disabled={loading}>
+              {loading ? "Đang xử lý..." : "Chụp & Lưu"}
             </button>
           ) : (
             <button className="capture-btn" onClick={startCamera}>
-              <i className="fas fa-video"></i> {scannedData ? "Chụp lại cái khác" : "Mở Camera Soi"}
+              {scannedData ? "Chụp lại" : "Mở Cam Sau"}
             </button>
           )}
         </div>
-
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
     </div>
