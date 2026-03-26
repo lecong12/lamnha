@@ -93,6 +93,8 @@ function App() {
         showToast("Lưu thành công!", "success");
         setEditingItem(null);
         await fetchAllData();
+      } else {
+        throw new Error(result.message || "Không thể lưu dữ liệu vào AppSheet");
       }
     } catch (error) { showToast(error.message, "error"); }
   };

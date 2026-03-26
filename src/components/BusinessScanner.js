@@ -227,7 +227,6 @@ function BusinessScanner({ showToast }) {
                   </div>
                 )}
               </div>
-            </div>
           )}
         </div>
 
