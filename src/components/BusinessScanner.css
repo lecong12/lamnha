@@ -1,4 +1,3 @@
-/* --- Khung bao ngoài --- */
 .scanner-wrapper { 
   padding: 20px 15px; 
   display: flex; 
@@ -7,7 +6,6 @@
   min-height: 100vh;
 }
 
-/* --- Thẻ Card quét thông tin --- */
 .scanner-main-card { 
   background: #fff; 
   width: 100%; 
@@ -18,10 +16,9 @@
   text-align: center; 
 }
 
-/* --- Khu vực hiển thị ảnh vừa chụp/quét (Chỉ 1 ảnh duy nhất) --- */
 .scan-display { 
-  min-height: 200px; 
-  background: #f9fafb; 
+  min-height: 250px; 
+  background: #000; /* Để nền đen cho giống màn hình camera */
   border-radius: 10px; 
   margin: 15px 0; 
   display: flex; 
@@ -29,57 +26,48 @@
   justify-content: center; 
   border: 1px dashed #ddd; 
   overflow: hidden; 
+  position: relative;
 }
 
-/* --- Ảnh Card/Bảng hiệu vừa trích xuất xong --- */
+.scan-display video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .card-thumb { 
-  width: 100%;       /* Hiển thị to rõ ràng để nhìn thông tin */
-  max-height: 180px; 
+  width: 100%; 
+  max-height: 250px; 
   object-fit: contain; 
-  border-radius: 8px; 
 }
 
-/* --- Khung kết quả trích xuất thông tin --- */
 .scan-result { 
   display: flex; 
   align-items: center; 
   padding: 12px; 
-  width: 100%; 
-  text-align: left; 
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: #f0fdf4; 
+  border: 1px solid #dcfce7;
   border-radius: 10px;
   margin-bottom: 15px;
+  text-align: left;
 }
 
-.biz-name { 
-  margin: 0; 
-  color: #111827; 
-  font-size: 16px; 
-  font-weight: 600;
-}
+.biz-name { margin: 0; color: #111827; font-size: 16px; font-weight: 600; }
+.biz-phone { margin: 5px 0; color: #4b5563; font-size: 14px; }
 
-.biz-phone { 
-  margin: 5px 0; 
-  color: #4b5563; 
-  font-size: 14px; 
-}
-
-/* --- Nút Gọi Ngay (Màu xanh lá thương hiệu) --- */
 .call-now-btn { 
   display: inline-flex; 
   align-items: center; 
   gap: 8px; 
   background: #10b981; 
   color: white; 
-  padding: 10px 18px; 
+  padding: 10px 15px; 
   border-radius: 8px; 
   text-decoration: none; 
-  font-weight: 600; 
-  margin-left: auto; /* Đẩy nút sang bên phải */
+  font-weight: 600;
+  margin-left: auto;
 }
 
-/* --- Nút Chụp ảnh (Màu xanh dương) --- */
 .capture-btn { 
   background: #3b82f6; 
   color: white; 
@@ -96,15 +84,7 @@
   font-size: 16px;
 }
 
-.capture-btn.disabled { 
-  background: #9ca3af; 
-}
+.capture-btn.disabled { background: #9ca3af; }
 
-/* --- Hiệu ứng xoay Loading --- */
-.spin { 
-  animation: spin 1s linear infinite; 
-}
-
-@keyframes spin { 
-  to { transform: rotate(360deg); } 
-}
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
