@@ -12,8 +12,8 @@ const parseDate = (value) => {
   if (typeof value === 'string') {
     if (!value.trim()) return null;
 
-    // Regex tìm định dạng dd/mm/yyyy hoặc d/m/yyyy
-    const parts = value.match(/^(\d{1,2})\/\-\/\-/);
+    // Updated regex to match dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy, dd mm yyyy
+    const parts = value.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
     if (parts) {
       // parts[1]=day, parts[2]=month, parts[3]=year -> new Date(year, monthIndex, day)
       const d = new Date(parts[3], parts[2] - 1, parts[1]);
@@ -104,6 +104,7 @@ export const fetchStages = async (appId) => {
         ngayBatDau: parseDate(row[startKey] || row.ngayBatDau), // Tự động parse ngày
         ngayKetThuc: parseDate(row[endKey] || row.ngayKetThuc),
         anhNghiemThu: row[imgKey] || "", // Map đúng cột ảnh
+        // Add other fields from AppSheet if needed, e.g., 'status'
       };
     }).sort((a, b) => a.appSheetId - b.appSheetId); // Sửa lỗi sắp xếp: Dùng thứ tự dòng trong Sheet (_RowNumber)
 

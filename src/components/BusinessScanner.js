@@ -11,50 +11,16 @@ const normalizeScanData = (rowData) => {
   if (!rowData) return null;
 
   const normalized = {
-    id: rowData.ID || rowData.id || rowData._RowNumber, // Use 'id' for internal tracking
-    ID: rowData.ID || rowData.id || rowData._RowNumber, // Keep original ID for tracking
-    TenDoanhNghiep: "Chưa xác định", // camelCase for JSX display
-    SoDienThoai: "Không tìm thấy", // camelCase for JSX display
-    TrangThai: "Processing", // camelCase for JSX display
-    AnhCard: "", // camelCase for JSX display
-    // Explicit Vietnamese keys for AppSheet interaction
-    "Tên Doanh Nghiệp": "Chưa xác định", 
-    "Số Điện Thoại": "Không tìm thấy", 
-    "Trạng Thái": "Processing", 
-    "Ảnh Card": "", 
-    "Ngày Quét": "",
+    id: rowData.ID || rowData.id || rowData._RowNumber,
+    ID: rowData.ID || rowData.id || rowData._RowNumber,
+    TenDoanhNghiep: rowData.TenDoanhNghiep || "Chưa xác định",
+    SoDienThoai: rowData.SoDienThoai || "Không tìm thấy",
+    TrangThai: rowData.TrangThai || "Processing",
+    AnhCard: rowData.AnhCard || "",
+    NgayQuet: rowData.NgayQuet || "", // Assuming NgayQuet is the column name for scan date
     ...rowData // Keep all other original properties, but prioritize explicit normalized keys
   };
 
-  // Normalize Company Name
-  const companyKeys = ['Tên Doanh Nghiệp', 'Ten Doanh Nghiep', 'Company Name', 'Company'];
-  for (const key of companyKeys) {
-    if (rowData[key]) { normalized["Tên Doanh Nghiệp"] = rowData[key]; normalized.TenDoanhNghiep = rowData[key]; break; } // Assign to both
-  }
-
-  // Normalize Phone Number
-  const phoneKeys = ['Số Điện Thoại', 'So Dien Thoai', 'Phone Number', 'Phone', 'SDT'];
-  for (const key of phoneKeys) {
-    if (rowData[key]) { normalized["Số Điện Thoại"] = rowData[key]; normalized.SoDienThoai = rowData[key]; break; } // Assign to both
-  }
-
-  // Normalize Status
-  const statusKeys = ['Trạng Thái', 'Trang Thai', 'Status'];
-  for (const key of statusKeys) {
-    if (rowData[key]) { normalized["Trạng Thái"] = rowData[key]; normalized.TrangThai = rowData[key]; break; } // Assign to both
-  }
-
-  // Normalize Image URL
-  const imageKeys = ['Ảnh Card', 'Anh Card', 'Image URL', 'Image'];
-  for (const key of imageKeys) {
-    if (rowData[key]) { normalized["Ảnh Card"] = rowData[key]; normalized.AnhCard = rowData[key]; break; } // Assign to both
-  }
-
-  // Normalize Ngay Quet
-  const dateKeys = ['Ngày Quét', 'Ngay Quet', 'Scan Date', 'Date'];
-  for (const key of dateKeys) {
-    if (rowData[key]) { normalized["Ngày Quét"] = rowData[key]; normalized.NgayQuet = rowData[key]; break; } // Assign to both
-  }
   return normalized;
 };
 
@@ -100,6 +66,7 @@ function BusinessScanner({ showToast }) {
             (r.ID && r.ID === latestScan.id) // Check against normalized 'id'
           );
 
+          console.log("Raw updatedRow from AppSheet during polling:", updatedRow);
           const normalizedUpdatedRow = normalizeScanData(updatedRow);
           if (normalizedUpdatedRow && normalizedUpdatedRow.TrangThai === "Completed") { // Use camelCase key for status check
             setLatestScan(normalizedUpdatedRow); // <--- This is where latestScan is updated
@@ -128,12 +95,12 @@ function BusinessScanner({ showToast }) {
 
       if (fileData.secure_url) {
         const rowData = {
-          "ID": `SCAN_${Date.now()}`, // Explicit column name
-          "Ảnh Card": fileData.secure_url, // Explicit column name
-          "Tên Doanh Nghiệp": "Đang phân tích...", // Explicit column name
-          "Số Điện Thoại": "", // Explicit column name
-          "Ngày Quét": new Date().toLocaleString('vi-VN'), // Explicit column name
-          "Trạng Thái": "Processing" // Explicit column name
+          "ID": `SCAN_${Date.now()}`,
+          "AnhCard": fileData.secure_url, // Exact column name from sheet
+          "TenDoanhNghiep": "Đang phân tích...", // Exact column name from sheet
+          "SoDienThoai": "", // Exact column name from sheet
+          "NgayQuet": new Date().toLocaleString('vi-VN'), // Exact column name from sheet
+          "TrangThai": "Processing" // Exact column name from sheet
         };
 
         const sheetRes = await addRowToSheet("DanhBa", rowData, APP_ID);
