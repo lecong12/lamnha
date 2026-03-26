@@ -1,0 +1,98 @@
+/* App.css - Thiết lập Dark Mode Triệt Để */
+
+:root {
+  /* CHẾ ĐỘ SÁNG (Mặc định) */
+  --bg-app: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --accent-color: #2d8e2b;
+  --hover-bg: #f8fafc;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Kích hoạt khi body có class .dark-theme */
+body.dark-theme {
+  --bg-app: #0f172a;       /* Nền ứng dụng tối */
+  --bg-card: #1e293b;      /* Nền các ô nội dung, bảng, form */
+  --bg-sidebar: #1e293b;   /* Nền sidebar */
+  --text-main: #f1f5f9;    /* Chữ chính trắng sáng */
+  --text-muted: #94a3b8;   /* Chữ phụ xám nhạt */
+  --border-color: #334155; /* Đường kẻ tối */
+  --accent-color: #4ade80; /* Màu nhấn xanh sáng hơn */
+  --hover-bg: #2d3748;     /* Màu khi di chuột qua */
+  --shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+/* ÁP DỤNG TOÀN CỤC */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.app {
+  min-height: 100vh;
+  background-color: var(--bg-app);
+}
+
+/* LÀM TỐI CÁC THÀNH PHẦN CHÍNH */
+.main-content {
+  background-color: var(--bg-app);
+}
+
+/* Đây là phần quan trọng nhất: Ép tất cả các khối nội dung dùng biến */
+.card, 
+.table-container, 
+.contract-item, 
+.drawing-card, 
+.modal-content, 
+.summary-card,
+.progress-stage-card,
+.note-item {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow);
+}
+
+/* Làm tối các ô nhập liệu (Input/Select) */
+input, select, textarea {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* Làm tối tiêu đề bảng và dòng */
+th {
+  background-color: var(--hover-bg) !important;
+  color: var(--text-main) !important;
+}
+
+td {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Các đoạn văn bản phụ */
+.text-muted, .date, .size, .contract-meta, .drawing-meta {
+  color: var(--text-muted) !important;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  border: 4px solid var(--border-color);
+  border-top-color: var(--accent-color);
+}
+
+/* Chế độ tối cho Bar Chart */
+.dark-theme .bar-chart-container .recharts-text.recharts-yAxis-tick-value {
+  fill: #f87171 !important; /* Màu đỏ nhạt (red-400) */
+}

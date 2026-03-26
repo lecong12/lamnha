@@ -1,0 +1,15 @@
+{
+  "short_name": "Thu Chi",
+  "name": "Quản Lý Thu Chi Xây Nhà",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#2d8e2b",
+  "background_color": "#f5f7fa"
+}

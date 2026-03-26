@@ -1,0 +1,182 @@
+.sidebar {
+  height: 100vh;
+  background-color: var(--bg-sidebar);
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  border-right: 1px solid #f0f0f0;
+  overflow: hidden;
+}
+
+.sidebar.open {
+  width: 280px; /* Tăng chiều rộng khi mở */
+}
+
+.sidebar.closed {
+  width: 64px;
+}
+
+.sidebar-header {
+  height: 60px; /* Đồng bộ với Header chính */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background-color: #2d8e2b; /* Màu xanh của Header chính */
+  color: white;
+  flex-shrink: 0;
+}
+
+.sidebar-header .app-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+  color: white; /* Đảm bảo chữ Menu màu trắng */
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.sidebar-header .toggle-btn {
+  color: white;
+}
+
+.sidebar-header .toggle-btn:hover {
+  background-color: rgba(255,255,255,0.2);
+}
+
+.sidebar-menu {
+  flex: 1;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin: 0 8px;
+  border-radius: 8px;
+  height: 48px;
+}
+
+.menu-item:hover {
+  background-color: var(--hover-bg);
+  color: var(--accent-color);
+}
+
+.menu-item.active {
+  background-color: rgba(45, 142, 43, 0.1);
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.menu-item.logout {
+  color: #6b7280;
+}
+
+.menu-item.logout:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.menu-label {
+  margin-left: 12px;
+  font-size: 14px;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.sidebar.closed .menu-label {
+  opacity: 0;
+  display: none;
+}
+
+.sidebar-footer {
+  padding: 16px 0;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-sidebar);
+}
+
+/* --- MOBILE RESPONSIVE (Drawer Menu) --- */
+
+/* Overlay (Lớp phủ mờ) */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  /* Hiện overlay khi menu mở */
+  .sidebar-overlay.open {
+    display: block;
+  }
+
+  .sidebar {
+    display: flex; /* Hiện sidebar (không ẩn nữa) */
+    position: fixed;
+    top: 0; /* Bắt đầu từ đỉnh trên mobile */
+    left: -280px; /* Mặc định ẩn sang trái */
+    height: 100vh;
+    width: 260px !important; /* Chiều rộng cố định trên mobile */
+    z-index: 1001; /* Nằm trên overlay */
+    transition: left 0.3s ease-in-out;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+  }
+
+  .sidebar.open {
+    left: 0; /* Trượt vào */
+    width: 260px !important;
+  }
+
+  .sidebar.closed {
+    left: -280px; /* Trượt ra */
+    width: 260px !important;
+  }
+
+  /* Luôn hiện chữ menu trên mobile khi mở */
+  .menu-label {
+    display: block !important;
+    opacity: 1 !important;
+  }
+}

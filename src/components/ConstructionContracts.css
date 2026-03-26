@@ -1,0 +1,189 @@
+.contracts-container {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  min-height: 80vh;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  font-size: 1.5rem;
+  color: var(--text-main);
+}
+
+.category-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.tab-btn {
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-main);
+}
+
+.tab-btn.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.upload-box {
+  margin-bottom: 20px;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--accent-color);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.upload-btn:hover {
+  opacity: 0.9;
+}
+
+.upload-btn.disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.contracts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contract-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.contract-item:hover {
+  background-color: var(--hover-bg);
+}
+
+.contract-icon {
+  color: #ef4444; /* PDF color */
+  margin-right: 16px;
+}
+
+.contract-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.contract-name {
+  font-weight: 500;
+  color: var(--text-main);
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+
+.contract-name:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.contract-meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.contract-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.action-icon:hover {
+  background-color: var(--hover-bg);
+}
+
+.action-icon.delete:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.action-icon.download:hover {
+  background-color: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.no-contracts {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+}
+
+.pdf-body {
+  flex: 1;
+  position: relative;
+}
+
+.pdf-fallback {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: var(--text-muted);
+  background-color: var(--bg-app);
+}
+
+.pdf-fallback p {
+  margin-bottom: 1rem;
+}
+
+.fallback-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--accent-color);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+}

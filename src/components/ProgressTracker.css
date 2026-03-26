@@ -1,0 +1,155 @@
+/* ProgressTracker.css */
+.progress-tracker-section {
+  padding: 10px 0;
+}
+
+.stages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.stage-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stage-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.stage-header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stage-name-text {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-main);
+}
+
+.stage-date-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-left: 28px;
+}
+
+/* Kiểu dáng cho ô chọn trạng thái */
+.status-select-box {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-app);
+  color: var(--text-main);
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Màu sắc theo trạng thái */
+.status-hoàn-thành { border-left: 5px solid #22c55e; }
+.status-đang-thi-công { border-left: 5px solid #3b82f6; }
+.status-chưa-bắt-đầu { border-left: 5px solid #94a3b8; }
+
+/* Khu vực ảnh */
+.image-upload-zone {
+  width: 100%;
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--bg-app);
+}
+
+.img-preview, .img-done {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Nút bấm trên ảnh */
+.upload-actions {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn-confirm, .btn-cancel {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: white;
+}
+
+.btn-confirm { background-color: #22c55e; }
+.btn-cancel { background-color: #ef4444; }
+
+.upload-placeholder-box {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  gap: 8px;
+  transition: background 0.3s;
+}
+
+.upload-placeholder-box:hover {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: var(--accent-color);
+}
+
+.edit-image-label {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  backdrop-filter: blur(4px);
+}
+
+/* Hiệu ứng xoay khi đang tải */
+.spin {
+  animation: rotation 1s infinite linear;
+}
+
+@keyframes rotation {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(359deg); }
+}
+
+@media (max-width: 600px) {
+  .stages-grid { grid-template-columns: 1fr; }
+}

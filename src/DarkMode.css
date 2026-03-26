@@ -1,0 +1,167 @@
+/* DarkMode.css - Đã đồng bộ và tối ưu triệt để */
+
+/* Giao diện chung */
+body.dark-theme {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+}
+
+.dark-theme .app,
+.dark-theme .main-content,
+.dark-theme .app-main-wrapper,
+.dark-theme .contracts-container,
+.dark-theme .drawings-container {
+  background-color: #0f172a !important;
+  color: #f1f5f9;
+}
+
+/* Sidebar */
+.dark-theme .sidebar {
+  background-color: #1e293b !important;
+  border-right: 1px solid #334155 !important;
+}
+.dark-theme .sidebar-header {
+  background-color: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+}
+.dark-theme .menu-item {
+  color: #94a3b8 !important;
+}
+.dark-theme .menu-item:hover {
+  background-color: #334155 !important;
+  color: #fff !important;
+}
+.dark-theme .menu-item.active {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+.dark-theme .sidebar-footer {
+  background-color: #1e293b !important;
+  border-top: 1px solid #334155 !important;
+}
+
+/* Header */
+.dark-theme .header {
+  background-color: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+}
+.dark-theme .logo-text, .dark-theme .page-title {
+  color: #f8fafc !important;
+}
+
+/* Cards & Containers (Bao gồm cả Hợp đồng & Bản vẽ) */
+.dark-theme .stat-card,
+.dark-theme .chart-card,
+.dark-theme .stage-card,
+.dark-theme .transaction-card,
+.dark-theme .progress-tracker-section,
+.dark-theme .budget-section,
+.dark-theme .contract-item,
+.dark-theme .drawing-card,
+.dark-theme .upload-box,
+.dark-theme .scanner-main-card {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Tab buttons trong Hợp đồng/Bản vẽ */
+.dark-theme .tab-btn {
+  background-color: #334155 !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+.dark-theme .tab-btn.active {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+/* Override các style viết trực tiếp (inline styles) */
+.dark-theme div[style*="background-color: rgb(255, 255, 255)"],
+.dark-theme div[style*="background-color: #fff"],
+.dark-theme div[style*="background: white"] {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+/* Text & Labels */
+.dark-theme .contract-name, .dark-theme .drawing-name {
+  color: #60a5fa !important; /* Xanh dương sáng dễ đọc */
+}
+.dark-theme .contract-meta, .dark-theme .drawing-meta, .dark-theme .stat-label {
+  color: #94a3b8 !important;
+}
+
+/* Tables */
+.dark-theme .data-table th,
+.dark-theme .budget-table th,
+.dark-theme th {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+  border-bottom: 1px solid #475569 !important;
+}
+.dark-theme .data-table td,
+.dark-theme .budget-table td,
+.dark-theme td {
+  background-color: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-bottom: 1px solid #334155 !important;
+}
+.dark-theme tr:hover td {
+  background-color: #2d3748 !important;
+}
+
+/* Inputs & Selects */
+.dark-theme input,
+.dark-theme select,
+.dark-theme textarea {
+  background-color: #0f172a !important;
+  border: 1px solid #475569 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Modal & PDF Viewer */
+.dark-theme .modal-content,
+.dark-theme .pdf-viewer-container {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+  border: 1px solid #334155 !important;
+}
+.dark-theme .pdf-header {
+  background-color: #334155 !important;
+  border-bottom: 1px solid #475569 !important;
+}
+.dark-theme .pdf-body {
+  background-color: #0f172a !important;
+}
+
+/* Mobile Footer */
+.dark-theme .mobile-footer {
+  background-color: #1e293b !important;
+  border-top: 1px solid #334155 !important;
+}
+.dark-theme .summary-item.chi {
+  background: #450a0a !important; /* Darker red background */
+  color: #fca5a5 !important; /* Lighter red text */
+  border: 1px solid #7f1d1d !important;
+}
+.dark-theme .nav-item.active {
+  color: #4ade80 !important; /* Xanh lá sáng */
+  background-color: #334155 !important;
+}
+
+/* Scrollbar cho Dark Mode (Tùy chọn cho Chrome/Safari) */
+.dark-theme ::-webkit-scrollbar {
+  width: 8px;
+}
+.dark-theme ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.dark-theme ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+.dark-theme ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

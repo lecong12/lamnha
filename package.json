@@ -1,0 +1,50 @@
+{
+  "name": "thu-chi-xay-nha",
+  "version": "1.0.0",
+  "private": true,
+  "main": "api/index.js",
+  "engines": {
+    "node": "20.x"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2",
+    "express": "^4.18.2",
+    "googleapis": "^105.0.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "nodemon": "^3.1.0",
+    "papaparse": "^5.4.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^5.0.1",
+    "react-scripts": "5.0.1",
+    "recharts": "^2.10.3",
+    "tesseract.js": "^7.0.0"
+  },
+  "scripts": {
+    "start": "concurrently \"npm:start-backend\" \"npm:start-frontend\"",
+    "start-frontend": "react-scripts start",
+    "start-backend": "nodemon index.js",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:5000"
+}
