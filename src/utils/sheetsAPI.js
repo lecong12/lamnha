@@ -14,6 +14,45 @@ const formatRowId = (id) => {
   return id;
 };
 
+// Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
+const getCleanLink = (rawLink) => {
+  if (!rawLink) return "";
+  let current = String(rawLink).trim();
+
+  try {
+    // 1. Giải mã JSON lồng nhau (AppSheet đôi khi bọc link trong JSON {"Url": "...", "LinkText": "..."})
+    while (current.startsWith('{') || current.includes('{"Url"')) {
+      const parsed = JSON.parse(current);
+      current = (parsed.Url || parsed.LinkText || current).trim();
+    }
+  } catch (e) {
+    // Nếu không parse được JSON, cứ tiếp tục để tìm marker Cloudinary bên dưới
+  }
+
+  // 2. Tìm vị trí của link Cloudinary thật (loại bỏ domain Vercel thừa nếu có)
+  const cloudinaryMarker = "https://res.cloudinary.com";
+  const startIndex = current.indexOf(cloudinaryMarker);
+  
+  if (startIndex !== -1) {
+    let cleanUrl = current.substring(startIndex);
+    
+    // 3. Sửa lỗi thiếu dấu gạch chéo (https:/ thay vì https://) thường gặp khi parse JSON lỗi
+    if (cleanUrl.startsWith("https:/res.cloudinary.com") && !cleanUrl.startsWith("https://res.cloudinary.com")) {
+      cleanUrl = cleanUrl.replace("https:/", "https://");
+    }
+
+    // 4. Cắt bỏ các ký tự rác ở cuối (như %22, dấu ngoặc, hoặc text dư thừa sau phần mở rộng file)
+    const match = cleanUrl.match(/\.(pdf|jpg|jpeg|png|webp)/i);
+    if (match) {
+      const extensionIndex = cleanUrl.indexOf(match[0]);
+      return cleanUrl.substring(0, extensionIndex + match[0].length);
+    }
+    
+    return cleanUrl;
+  }
+  return current;
+};
+
 // Sử dụng endpoint chuẩn của AppSheet, có thể thay đổi tên bảng linh hoạt
 const getApiUrl = (appId, tableName) => 
   `https://www.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(tableName)}/Action`;
@@ -61,10 +100,13 @@ export const fetchFileData = async (tableName, appId) => {
 
     return {
       success: true,
-      data: data.map(row => ({
-        ...row,
-        url: row.url || row.URL || row.Link || row['Link PDF'] || row['File URL'] || row.file || '' // Flexible URL mapping
-      }))
+      data: data.map(row => {
+        const rawUrl = row.url || row.URL || row.Link || row['Link PDF'] || row['File URL'] || row.file || '';
+        return {
+          ...row,
+          url: getCleanLink(rawUrl)
+        };
+      })
     };
   } catch (error) {
     console.error(`Error fetching ${tableName}:`, error);
