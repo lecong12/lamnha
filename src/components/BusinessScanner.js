@@ -11,11 +11,17 @@ const normalizeScanData = (rowData) => {
   if (!rowData) return null;
 
   const normalized = {
+    id: rowData.ID || rowData.id || rowData._RowNumber, // Use 'id' for internal tracking
     ID: rowData.ID || rowData.id || rowData._RowNumber, // Keep original ID for tracking
-    "Tên Doanh Nghiệp": "Chưa xác định",
-    "Số Điện Thoại": "Không tìm thấy",
-    "Trạng Thái": "Processing",
-    "Ảnh Card": "",
+    TenDoanhNghiep: "Chưa xác định", // camelCase for JSX display
+    SoDienThoai: "Không tìm thấy", // camelCase for JSX display
+    TrangThai: "Processing", // camelCase for JSX display
+    AnhCard: "", // camelCase for JSX display
+    // Explicit Vietnamese keys for AppSheet interaction
+    "Tên Doanh Nghiệp": "Chưa xác định", 
+    "Số Điện Thoại": "Không tìm thấy", 
+    "Trạng Thái": "Processing", 
+    "Ảnh Card": "", 
     "Ngày Quét": "",
     ...rowData // Keep all other original properties, but prioritize explicit normalized keys
   };
@@ -23,31 +29,31 @@ const normalizeScanData = (rowData) => {
   // Normalize Company Name
   const companyKeys = ['Tên Doanh Nghiệp', 'Ten Doanh Nghiep', 'Company Name', 'Company'];
   for (const key of companyKeys) {
-    if (rowData[key]) { normalized["Tên Doanh Nghiệp"] = rowData[key]; normalized.TenDoanhNghiep = rowData[key]; break; }
+    if (rowData[key]) { normalized["Tên Doanh Nghiệp"] = rowData[key]; normalized.TenDoanhNghiep = rowData[key]; break; } // Assign to both
   }
 
   // Normalize Phone Number
   const phoneKeys = ['Số Điện Thoại', 'So Dien Thoai', 'Phone Number', 'Phone', 'SDT'];
   for (const key of phoneKeys) {
-    if (rowData[key]) { normalized["Số Điện Thoại"] = rowData[key]; normalized.SoDienThoai = rowData[key]; break; }
+    if (rowData[key]) { normalized["Số Điện Thoại"] = rowData[key]; normalized.SoDienThoai = rowData[key]; break; } // Assign to both
   }
 
   // Normalize Status
   const statusKeys = ['Trạng Thái', 'Trang Thai', 'Status'];
   for (const key of statusKeys) {
-    if (rowData[key]) { normalized["Trạng Thái"] = rowData[key]; normalized.TrangThai = rowData[key]; break; }
+    if (rowData[key]) { normalized["Trạng Thái"] = rowData[key]; normalized.TrangThai = rowData[key]; break; } // Assign to both
   }
 
   // Normalize Image URL
   const imageKeys = ['Ảnh Card', 'Anh Card', 'Image URL', 'Image'];
   for (const key of imageKeys) {
-    if (rowData[key]) { normalized["Ảnh Card"] = rowData[key]; normalized.AnhCard = rowData[key]; break; }
+    if (rowData[key]) { normalized["Ảnh Card"] = rowData[key]; normalized.AnhCard = rowData[key]; break; } // Assign to both
   }
 
   // Normalize Ngay Quet
   const dateKeys = ['Ngày Quét', 'Ngay Quet', 'Scan Date', 'Date'];
   for (const key of dateKeys) {
-    if (rowData[key]) { normalized["Ngày Quét"] = rowData[key]; normalized.NgayQuet = rowData[key]; break; }
+    if (rowData[key]) { normalized["Ngày Quét"] = rowData[key]; normalized.NgayQuet = rowData[key]; break; } // Assign to both
   }
   return normalized;
 };
@@ -73,11 +79,12 @@ function BusinessScanner({ showToast }) {
           const updatedRow = res.data.find(r => 
             (r.ID && r.ID === latestScan.ID) || 
             (r.id && r.id === latestScan.ID) ||
-            (r._RowNumber && r._RowNumber === latestScan._RowNumber) // Fallback to _RowNumber if ID isn't reliable
+            (r._RowNumber && r._RowNumber === latestScan._RowNumber) || // Fallback to _RowNumber if ID isn't reliable
+            (r.ID && r.ID === latestScan.id) // Check against normalized 'id'
           );
 
           const normalizedUpdatedRow = normalizeScanData(updatedRow);
-          if (normalizedUpdatedRow && normalizedUpdatedRow["Trạng Thái"] === "Completed") {
+          if (normalizedUpdatedRow && normalizedUpdatedRow.TrangThai === "Completed") { // Use camelCase key for status check
             setLatestScan(normalizedUpdatedRow); // <--- This is where latestScan is updated
             setPolling(false);
             showToast("AI đã trích xuất xong!", "success"); //
@@ -117,6 +124,9 @@ function BusinessScanner({ showToast }) {
           setLatestScan(normalizeScanData(rowData)); // Normalize initial data as well
           setPolling(true);
           showToast("Đã gửi ảnh. Vui lòng chờ AI trong giây lát.", "info");
+        } else {
+          // Log the error message from AppSheet API
+          showToast(`Lỗi lưu vào Sheet: ${sheetRes.message}`, "error");
         }
       }
     } catch (error) { showToast("Lỗi: " + error.message, "error"); }
@@ -132,20 +142,44 @@ function BusinessScanner({ showToast }) {
           {!latestScan ? (
             <div className="empty-state">Chụp bảng hiệu hoặc card để lưu danh bạ</div>
           ) : (
-            <div className="scan-result">
-              <img src={latestScan.AnhCard} alt="Card" className="card-thumb" />
-              <div className="scan-info">
+            <div className="scan-result-container"> {/* New container for image + info */}
+              <img src={latestScan.AnhCard} alt="Card" className="card-thumb" /> {/* Use camelCase key */}
+              
                 {polling ? (
                   <div className="status-loading"><FiClock className="spin" /> AI đang đọc dữ liệu...</div>
                 ) : (
-                  <div className="status-done">
-                    <p className="biz-name"><strong>{latestScan.TenDoanhNghiep}</strong></p>
-                    <p className="biz-phone">{latestScan.SoDienThoai}</p>
-                    {latestScan.SoDienThoai && (
-                      <a href={`tel:${latestScan.SoDienThoai.replace(/\D/g,'')}`} className="call-now-btn">
-                        <FiPhone /> Gọi ngay
+                  <div className="result-card">
+                    <p className="result-title">Thông tin tìm thấy:</p>
+                    
+                    <div className="info-row">
+                      <p className="label">Doanh nghiệp:</p>
+                      <p className="value">{latestScan.TenDoanhNghiep || "Chưa xác định"}</p> {/* Use camelCase key */}
+                    </div>
+
+                    <div className="info-row">
+                      <p className="label">Số điện thoại:</p>
+                      <p className="value">{latestScan.SoDienThoai || "Không tìm thấy"}</p> {/* Use camelCase key */}
+                    </div>
+
+                    <div className="button-group">
+                      {latestScan.SoDienThoai && latestScan.SoDienThoai !== "Không tìm thấy" && (
+                        <a 
+                          href={`tel:${latestScan.SoDienThoai.replace(/\D/g,'')}`} 
+                          className="call-button"
+                        >
+                          📞 Gọi ngay
+                        </a>
+                      )}
+                      <button 
+                        className="reset-button" 
+                        onClick={() => { 
+                          setLatestScan(null); 
+                          setPolling(false); 
+                        }}
+                      >
+                        Quét lại
                       </a>
-                    )}
+                    </div>
                   </div>
                 )}
               </div>

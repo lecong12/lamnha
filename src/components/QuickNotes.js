@@ -83,8 +83,8 @@ function QuickNotes({ showToast }) {
   const deleteNote = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa ghi chú này?")) {
         try {
-            // Sửa lỗi: Loại bỏ tham số null thừa, đúng signature là (tableName, rowId, appId)
-            const res = await deleteRowFromSheet("GhiChu", id, APP_ID);
+            // Corrected: Pass tableName as the first argument
+            const res = await deleteRowFromSheet("GhiChu", id, APP_ID); 
             if (res.success) {
                 setNotes(notes.filter(n => n.id !== id));
                 if (showToast) showToast("Đã xóa", "success");

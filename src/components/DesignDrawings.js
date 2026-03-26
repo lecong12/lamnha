@@ -105,7 +105,7 @@ function DesignDrawings({ showToast }) {
 
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa bản vẽ này?")) {
-      const res = await deleteRowFromSheet("BanVe", id, APP_ID);
+      const res = await deleteRowFromSheet("BanVe", id, APP_ID); // Pass tableName
       if (res.success) {
         setDrawings(drawings.filter(d => d.id !== id && d._RowNumber !== id));
       }

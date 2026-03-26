@@ -70,14 +70,14 @@ export const fetchFileData = async (tableName, appId) => {
 /**
  * Cập nhật dòng linh hoạt cho MỌI bảng
  */
-export const updateRowInSheet = async (tableName, rowData, appId) => {
+export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
-    const payload = { ...rowData };
     // AppSheet cần ID để biết dòng nào cần sửa
     if (!payload.id) {
         throw new Error("Thiếu 'id' để cập nhật dòng.");
     }
 
+    // AppSheet cần ID để biết dòng nào cần sửa, và các trường khác để cập nhật
     const response = await fetch(getApiUrl(appId, tableName), {
       method: "POST",
       headers: {
@@ -109,7 +109,7 @@ export const updateRowInSheet = async (tableName, rowData, appId) => {
 /**
  * Thêm dòng mới linh hoạt
  */
-export const addRowToSheet = async (tableName, rowData, appId) => {
+export const addRowToSheet = async (tableName, payload, appId) => {
   try {
     const response = await fetch(getApiUrl(appId, tableName), {
       method: "POST",
@@ -123,7 +123,7 @@ export const addRowToSheet = async (tableName, rowData, appId) => {
           Locale: "vi-VN",
           Timezone: "Asia/Ho_Chi_Minh",
         },
-        Rows: [rowData], // Gửi trực tiếp rowData
+        Rows: [payload], // Gửi trực tiếp payload
       }),
     });
 
@@ -142,7 +142,7 @@ export const addRowToSheet = async (tableName, rowData, appId) => {
 /**
  * Xóa dòng khỏi bất kỳ bảng nào
  */
-export const deleteRowFromSheet = async (tableName, rowId, appId) => {
+export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
   try {
     const response = await fetch(getApiUrl(appId, tableName), {
       method: "POST",
@@ -153,7 +153,7 @@ export const deleteRowFromSheet = async (tableName, rowId, appId) => {
       body: JSON.stringify({
         Action: "Delete",
         Properties: { Locale: "vi-VN" },
-        Rows: [{ id: formatRowId(rowId) }], // Chỉ cần gửi ID của dòng cần xóa
+        Rows: [{ id: formatRowId(payloadId) }], // Chỉ cần gửi ID của dòng cần xóa
       }),
     });
 
