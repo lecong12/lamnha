@@ -78,7 +78,7 @@ function ConstructionContracts({ showToast }) {
             name: file.name,
             url: fileData.secure_url, // Cột 'url' theo yêu cầu
             date: new Date().toLocaleDateString('vi-VN'),
-            size: (file.size / 1024 / 1024).toFixed(2) + ' MB', // Gửi dưới dạng chuỗi với MB
+            size: parseFloat((file.size / 1024 / 1024).toFixed(2)), // Gửi dưới dạng số
             category: activeCategory // Cột 'category' theo yêu cầu
         };
         

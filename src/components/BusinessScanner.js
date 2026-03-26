@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiCamera, FiLoader, FiPhone, FiCheckCircle, FiClock } from 'react-icons/fi';
-import { addRowToSheet, fetchTableData } from '../utils/sheetsAPI';
+import { addRowToSheet, fetchTableData } from '../utils/sheetsAPI'; // Removed unused updateRowInSheet
 import './BusinessScanner.css';
 
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '').trim();
@@ -16,10 +16,20 @@ function BusinessScanner({ showToast }) {
   useEffect(() => {
     let interval;
     if (polling && latestScan) {
+      // Use a more robust polling mechanism: fetch only the specific row if possible,
+      // or filter more carefully. For now, fetching all and filtering is okay.
       interval = setInterval(async () => {
-        const res = await fetchTableData("DanhBa", APP_ID);
-        if (res.success) {
-          const updatedRow = res.data.find(r => r.ID === latestScan.ID);
+        const res = await fetchTableData("DanhBa", APP_ID); // Fetch all data from "DanhBa"
+        if (res.success && res.data) {
+          // Find the specific row that was just added by its ID
+          // Note: AppSheet might return different casing for ID, so normalize
+          // Also, latestScan.ID is the ID we generated (e.g., SCAN_12345)
+          const updatedRow = res.data.find(r => 
+            (r.ID && r.ID === latestScan.ID) || 
+            (r.id && r.id === latestScan.ID) ||
+            (r._RowNumber && r._RowNumber === latestScan._RowNumber) // Fallback to _RowNumber if ID isn't reliable
+          );
+
           if (updatedRow && updatedRow.TrangThai === "Completed") {
             setLatestScan(updatedRow);
             setPolling(false);
@@ -47,12 +57,12 @@ function BusinessScanner({ showToast }) {
 
       if (fileData.secure_url) {
         const rowData = {
-          ID: `SCAN_${Date.now()}`,
-          AnhCard: fileData.secure_url,
-          TenDoanhNghiep: "Đang phân tích...", 
-          SoDienThoai: "",
-          NgayQuet: new Date().toLocaleString('vi-VN'),
-          TrangThai: "Processing"
+          "ID": `SCAN_${Date.now()}`, // Explicit column name
+          "Ảnh Card": fileData.secure_url, // Explicit column name
+          "Tên Doanh Nghiệp": "Đang phân tích...", // Explicit column name
+          "Số Điện Thoại": "", // Explicit column name
+          "Ngày Quét": new Date().toLocaleString('vi-VN'), // Explicit column name
+          "Trạng Thái": "Processing" // Explicit column name
         };
 
         const sheetRes = await addRowToSheet("DanhBa", rowData, APP_ID);

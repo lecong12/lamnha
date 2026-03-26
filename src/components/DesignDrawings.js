@@ -81,7 +81,7 @@ function DesignDrawings({ showToast }) {
             name: file.name, // Lấy từ file input
             url: fileData.secure_url, // Lấy từ Cloudinary
             date: new Date().toLocaleDateString('vi-VN'), // Lấy ngày hiện tại
-            size: (file.size / 1024 / 1024).toFixed(2) + ' MB', // Gửi dưới dạng chuỗi với MB
+            size: parseFloat((file.size / 1024 / 1024).toFixed(2)), // Gửi dưới dạng số
             category: activeCategory // Lấy từ state
         };
         
