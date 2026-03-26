@@ -1,100 +1,85 @@
-/* --- Container bao ngoài cùng --- */
+/* --- Khung bao ngoài --- */
 .scanner-wrapper { 
   padding: 20px 15px; 
   display: flex; 
   justify-content: center; 
-  background-color: #f8fafc; /* Màu nền nhẹ nhàng, chuyên nghiệp */
+  background-color: #f3f4f6; 
   min-height: 100vh;
 }
 
-/* --- Thẻ Card chính (Nơi chứa toàn bộ nội dung) --- */
+/* --- Thẻ Card quét thông tin --- */
 .scanner-main-card { 
-  background: #ffffff; 
+  background: #fff; 
   width: 100%; 
-  max-width: 480px; 
-  border-radius: 20px; 
-  padding: 24px; 
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 20px 48px rgba(0, 0, 0, 0.05); 
+  max-width: 450px; 
+  border-radius: 15px; 
+  padding: 20px; 
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08); 
   text-align: center; 
-  border: 1px solid #f1f5f9;
 }
 
-/* --- Tiêu đề Component --- */
-.scanner-main-card h3 {
-  margin: 0 0 20px 0;
-  color: #1e293b;
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-/* --- Khu vực hiển thị (Camera/Album ảnh) --- */
+/* --- Khu vực hiển thị ảnh vừa chụp/quét (Chỉ 1 ảnh duy nhất) --- */
 .scan-display { 
-  min-height: 220px; 
-  background: #f1f5f9; 
-  border-radius: 16px; 
+  min-height: 200px; 
+  background: #f9fafb; 
+  border-radius: 10px; 
   margin: 15px 0; 
   display: flex; 
-  flex-wrap: wrap;       /* QUAN TRỌNG: Để ảnh tự xuống hàng khi nhiều */
-  gap: 12px;             /* Khoảng cách giữa các ảnh trong album */
-  padding: 15px; 
   align-items: center; 
   justify-content: center; 
-  border: 2px dashed #cbd5e1; 
-  overflow-y: auto;      /* Tự hiện thanh cuộn nếu quá nhiều ảnh */
-  max-height: 450px;
-  transition: all 0.3s ease;
+  border: 1px dashed #ddd; 
+  overflow: hidden; 
 }
 
-/* --- Video Camera --- */
-.scan-display video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
-}
-
-/* --- Ảnh nhỏ trong Album (Thumbnail) --- */
+/* --- Ảnh Card/Bảng hiệu vừa trích xuất xong --- */
 .card-thumb { 
-  width: 95px; 
-  height: 95px; 
-  object-fit: cover; 
-  border-radius: 12px; 
-  border: 2px solid #ffffff;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
+  width: 100%;       /* Hiển thị to rõ ràng để nhìn thông tin */
+  max-height: 180px; 
+  object-fit: contain; 
+  border-radius: 8px; 
 }
 
-.card-thumb:hover {
-  transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi di chuột */
-}
-
-/* --- Kết quả quét hóa đơn (OCR) --- */
+/* --- Khung kết quả trích xuất thông tin --- */
 .scan-result { 
   display: flex; 
   align-items: center; 
-  padding: 14px; 
+  padding: 12px; 
   width: 100%; 
   text-align: left; 
-  background: #f0fdf4; 
-  border-radius: 12px;
-  margin-bottom: 20px;
-  border: 1px solid #bbf7d0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin-bottom: 15px;
 }
 
 .biz-name { 
   margin: 0; 
-  color: #166534; 
+  color: #111827; 
   font-size: 16px; 
-  font-weight: 700; 
+  font-weight: 600;
 }
 
 .biz-phone { 
-  margin: 4px 0; 
-  color: #374151; 
+  margin: 5px 0; 
+  color: #4b5563; 
   font-size: 14px; 
 }
 
-/* --- Nút bấm hành động (Chụp/Chọn/Lưu) --- */
+/* --- Nút Gọi Ngay (Màu xanh lá thương hiệu) --- */
+.call-now-btn { 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 8px; 
+  background: #10b981; 
+  color: white; 
+  padding: 10px 18px; 
+  border-radius: 8px; 
+  text-decoration: none; 
+  font-weight: 600; 
+  margin-left: auto; /* Đẩy nút sang bên phải */
+}
+
+/* --- Nút Chụp ảnh (Màu xanh dương) --- */
 .capture-btn { 
   background: #3b82f6; 
   color: white; 
@@ -102,67 +87,24 @@
   align-items: center; 
   justify-content: center; 
   gap: 10px; 
-  padding: 16px; 
-  border-radius: 14px; 
+  padding: 15px; 
+  border-radius: 10px; 
   cursor: pointer; 
   border: none;
-  font-weight: 600;
-  font-size: 15px;
-  transition: all 0.2s ease;
   width: 100%;
-}
-
-.capture-btn:active {
-  transform: scale(0.97);
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .capture-btn.disabled { 
-  background: #94a3b8; 
-  cursor: not-allowed;
+  background: #9ca3af; 
 }
 
-/* Nút Gọi / Lưu Nhật Ký (Xanh lá) */
-.call-now-btn { 
-  display: inline-flex; 
-  align-items: center; 
-  justify-content: center;
-  gap: 10px; 
-  background: #10b981; 
-  color: white; 
-  padding: 16px; 
-  border-radius: 14px; 
-  text-decoration: none; 
-  font-weight: 600; 
-  border: none;
-  font-size: 15px;
-  transition: all 0.2s ease;
-}
-
-.call-now-btn:hover {
-  background: #059669;
-}
-
-/* --- Hiệu ứng xoay (Spin) --- */
+/* --- Hiệu ứng xoay Loading --- */
 .spin { 
   animation: spin 1s linear infinite; 
 }
 
 @keyframes spin { 
-  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); } 
-}
-
-/* --- Tối ưu hóa cho điện thoại (Mobile) --- */
-@media (max-width: 480px) {
-  .scanner-main-card {
-    padding: 20px 15px;
-  }
-  .card-thumb {
-    width: 80px;
-    height: 80px;
-  }
-  .scan-display {
-    min-height: 180px;
-    gap: 8px;
-  }
 }
