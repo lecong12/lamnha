@@ -35,7 +35,11 @@ function BusinessScanner({ showToast }) {
       const res = await fetchTableData("DanhBa", APP_ID);
       if (res.success && res.data) {
         // Lấy 10 bản ghi mới nhất (đảo ngược mảng)
-        setRecentContacts(res.data.slice().reverse().slice(0, 10));
+        setRecentContacts(res.data.slice().reverse().slice(0, 10).map(item => ({
+          id: item.ID || item.id,
+          ten: item.TenDoanhNghiep || item.ten || "Không tên",
+          sdt: item.SoDienThoai || item.sdt || "Không có số"
+        })));
       }
     } catch (e) {
       console.error("Lỗi tải danh bạ:", e);
@@ -104,8 +108,8 @@ function BusinessScanner({ showToast }) {
         
         // 1. Tìm số điện thoại (Regex VN cải tiến)
         const phoneRegex = /(0[35789][0-9\s\.]{8,12}|02[0-9\s\.]{9,13})/g;
-        const cleanTextForPhone = text.replace(/[\s\.]/g, '');
-        const phoneMatch = cleanTextForPhone.match(/(0[35789][0-9]{8}|02[0-9]{8,9})/);
+        const cleanTextForPhone = text.replace(/[^\d]/g, ''); // Chỉ giữ lại số để tìm SĐT
+        const phoneMatch = cleanTextForPhone.match(/(03|05|07|08|09|02)\d{8,9}/);
         if (phoneMatch) extracted.soDienThoai = phoneMatch[0];
 
         // 2. Tìm tên doanh nghiệp (Logic trích xuất tiếng Việt)
@@ -138,8 +142,8 @@ function BusinessScanner({ showToast }) {
           if (!nameLine) {
             nameLine = cleanLines.find(l => {
               const hasFewNumbers = (l.match(/\d/g) || []).length < 5;
-              const notAddress = !/(số|đường|phường|quận|tp|huyện|tỉnh|địa chỉ|đ\/c|hotline|tel|fax|mst|email)/i.test(l);
-              const notEmail = !/@/.test(l) && !/\.com/.test(l);
+              const notAddress = !/(số|đường|phường|quận|tp|huyện|tỉnh|địa chỉ|đ\/c|đc|hotline|tel|fax|mst|email|website|web)/i.test(l);
+              const notEmail = !/@/.test(l) && !/\.com|\.vn/.test(l);
               return hasFewNumbers && notAddress && notEmail;
             });
           }
@@ -174,11 +178,12 @@ function BusinessScanner({ showToast }) {
       // Đảm bảo lấy link ảnh từ state image hoặc scannedData
       const currentImg = image || scannedData.hinhAnh;
       const payload = {
-        "id": `DB_${Date.now()}`, // Tạo ID dạng chuỗi để AppSheet không nhầm lẫn
-        "Tên": scannedData.tenDoanhNghiep,
-        "SĐT": scannedData.soDienThoai,
-        "Ảnh": currentImg,
-        "Ngày lưu": new Date().toLocaleDateString('vi-VN')
+        "ID": `DB_${Date.now()}`, 
+        "AnhCard": currentImg,
+        "TenDoanhNghiep": scannedData.tenDoanhNghiep,
+        "SoDienThoai": scannedData.soDienThoai,
+        "NgayQuet": new Date().toLocaleDateString('vi-VN'),
+        "TrangThai": "Hoàn thành"
       };
 
       const res = await addRowToSheet("DanhBa", payload, APP_ID);
@@ -268,12 +273,12 @@ function BusinessScanner({ showToast }) {
               {recentContacts.map((contact, idx) => (
                 <div key={contact.id || idx} className="contact-mini-item">
                   <div className="contact-mini-info">
-                    <div className="contact-name">{contact.Tên || "Không tên"}</div>
-                    <div className="contact-phone">{contact.SĐT || "Không có số"}</div>
+                    <div className="contact-name">{contact.ten}</div>
+                    <div className="contact-phone">{contact.sdt}</div>
                   </div>
                   <div className="contact-mini-actions">
-                    {contact.SĐT && (
-                      <a href={`tel:${contact.SĐT}`} className="mini-call-btn" title="Gọi ngay">
+                    {contact.sdt !== "Không có số" && (
+                      <a href={`tel:${contact.sdt}`} className="mini-call-btn" title="Gọi ngay">
                         <FiPhoneCall size={14} />
                       </a>
                     )}
