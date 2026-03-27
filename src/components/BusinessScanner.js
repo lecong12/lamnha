@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { FiCamera, FiLoader, FiSave, FiImage, FiSearch, FiPhoneCall } from 'react-icons/fi';
+import React, { useState, useRef, useEffect } from 'react';
+import { FiCamera, FiLoader, FiSave, FiImage, FiSearch, FiPhoneCall, FiUser, FiExternalLink } from 'react-icons/fi';
 import Tesseract from 'tesseract.js';
-import { addRowToSheet } from '../utils/sheetsAPI';
+import { addRowToSheet, fetchTableData } from '../utils/sheetsAPI';
 import './BusinessScanner.css';
 
 // Cấu hình lấy từ môi trường
@@ -15,12 +15,34 @@ function BusinessScanner({ showToast }) {
   const [uploading, setUploading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [recentContacts, setRecentContacts] = useState([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
   
   const [scannedData, setScannedData] = useState({
     tenDoanhNghiep: "",
     soDienThoai: "",
     hinhAnh: ""
   });
+
+  // Tải danh sách liên hệ đã lưu khi mở trang
+  useEffect(() => {
+    loadRecentContacts();
+  }, []);
+
+  const loadRecentContacts = async () => {
+    try {
+      setLoadingContacts(true);
+      const res = await fetchTableData("DanhBa", APP_ID);
+      if (res.success && res.data) {
+        // Lấy 10 bản ghi mới nhất (đảo ngược mảng)
+        setRecentContacts(res.data.slice().reverse().slice(0, 10));
+      }
+    } catch (e) {
+      console.error("Lỗi tải danh bạ:", e);
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
 
   // Helper: Làm sạch link Cloudinary từ chuỗi rác
   const getCleanUrl = (rawUrl) => {
@@ -82,11 +104,9 @@ function BusinessScanner({ showToast }) {
         
         // 1. Tìm số điện thoại (Regex VN cải tiến)
         const phoneRegex = /(0[35789][0-9\s\.]{8,12}|02[0-9\s\.]{9,13})/g;
-        const phoneMatches = text.match(phoneRegex);
-        if (phoneMatches) {
-          const cleanPhone = phoneMatches[0].replace(/[\s\.]/g, '');
-          if (cleanPhone.length >= 10) extracted.soDienThoai = cleanPhone;
-        }
+        const cleanTextForPhone = text.replace(/[\s\.]/g, '');
+        const phoneMatch = cleanTextForPhone.match(/(0[35789][0-9]{8}|02[0-9]{8,9})/);
+        if (phoneMatch) extracted.soDienThoai = phoneMatch[0];
 
         // 2. Tìm tên doanh nghiệp (Logic trích xuất tiếng Việt)
         const businessKeywords = [
@@ -96,8 +116,11 @@ function BusinessScanner({ showToast }) {
         ];
         
         const cleanLines = text.split('\n')
-          .map(l => l.trim().replace(/[|\\\[\]{}()_*~]/g, ''))
-          .filter(l => l.length > 3);
+          .map(l => l.trim()
+            .replace(/[|\\\[\]{}()_*~]/g, '') // Xóa ký tự lạ OCR
+            .replace(/^[^\w\sÀ-ỹ]+|[^\w\sÀ-ỹ]+$/g, '') // Xóa rác ở đầu/cuối dòng
+          )
+          .filter(l => l.length > 3 && !/^\d+$/.test(l)); // Bỏ dòng chỉ toàn số
 
         if (cleanLines.length > 0) {
           let nameLine = cleanLines.find(l => 
@@ -115,12 +138,16 @@ function BusinessScanner({ showToast }) {
           if (!nameLine) {
             nameLine = cleanLines.find(l => {
               const hasFewNumbers = (l.match(/\d/g) || []).length < 5;
-              const notAddress = !/(số|đường|phường|quận|tp|huyện|tỉnh|địa chỉ|đ\/c)/i.test(l);
-              const notEmail = !/@/.test(l);
+              const notAddress = !/(số|đường|phường|quận|tp|huyện|tỉnh|địa chỉ|đ\/c|hotline|tel|fax|mst|email)/i.test(l);
+              const notEmail = !/@/.test(l) && !/\.com/.test(l);
               return hasFewNumbers && notAddress && notEmail;
             });
           }
-          extracted.tenDoanhNghiep = (nameLine || cleanLines[0]).trim();
+          
+          let finalName = (nameLine || cleanLines[0]).trim();
+          // Làm sạch lần cuối: Xóa các nhãn thông tin nếu còn sót
+          finalName = finalName.replace(/^(Tên|Cửa hàng|Cty|Công ty|Đ/c|Địa chỉ)[:\s\-]*/i, '');
+          extracted.tenDoanhNghiep = finalName;
         }
 
         return extracted;
@@ -147,12 +174,11 @@ function BusinessScanner({ showToast }) {
       // Đảm bảo lấy link ảnh từ state image hoặc scannedData
       const currentImg = image || scannedData.hinhAnh;
       const payload = {
-        "id": Date.now().toString(),
+        "id": `DB_${Date.now()}`, // Tạo ID dạng chuỗi để AppSheet không nhầm lẫn
         "Tên": scannedData.tenDoanhNghiep,
         "SĐT": scannedData.soDienThoai,
         "Ảnh": currentImg,
-        "Ngày lưu": new Date().toLocaleDateString('vi-VN'),
-        "ngay": new Date().toISOString().split('T')[0] // Bổ sung dự phòng
+        "Ngày lưu": new Date().toLocaleDateString('vi-VN')
       };
 
       const res = await addRowToSheet("DanhBa", payload, APP_ID);
@@ -162,6 +188,7 @@ function BusinessScanner({ showToast }) {
         setScannedData({ 
           tenDoanhNghiep: "", soDienThoai: "", hinhAnh: "" 
         });
+        loadRecentContacts(); // Tải lại danh sách sau khi lưu
       }
     } catch (error) {
       showToast("Lỗi lưu AppSheet: " + error.message, "error");
@@ -226,6 +253,38 @@ function BusinessScanner({ showToast }) {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* MỚI: Khu vực hiển thị danh bạ vừa lưu */}
+        <div className="recent-contacts-section">
+          <div className="section-divider">
+            <span>Danh bạ đã lưu gần đây</span>
+          </div>
+          
+          {loadingContacts ? (
+            <div className="loading-inline"><FiLoader className="spin" /> Đang tải dữ liệu...</div>
+          ) : recentContacts.length > 0 ? (
+            <div className="contacts-mini-list">
+              {recentContacts.map((contact, idx) => (
+                <div key={contact.id || idx} className="contact-mini-item">
+                  <div className="contact-mini-info">
+                    <div className="contact-name">{contact.Tên || "Không tên"}</div>
+                    <div className="contact-phone">{contact.SĐT || "Không có số"}</div>
+                  </div>
+                  <div className="contact-mini-actions">
+                    {contact.SĐT && (
+                      <a href={`tel:${contact.SĐT}`} className="mini-call-btn" title="Gọi ngay">
+                        <FiPhoneCall size={14} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-contacts-text">Chưa có liên hệ nào trong danh bạ.</div>
+          )}
+          <p className="storage-hint">Dữ liệu được lưu tại Google Sheet: <strong>DanhBa</strong></p>
         </div>
       </div>
     </div>
