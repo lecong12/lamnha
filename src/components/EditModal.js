@@ -332,7 +332,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
                 ) : (
                   <div className="preview-container" onClick={() => !uploading && fileInputRef.current.click()}>
                     <img src={preview} alt="Chứng từ" />
-                    {uploading && <div className="upload-overlay"><FiLoader className="spin" /></div>}
+                    {uploading && <div className="upload-overlay" style={{ background: 'rgba(0,0,0,0.4)', color: '#fff' }}><FiLoader className="spin" /><span>Đang lưu...</span></div>}
                     <button 
                       type="button" 
                       className="remove-image-btn" 

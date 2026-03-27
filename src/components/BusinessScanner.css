@@ -45,6 +45,12 @@
   cursor: pointer;
   overflow: hidden;
   margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.scan-preview-zone.has-img {
+  border: 2px solid #3b82f6; /* Đổi gạch đứt thành viền liền khi có ảnh */
+  background: #000;
 }
 
 .img-preview {
@@ -65,13 +71,14 @@
 .scan-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.4); /* Chuyển sang màu tối trong suốt để thấy ảnh rõ hơn */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 10px;
   z-index: 10;
+  color: #fff; /* Chuyển chữ sang màu trắng để nổi bật trên nền tối */
 }
 
 .scan-result-form {
