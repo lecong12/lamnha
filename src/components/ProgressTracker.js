@@ -54,8 +54,9 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast, isDarkMode }) 
       const data = new FormData();
       data.append("file", file);
       data.append("upload_preset", UPLOAD_PRESET);
-
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { 
+      data.append("resource_type", "auto"); // Sử dụng auto để Cloudinary tự nhận diện
+      
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { 
         method: "POST", 
         body: data 
       });

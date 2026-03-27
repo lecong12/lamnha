@@ -37,8 +37,8 @@ function BusinessScanner({ showToast }) {
         // Lấy 10 bản ghi mới nhất (đảo ngược mảng)
         setRecentContacts(res.data.slice().reverse().slice(0, 10).map(item => ({
           id: item.ID || item.id,
-          ten: item.TenDoanhNghiep || item.ten || "Không tên",
-          sdt: item.SoDienThoai || item.sdt || "Không có số"
+          ten: item.TenDoanhNghiep || item.ten || "Không tên", // Map đúng tên cột
+          sdt: item.SoDienThoai || item.sdt || "Không có số" // Map đúng tên cột
         })));
       }
     } catch (e) {
@@ -68,12 +68,12 @@ function BusinessScanner({ showToast }) {
     setScannedData({ tenDoanhNghiep: "", soDienThoai: "", hinhAnh: "" });
     setUploading(true);
     setScanning(true);
-    showToast("Đang xử lý ảnh...", "info");
+    showToast("Bắt đầu xử lý ảnh...", "info");
 
     const isPdf = file.type === "application/pdf";
     const resourceType = isPdf ? "raw" : "image";
 
-    // TÁC VỤ 1: QUÉT OCR (Chạy độc lập - Cập nhật ngay khi xong)
+    // TÁC VỤ 1: QUÉT OCR (Chạy độc lập, dùng file cục bộ cho tốc độ tối đa)
     if (!isPdf) {
       ocrTask(file).then(extractedInfo => {
         setScannedData(prev => ({
@@ -82,24 +82,28 @@ function BusinessScanner({ showToast }) {
           soDienThoai: extractedInfo.sdt
         }));
         setScanning(false);
-        showToast("Đã trích xuất thông tin!", "success");
+        showToast("Đã trích xuất thông tin từ ảnh!", "success");
       }).catch(err => {
         setScanning(false);
         console.error("OCR Error:", err);
+        showToast("Lỗi trích xuất thông tin.", "error");
       });
     } else {
       setScanning(false);
     }
 
-    // TÁC VỤ 2: UPLOAD LÊN CLOUDINARY (Chạy ngầm - Khi xong mới mở nút Lưu)
-    uploadTask(file, resourceType).then(cloudinaryUrl => {
-      setScannedData(prev => ({ ...prev, hinhAnh: cloudinaryUrl }));
-      setUploading(false);
-      showToast("Đã đồng bộ ảnh!", "success");
-    }).catch(err => {
-      setUploading(false);
-      showToast("Lỗi tải ảnh: " + err.message, "error");
-    });
+    // TÁC VỤ 2: UPLOAD LÊN CLOUDINARY (Chạy ngầm)
+    uploadTask(file, resourceType)
+      .then(cloudinaryUrl => {
+        setScannedData(prev => ({ ...prev, hinhAnh: cloudinaryUrl }));
+        setUploading(false);
+        showToast("Đã đồng bộ ảnh!", "success");
+      })
+      .catch(err => {
+        setUploading(false);
+        showToast("Lỗi tải ảnh: " + err.message, "error");
+        console.error("Upload error:", err);
+      });
   };
 
   // Hàm hỗ trợ Upload tách rời
@@ -111,7 +115,10 @@ function BusinessScanner({ showToast }) {
     const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
       method: "POST", body: formData
     });
-    if (!res.ok) throw new Error("Cloudinary rejected");
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error?.message || "Cloudinary rejected");
+    }
     const data = await res.json();
     return getCleanUrl(data.secure_url);
   };
@@ -119,24 +126,61 @@ function BusinessScanner({ showToast }) {
   // Hàm hỗ trợ OCR tách rời
   const ocrTask = async (file) => {
     const { data: { text } } = await Tesseract.recognize(file, 'vie');
-    const digitsOnly = text.replace(/[^\d]/g, '');
-    const phoneMatch = digitsOnly.match(/(03|05|07|08|09|02)\d{8,9}/);
-    const sdt = phoneMatch ? phoneMatch[0] : "";
-
-    const businessKeywords = ['công ty', 'cửa hàng', 'đại lý', 'vật tư', 'xây dựng', 'nhà thầu', 'nội thất'];
-    const cleanLines = text.split('\n')
-      .map(l => l.trim().replace(/[|\\\[\]{}()_*~^]/g, '').replace(/^[^\w\sÀ-ỹ0-9]+|[^\w\sÀ-ỹ0-9]+$/g, ''))
-      .filter(l => l.length > 2 && !/^\d+$/.test(l));
-
-    let nameLine = cleanLines.find(l => businessKeywords.some(kw => l.toLowerCase().includes(kw)));
-    if (!nameLine) {
-      nameLine = cleanLines.find(l => {
-        const upperCount = (l.match(/[A-ZÀ-Ỹ]/g) || []).length;
-        return l.length > 5 && (upperCount / l.length) > 0.5;
-      });
+    
+    // Trích xuất SĐT (Hỗ trợ dấu + quốc tế và các định dạng có dấu cách/chấm)
+    const phoneRegex = /(\+[\d\s.]{7,15}|(?:03|05|07|08|09|02)[\d\s.]{8,12})/g;
+    const phoneMatches = text.match(phoneRegex);
+    let sdt = "";
+    if (phoneMatches) {
+      const rawPhone = phoneMatches[0].trim();
+      const digits = rawPhone.replace(/[^\d]/g, '');
+      sdt = rawPhone.startsWith('+') ? `+${digits}` : digits;
     }
-    const ten = (nameLine || cleanLines[0] || "").replace(/^(Tên|Cửa hàng|Cty|Công ty|Đ\/c|Địa chỉ|ĐC)[:\s\-]*/i, '').trim();
+
+    // Trích xuất Tên Doanh nghiệp
+    const businessKeywords = ['công ty', 'cửa hàng', 'đại lý', 'vật tư', 'xây dựng', 'nhà thầu', 'nội thất', 'thiết kế', 'kiến trúc', 'điện nước'];
+    const cleanLines = text.split('\n')
+      .map(l => l.trim().replace(/[|\\\[\]{}()_*~^]/g, '').replace(/^[^a-zA-ZÀ-ỹ0-9]+|[^\w\sÀ-ỹ0-9]+$/g, ''))
+      .filter(l => {
+        if (l.length < 4) return false; // Bỏ qua dòng quá ngắn
+        if (/^(fb|zalo|web|mst|stk|id|đc|add|tel|hotline|email|www|http)/i.test(l)) return false; // Bỏ qua các từ khóa liên hệ
+        return !/^[\d\s.,\-:/]+$/.test(l); // Bỏ dòng chỉ toàn số/phân cách
+      });
+
+    let ten = "";
+    if (cleanLines.length > 0) {
+      let nameLine = cleanLines.find(l => businessKeywords.some(kw => l.toLowerCase().includes(kw)));
+      if (!nameLine) {
+        nameLine = cleanLines.find(l => {
+          const upperCount = (l.match(/[A-ZÀ-ỸĐ]/g) || []).length; // Thêm Đ vào danh sách chữ hoa
+          return l.length > 6 && (upperCount / l.length) > 0.5; // Tỉ lệ chữ hoa cao
+        });
+      }
+      ten = (nameLine || cleanLines[0] || "").replace(/^(Tên|Cửa hàng|Cty|Công ty|Đ\/c|Địa chỉ|ĐC|SĐT|Tel|MST|Zalo|FB|Facebook)[:\s\-]*/i, '').trim();
+    }
     return { ten, sdt };
+  };
+
+  // Hàm xử lý OCR khi bấm nút "Quét lại ảnh"
+  const handleOCR = async (source) => {
+    const ocrSource = source || image;
+    if (!ocrSource) return;
+
+    setScanning(true);
+    try {
+      const extractedInfo = await ocrTask(ocrSource);
+      setScannedData(prev => ({
+        ...prev,
+        tenDoanhNghiep: extractedInfo.ten,
+        soDienThoai: extractedInfo.sdt
+      }));
+      showToast("Đã nhận diện thông tin!", "success");
+    } catch (error) {
+      console.error("OCR Error:", error);
+      showToast("Lỗi khi quét ảnh.", "error");
+    } finally {
+      setScanning(false);
+    }
   };
 
   // Lưu vào AppSheet
@@ -155,8 +199,8 @@ function BusinessScanner({ showToast }) {
     try {
       // Chỉ sử dụng scannedData.hinhAnh (Cloudinary URL), không dùng link blob preview
       const payload = {
-        "ID": `DB_${Date.now()}`,
-        "AnhCard": scannedData.hinhAnh,
+        "ID": `DB_${Date.now()}`, // Tạo ID dạng chuỗi để AppSheet không nhầm lẫn
+        "AnhCard": scannedData.hinhAnh, // Khớp với tên cột của bạn
         "TenDoanhNghiep": scannedData.tenDoanhNghiep,
         "SoDienThoai": scannedData.soDienThoai,
         "NgayQuet": new Date().toLocaleString('vi-VN'),
@@ -166,7 +210,7 @@ function BusinessScanner({ showToast }) {
       const res = await addRowToSheet("DanhBa", payload, APP_ID);
       if (res.success) {
         showToast("Đã lưu vào Danh bạ!", "success");
-        setImage(null);
+        setImage(null); // Xóa preview
         setScannedData({ 
           tenDoanhNghiep: "", soDienThoai: "", hinhAnh: "" 
         });
@@ -190,10 +234,16 @@ function BusinessScanner({ showToast }) {
         <div className="scanner-body">
           {/* Khu vực xem trước / Upload */}
           <div className={`scan-preview-zone ${image ? 'has-img' : ''}`} onClick={() => !uploading && fileInputRef.current.click()}>
-            {uploading ? (
-              <div className="scan-overlay"><FiLoader className="spin" /> <span>Đang tải lên...</span></div>
-            ) : image ? (
-              <img src={image} alt="Preview" className="img-preview" />
+            {image ? (
+              <>
+                <img src={image} alt="Preview" className="img-preview" />
+                {uploading && (
+                  <div className="scan-overlay">
+                    <FiLoader className="spin" /> 
+                    <span>Đang tải lên Cloudinary...</span>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="scan-placeholder">
                 <FiImage size={40} />
@@ -220,7 +270,7 @@ function BusinessScanner({ showToast }) {
 
             {scannedData.soDienThoai && (
               <div className="quick-call-zone">
-                <a href={`tel:${scannedData.soDienThoai}`} className="btn-call">
+                <a href={`tel:${String(scannedData.soDienThoai || '').replace(/\D/g,'')}`} className="btn-call">
                   <FiPhoneCall /> Gọi ngay: {scannedData.soDienThoai}
                 </a>
               </div>
@@ -255,7 +305,7 @@ function BusinessScanner({ showToast }) {
                   </div>
                   <div className="contact-mini-actions">
                     {contact.sdt !== "Không có số" && (
-                      <a href={`tel:${contact.sdt.replace(/\D/g,'')}`} className="mini-call-btn" title="Gọi ngay">
+                      <a href={`tel:${String(contact.sdt || '').replace(/\D/g,'')}`} className="mini-call-btn" title="Gọi ngay">
                         <FiPhoneCall size={14} />
                       </a>
                     )}

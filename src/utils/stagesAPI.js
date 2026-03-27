@@ -14,7 +14,7 @@ const parseDate = (value) => {
   if (typeof value === 'string') {
     if (!value.trim()) return null;
 
-    // Try dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy, dd mm yyyy
+    // Try dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy, dd mm yyyy (Fix Regex)
     let parts = value.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
     if (parts) {
       // parts[1]=day, parts[2]=month, parts[3]=year -> new Date(year, monthIndex, day)

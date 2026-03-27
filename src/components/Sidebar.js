@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
-  FiLogOut, 
-  FiChevronLeft, 
+  FiLogOut, FiChevronLeft, 
   FiChevronRight,
   FiCheckCircle,
   FiBarChart2,

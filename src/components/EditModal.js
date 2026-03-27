@@ -122,14 +122,13 @@ function EditModal({ item, onClose, onSave, showToast }) {
     try {
       setUploading(true);
       
-      // Tạo preview cục bộ
+      // Tạo preview cục bộ ngay lập tức
       const localUrl = URL.createObjectURL(file);
       const isPdf = file.type === "application/pdf";
       
       setPreview(localUrl); // HIỂN THỊ ẢNH THẬT NGAY LẬP TỨC
       setIsPdfPreview(isPdf);
 
-      
       // Tự động quét OCR ngay khi chọn ảnh (không áp dụng cho PDF)
       if (!isPdf) handleOCR(file);
 
@@ -140,10 +139,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
       data.append("upload_preset", UPLOAD_PRESET);
       data.append("resource_type", resourceType); 
 
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
-        { method: "POST", body: data }
-      );
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: data });
 
       const fileData = await res.json();
       
@@ -151,7 +147,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
         console.log("Upload thành công:", fileData.secure_url);
         setFormData((prev) => ({ ...prev, hinhAnh: fileData.secure_url }));
       } else {
-        throw new Error(fileData.error?.message || "Lỗi không xác định");
+        throw new Error(fileData.error?.message || `Lỗi HTTP: ${res.status}`);
       }
     } catch (error) {
       console.error("Upload error:", error);
@@ -172,7 +168,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
   // Xử lý OCR (Quét hóa đơn) - Hỗ trợ cả File và URL
   const handleOCR = async (source) => {
     // Nếu gọi từ nút bấm mà không truyền source, lấy từ state
-    const ocrSource = source || preview || formData.hinhAnh;
+    const ocrSource = source || preview || formData.hinhAnh; // Ưu tiên preview, sau đó đến formData.hinhAnh
     if (!ocrSource) {
       if (!source) alert("Vui lòng tải ảnh lên trước khi quét.");
       return;

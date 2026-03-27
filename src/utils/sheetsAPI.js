@@ -1,6 +1,5 @@
 // AppSheet API Configuration
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
-
 const formatRowId = (id) => {
   if (id === null || id === undefined) return id;
   if (typeof id === 'string') {
