@@ -179,15 +179,29 @@ function EditModal({ item, onClose, onSave, showToast }) {
       const parsedData = { noiDung: formData.noiDung, soTien: formData.soTien, ngay: formData.ngay };
       let foundSomething = false;
 
-      // 1. Tìm Ngày tháng (dd/mm/yyyy hoặc dd-mm-yyyy)
-      const dateRegex = /(\d{1,2})[\s\/\-\.]+(\d{1,2})[\s\/\-\.]+(\d{4})/;
-      const dateMatch = text.match(dateRegex);
-      if (dateMatch) {
-        const day = dateMatch[1].padStart(2, '0');
-        const month = dateMatch[2].padStart(2, '0');
-        const year = dateMatch[3];
-        parsedData.ngay = `${year}-${month}-${day}`;
-        foundSomething = true;
+      // 1. Tìm Ngày tháng (dd/mm/yyyy hoặc dd-mm-yyyy) - Cải tiến để lấy ngày hợp lý nhất
+      const dateRegex = /(\d{1,2})[\s\/\\-\.]+(\d{1,2})[\s\/\\-\.]+(\d{4})/g;
+      const dateMatches = [...text.matchAll(dateRegex)];
+      
+      if (dateMatches.length > 0) {
+        const currentYear = new Date().getFullYear();
+        // Lọc ra các ngày có năm gần với hiện tại nhất (ví dụ từ 2020 đến 2030)
+        const validDates = dateMatches.map(m => ({
+          day: m[1].padStart(2, '0'),
+          month: m[2].padStart(2, '0'),
+          year: m[3],
+          full: `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+        })).filter(d => Math.abs(parseInt(d.year) - currentYear) <= 2); // Ưu tiên năm lệch không quá 2 năm
+
+        if (validDates.length > 0) {
+          // Chọn ngày cuối cùng tìm thấy (thường là ngày ký/xuất hóa đơn ở dưới cùng)
+          const bestDate = validDates[validDates.length - 1];
+          parsedData.ngay = bestDate.full;
+          foundSomething = true;
+        } else {
+          // Nếu không có ngày nào trong dải năm hợp lý, lấy ngày đầu tiên tìm được
+          parsedData.ngay = `${dateMatches[0][3]}-${dateMatches[0][2].padStart(2, '0')}-${dateMatches[0][1].padStart(2, '0')}`;
+        }
       }
 
       // 2. Tìm Số tiền (Lấy số lớn nhất tìm thấy trong văn bản)

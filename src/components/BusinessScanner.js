@@ -36,21 +36,22 @@ function BusinessScanner({ showToast }) {
 
     try {
       setUploading(true);
-      const isPdf = file.type === "application/pdf";
-      const resourceType = isPdf ? "raw" : "image";
-      
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
+      // Sử dụng endpoint /auto/upload để Cloudinary tự nhận diện loại file
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
         method: "POST",
         body: formData
       });
 
+      if (!res.ok) throw new Error("Không thể upload lên Cloudinary. Kiểm tra lại .env");
+
       const fileData = await res.json();
       if (fileData.secure_url) {
         const cleanUrl = getCleanUrl(fileData.secure_url);
+        const isPdf = file.type === "application/pdf";
         setImage(cleanUrl);
         setScannedData(prev => ({ ...prev, hinhAnh: cleanUrl }));
         showToast("Tải ảnh chứng từ thành công!", "success");
@@ -75,9 +76,13 @@ function BusinessScanner({ showToast }) {
       const { data: { text } } = await Tesseract.recognize(url, 'vie');
       const extracted = { ...scannedData };
       
-      // 1. Tìm số điện thoại (Regex cho số VN)
-      const phoneMatch = text.match(/(0[3|5|7|8|9][0-9]{8}|02[0-9]{8,9})/);
-      if (phoneMatch) extracted.soDienThoai = phoneMatch[0];
+      // 1. Tìm số điện thoại (Regex VN: hỗ trợ cả dấu chấm, dấu cách giữa các số)
+      const phoneRegex = /(0[35789][0-9]{1}[\s\.]?[0-9]{3}[\s\.]?[0-9]{4}|02[0-9]{1,2}[\s\.]?[0-9]{3,4}[\s\.]?[0-9]{4})/g;
+      const phoneMatches = text.match(phoneRegex);
+      if (phoneMatches) {
+        // Làm sạch số điện thoại (xóa dấu cách, dấu chấm)
+        extracted.soDienThoai = phoneMatches[0].replace(/[\s\.]/g, '');
+      }
 
       // 2. Tìm tên doanh nghiệp (Thường là dòng đầu tiên hoặc dòng có chữ in hoa)
       const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
@@ -106,11 +111,12 @@ function BusinessScanner({ showToast }) {
 
     setSaving(true);
     try {
+      const currentUrl = image || scannedData.hinhAnh;
       const payload = {
-        "id": `DB_${Date.now()}`,
+        "id": Date.now(), // AppSheet thường dùng Numeric ID hoặc String
         "Tên": scannedData.tenDoanhNghiep,
         "SĐT": scannedData.soDienThoai,
-        "Ảnh": scannedData.hinhAnh,
+        "Ảnh": currentUrl,
         "Ngày lưu": new Date().toLocaleDateString('vi-VN')
       };
 
