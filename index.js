@@ -4,6 +4,7 @@ const path = require('path');
 dotenv.config(); // Tải các biến môi trường từ file .env
 
 const { google } = require('googleapis');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const app = express();
 
 // Cho phép nhận JSON từ client
@@ -29,6 +30,51 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const sheets = google.sheets({ version: 'v4', auth });
+
+// Cấu hình Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// API trích xuất thông tin bằng AI
+app.post('/api/gemini-extract', async (req, res) => {
+  try {
+    const { imageUrl, type } = req.body; // type: 'card' hoặc 'invoice'
+    if (!imageUrl) return res.status(400).json({ error: 'Thiếu link ảnh' });
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // Tải ảnh từ Cloudinary để gửi cho Gemini
+    const imageResp = await fetch(imageUrl).then(response => response.arrayBuffer());
+    
+    let prompt = "";
+    if (type === 'card') {
+      prompt = "Phân tích ảnh card visit hoặc bảng hiệu này. Trích xuất chính xác: 1. Tên doanh nghiệp/cửa hàng (bỏ qua các chữ rác trong logo), 2. Số điện thoại (giữ nguyên dấu + nếu có, nếu không thấy thì để trống, tuyệt đối không bịa số). Trả về định dạng JSON thuần túy: {\"ten\": \"...\", \"sdt\": \"...\"}. Đảm bảo tiếng Việt có dấu chính xác.";
+    } else {
+      prompt = "Phân tích hóa đơn này. Trích xuất: 1. Ngày giao dịch (YYYY-MM-DD), 2. Tổng số tiền (số nguyên), 3. Nội dung vật tư/dịch vụ. Trả về JSON: {\"ngay\": \"...\", \"soTien\": 0, \"noiDung\": \"...\"}. Tiếng Việt chính xác.";
+    }
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: Buffer.from(imageResp).toString("base64"),
+          mimeType: "image/jpeg"
+        }
+      }
+    ]);
+
+    const response = await result.response;
+    let text = response.text();
+    
+    // Làm sạch chuỗi JSON nếu Gemini trả về kèm markdown ```json
+    text = text.replace(/```json|```/g, "").trim();
+    
+    const data = JSON.parse(text);
+    res.json(data);
+  } catch (error) {
+    console.error('Gemini Error:', error);
+    res.status(500).json({ error: 'AI không thể phân tích ảnh lúc này' });
+  }
+});
 
 // Route kiểm tra server sống hay chết
 app.get('/api/status', (req, res) => {
