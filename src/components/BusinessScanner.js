@@ -62,48 +62,104 @@ function BusinessScanner({ showToast }) {
 
     try {
       setUploading(true);
+      setScanning(true);
       
-      // 1. Tạo link xem trước cục bộ để hiển thị và quét OCR ngay lập tức
+      // 1. HIỂN THỊ ẢNH XEM TRƯỚC TỨC THÌ
       const localUrl = URL.createObjectURL(file);
       setImage(localUrl);
 
       const isPdf = file.type === "application/pdf";
-      // Nếu là ảnh thì quét OCR song song luôn, không đợi upload
-      if (!isPdf) {
-        handleOCR(file); 
-      }
-
-      // 2. Tiến hành upload lên Cloudinary đồng thời
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
       const resourceType = isPdf ? "raw" : "image";
-      formData.append("resource_type", resourceType);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
-        method: "POST",
-        body: formData,
-        signal: controller.signal
+      // Tác vụ 1: Upload lên Cloudinary
+      const uploadTask = async () => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", UPLOAD_PRESET);
+        formData.append("resource_type", resourceType);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
+          method: "POST",
+          body: formData,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!res.ok) throw new Error("Lỗi upload Cloudinary");
+        const data = await res.json();
+        return getCleanUrl(data.secure_url);
+      };
+
+      // Tác vụ 2: Quét OCR (nếu là ảnh)
+      const ocrTask = async () => {
+        if (isPdf) return { ten: "", sdt: "" };
+        const { data: { text } } = await Tesseract.recognize(file, 'vie');
+        
+        // Trích xuất SĐT
+        const cleanTextForPhone = text.replace(/[^\d]/g, '');
+        const phoneMatch = cleanTextForPhone.match(/(03|05|07|08|09|02)\d{8,9}/);
+        const sdt = phoneMatch ? phoneMatch[0] : "";
+
+        // Trích xuất Tên
+        const businessKeywords = ['công ty', 'cửa hàng', 'đại lý', 'vật tư', 'xây dựng', 'nhà thầu', 'nội thất'];
+        const cleanLines = text.split('\n')
+          .map(l => l.trim().replace(/[|\\\[\]{}()_*~^]/g, '').replace(/^[^\w\sÀ-ỹ0-9]+|[^\w\sÀ-ỹ0-9]+$/g, ''))
+          .filter(l => l.length > 2 && !/^\d+$/.test(l));
+
+        let nameLine = cleanLines.find(l => businessKeywords.some(kw => l.toLowerCase().includes(kw)));
+        if (!nameLine) {
+          nameLine = cleanLines.find(l => {
+            const upperCount = (l.match(/[A-ZÀ-Ỹ]/g) || []).length;
+            const letterCount = (l.match(/[a-zA-ZÀ-ỹ]/g) || []).length;
+            return letterCount > 5 && (upperCount / letterCount) > 0.5;
+          });
+        }
+        let ten = (nameLine || cleanLines[0] || "").trim().replace(/^(Tên|Cửa hàng|Cty|Công ty|Đ\/c|Địa chỉ|ĐC)[:\s\-]*/i, '');
+        
+        return { ten, sdt };
+      };
+
+      showToast("Đang xử lý song song...", "info");
+
+      // CHẠY SONG SONG
+      const [cloudinaryUrl, extractedInfo] = await Promise.all([uploadTask(), ocrTask()]);
+
+      // Cập nhật giao diện
+      setScannedData({
+        tenDoanhNghiep: extractedInfo.ten,
+        soDienThoai: extractedInfo.sdt,
+        hinhAnh: cloudinaryUrl
       });
-      clearTimeout(timeoutId);
+      setUploading(false);
+      setScanning(false);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error?.message || `Lỗi Cloudinary: ${res.status}`);
+      // TỰ ĐỘNG GHI VÀO SHEET DANHBA
+      if (extractedInfo.ten || extractedInfo.sdt) {
+        setSaving(true);
+        const payload = {
+          "ID": `DB_${Date.now()}`,
+          "AnhCard": cloudinaryUrl,
+          "TenDoanhNghiep": extractedInfo.ten,
+          "SoDienThoai": extractedInfo.sdt,
+          "NgayQuet": new Date().toLocaleString('vi-VN'),
+          "TrangThai": "Hoàn thành"
+        };
+        const sheetRes = await addRowToSheet("DanhBa", payload, APP_ID);
+        if (sheetRes.success) {
+          showToast("Đã tự động lưu danh bạ!", "success");
+          loadRecentContacts();
+        }
+        setSaving(false);
       }
 
-      const fileData = await res.json();
-      if (fileData.secure_url) {
-        const cleanUrl = getCleanUrl(fileData.secure_url);
-        setScannedData(prev => ({ ...prev, hinhAnh: cleanUrl }));
-        showToast("Tải ảnh chứng từ thành công!", "success");
-      }
     } catch (error) {
       showToast("Lỗi upload: " + error.message, "error");
-    } finally {
       setUploading(false);
+      setScanning(false);
+      setSaving(false);
+    } finally {
+      // Clean up local URL if needed
     }
   };
 
