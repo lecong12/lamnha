@@ -58,11 +58,16 @@ app.post('/api/gemini-extract', async (req, res) => {
     
     let prompt = "";
     if (type === 'card') {
-      prompt = `Bạn là một chuyên gia OCR chính xác 100%. Hãy phân tích ảnh Card Visit hoặc Bảng hiệu.
+      prompt = `Bạn là một chuyên gia OCR tài liệu chính xác. Hãy phân tích ảnh Card Visit hoặc Bảng hiệu này để trích xuất thông tin liên hệ.
       Yêu cầu:
-      1. "ten": Trích xuất tên doanh nghiệp hoặc tên cửa hàng to nhất. Bỏ qua các từ mô tả chung chung nếu có tên riêng.
-      2. "sdt": Tìm số điện thoại di động hoặc hotline. Chỉ lấy các chữ số, giữ dấu + nếu có.
-      Lưu ý: Nếu không tìm thấy, hãy để chuỗi rỗng "". Tuyệt đối không tự bịa thông tin.
+      1. "ten": Trích xuất tên doanh nghiệp hoặc tên cửa hàng rõ ràng nhất.
+      2. "sdt": Tìm số điện thoại. Quy chuẩn kiểm tra nghiêm ngặt:
+         - Định dạng Việt Nam: Phải bắt đầu bằng số 0 (các đầu số 03, 05, 07, 08, 09 cho di động hoặc 02 cho máy bàn) và phải đủ 10 đến 11 chữ số.
+         - Định dạng Quốc tế: Phải bắt đầu bằng dấu "+" (ví dụ: +84...).
+         - Chỉ lấy các chữ số và dấu "+", loại bỏ các ký tự đặc biệt khác.
+         - Tuyệt đối không được ghép các dãy số ở các vị trí khác nhau thành một số điện thoại.
+         - Ưu tiên các số nằm gần icon điện thoại hoặc nhãn: Tel, Hotline, Mobile, SĐT.
+      Lưu ý đặc biệt: Nếu không tìm thấy dãy số nào khớp với quy chuẩn thực tế hoặc số bị mờ không đọc rõ, hãy để giá trị là "". Tuyệt đối không tự bịa số.
       Trả về JSON: {"ten": "...", "sdt": "..."}`;
     } else {
       prompt = `Bạn là một kế toán chuyên nghiệp. Hãy phân tích hóa đơn/biên lai vật tư xây dựng này.
