@@ -146,7 +146,7 @@ function BusinessScanner({ showToast }) {
           
           let finalName = (nameLine || cleanLines[0]).trim();
           // Làm sạch lần cuối: Xóa các nhãn thông tin nếu còn sót
-          finalName = finalName.replace(/^(Tên|Cửa hàng|Cty|Công ty|Đ/c|Địa chỉ)[:\s\-]*/i, '');
+          finalName = finalName.replace(/^(Tên|Cửa hàng|Cty|Công ty|Đ\/c|Địa chỉ|ĐC)[:\s\-]*/i, '');
           extracted.tenDoanhNghiep = finalName;
         }
 
