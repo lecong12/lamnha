@@ -39,14 +39,15 @@ function BusinessScanner({ showToast }) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
+      formData.append("resource_type", "auto");
 
-      // Sử dụng endpoint /auto/upload để Cloudinary tự nhận diện loại file
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+      // Sửa endpoint upload đúng chuẩn Cloudinary v1.1
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
         method: "POST",
         body: formData
       });
 
-      if (!res.ok) throw new Error("Không thể upload lên Cloudinary. Kiểm tra lại .env");
+      if (!res.ok) throw new Error(`Lỗi Cloudinary: ${res.status}`);
 
       const fileData = await res.json();
       if (fileData.secure_url) {
@@ -76,13 +77,13 @@ function BusinessScanner({ showToast }) {
       const { data: { text } } = await Tesseract.recognize(url, 'vie');
       const extracted = { ...scannedData };
       
-      // 1. Tìm số điện thoại (Regex VN: hỗ trợ 0x.xxx.xxxx, 0x xxx xxxx, 02x...)
-      const phoneRegex = /(0[35789][0-9]{1}[\s\.]?[0-9]{3}[\s\.]?[0-9]{4}|02[0-9]{1,2}[\s\.]?[0-9]{3,4}[\s\.]?[0-9]{4}|[0-9]{4}[\s\.]?[0-9]{3}[\s\.]?[0-9]{3})/g;
+      // 1. Tìm số điện thoại (Regex VN cải tiến)
+      const phoneRegex = /(0[35789][0-9\s\.]{8,12}|02[0-9\s\.]{9,13})/g;
       const phoneMatches = text.match(phoneRegex);
       if (phoneMatches) {
-        // Lấy số dài nhất tìm được (tránh lấy nhầm mã số thuế)
-        const longestPhone = phoneMatches.reduce((a, b) => a.length > b.length ? a : b);
-        extracted.soDienThoai = longestPhone.replace(/[\s\.]/g, '');
+        // Làm sạch và lấy số đầu tiên tìm thấy
+        const cleanPhone = phoneMatches[0].replace(/[\s\.]/g, '');
+        if (cleanPhone.length >= 10) extracted.soDienThoai = cleanPhone;
       }
 
       // 2. Tìm tên doanh nghiệp (Thường là dòng đầu tiên hoặc dòng có chữ in hoa)
@@ -115,14 +116,17 @@ function BusinessScanner({ showToast }) {
       // Đảm bảo lấy link ảnh từ state image hoặc scannedData
       const currentImg = image || scannedData.hinhAnh;
       const payload = {
-        "id": `DB_${Date.now()}`,
+        "id": Date.now().toString(),
         "Tên": scannedData.tenDoanhNghiep,
         "SĐT": scannedData.soDienThoai,
         "Ảnh": currentImg,
-        "Ngày": new Date().toLocaleDateString('vi-VN')
+        "Ngày lưu": new Date().toLocaleDateString('vi-VN'),
+        "ngay": new Date().toISOString().split('T')[0] // Bổ sung dự phòng
       };
+
       const res = await addRowToSheet("DanhBa", payload, APP_ID);
       if (res.success) {
+        showToast("Đã lưu vào Danh bạ!", "success");
         setImage(null);
         setScannedData({ 
           tenDoanhNghiep: "", soDienThoai: "", hinhAnh: "" 

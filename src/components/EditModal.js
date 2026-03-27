@@ -179,22 +179,31 @@ function EditModal({ item, onClose, onSave, showToast }) {
       const parsedData = { noiDung: formData.noiDung, soTien: formData.soTien, ngay: formData.ngay };
       let foundSomething = false;
 
-      // 1. Tìm Ngày tháng (dd/mm/yyyy hoặc dd-mm-yyyy) - Fix lỗi Range out of order
+      // 1. Tìm Ngày tháng (dd/mm/yyyy hoặc dd-mm-yyyy)
       const dateRegex = /(\d{1,2})[\s\/\-\.]+(\d{1,2})[\s\/\-\.]+(\d{4})/g;
       const dateMatches = [...text.matchAll(dateRegex)];
       
       if (dateMatches.length > 0) {
         const currentYear = new Date().getFullYear();
-        // Lọc ra các ngày có năm gần với hiện tại nhất (ví dụ từ 2020 đến 2030)
-        const validDates = dateMatches.map(m => ({
-          day: m[1].padStart(2, '0'),
-          month: m[2].padStart(2, '0'),
-          year: m[3],
-          full: `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
-        })).filter(d => Math.abs(parseInt(d.year) - currentYear) <= 2); // Ưu tiên năm lệch không quá 2 năm
+        
+        // Chuyển đổi và sửa lỗi OCR (ví dụ: Tesseract hay đọc nhầm 202x thành 201x)
+        const validDates = dateMatches.map(m => {
+          const day = m[1].padStart(2, '0');
+          const month = m[2].padStart(2, '0');
+          let year = m[3];
+          
+          // Logic sửa lỗi: Nếu năm đọc ra là 201x nhưng thực tế là 202x
+          if (year.startsWith("201") && currentYear >= 2024) {
+            year = year.replace("201", "202");
+          }
+          
+          return { day, month, year, full: `${year}-${month}-${day}` };
+        }).filter(d => {
+          const y = parseInt(d.year);
+          return y >= currentYear - 1 && y <= currentYear + 1;
+        });
 
         if (validDates.length > 0) {
-          // Chọn ngày cuối cùng tìm thấy (thường là ngày ký/xuất hóa đơn ở dưới cùng)
           const bestDate = validDates[validDates.length - 1];
           parsedData.ngay = bestDate.full;
           foundSomething = true;
