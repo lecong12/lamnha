@@ -75,59 +75,57 @@ function BusinessScanner({ showToast }) {
     
     try {
       const { data: { text } } = await Tesseract.recognize(url, 'vie');
-      const extracted = { ...scannedData };
-      
-      // 1. Tìm số điện thoại (Regex VN cải tiến)
-      const phoneRegex = /(0[35789][0-9\s\.]{8,12}|02[0-9\s\.]{9,13})/g;
-      const phoneMatches = text.match(phoneRegex);
-      if (phoneMatches) {
-        // Làm sạch và lấy số đầu tiên tìm thấy
-        const cleanPhone = phoneMatches[0].replace(/[\s\.]/g, '');
-        if (cleanPhone.length >= 10) extracted.soDienThoai = cleanPhone;
-      }
 
-      // 2. Tìm tên doanh nghiệp (Logic cải tiến trích xuất tiếng Việt)
-      const businessKeywords = [
-        'công ty', 'cửa hàng', 'đại lý', 'vật tư', 'xây dựng', 'văn phòng', 
-        'showroom', 'doanh nghiệp', 'hộ kinh doanh', 'tiệm', 'cơ sở', 
-        'nhà thầu', 'vật liệu', 'trang trí', 'nội thất', 'điện nước'
-      ];
-      
-      // Tách dòng và làm sạch rác OCR (giữ lại chữ Tiếng Việt và các dấu)
-      const cleanLines = text.split('\n')
-        .map(l => l.trim().replace(/[|\\\[\]{}()_*~]/g, '')) // Xóa ký tự lạ thường gặp trong OCR
-        .filter(l => l.length > 3);
-
-      if (cleanLines.length > 0) {
-        // Ưu tiên 1: Dòng chứa từ khóa doanh nghiệp (thường là tên chính thức)
-        let nameLine = cleanLines.find(l => 
-          businessKeywords.some(kw => l.toLowerCase().includes(kw))
-        );
-
-        // Ưu tiên 2: Dòng có tỷ lệ chữ hoa cao (thường là tên thương hiệu/Logo)
-        if (!nameLine) {
-          nameLine = cleanLines.find(l => {
-            const upperCount = (l.match(/[A-ZÀ-Ỹ]/g) || []).length;
-            const letterCount = (l.match(/[a-zA-ZÀ-ỹ]/g) || []).length;
-            return letterCount > 5 && (upperCount / letterCount) > 0.5;
-          });
+      // Sử dụng functional update để tránh stale state (dữ liệu cũ ghi đè dữ liệu mới)
+      setScannedData(prev => {
+        const extracted = { ...prev };
+        
+        // 1. Tìm số điện thoại (Regex VN cải tiến)
+        const phoneRegex = /(0[35789][0-9\s\.]{8,12}|02[0-9\s\.]{9,13})/g;
+        const phoneMatches = text.match(phoneRegex);
+        if (phoneMatches) {
+          const cleanPhone = phoneMatches[0].replace(/[\s\.]/g, '');
+          if (cleanPhone.length >= 10) extracted.soDienThoai = cleanPhone;
         }
 
-        // Ưu tiên 3: Dòng đầu tiên không phải thông tin liên hệ (SĐT, Email, Địa chỉ)
-        if (!nameLine) {
-          nameLine = cleanLines.find(l => {
-            const hasFewNumbers = (l.match(/\d/g) || []).length < 5;
-            const notAddress = !/(số|đường|phường|quận|tp|huyện|tỉnh|địa chỉ|đ\/c)/i.test(l);
-            const notEmail = !/@/.test(l);
-            return hasFewNumbers && notAddress && notEmail;
-          });
+        // 2. Tìm tên doanh nghiệp (Logic trích xuất tiếng Việt)
+        const businessKeywords = [
+          'công ty', 'cửa hàng', 'đại lý', 'vật tư', 'xây dựng', 'văn phòng', 
+          'showroom', 'doanh nghiệp', 'hộ kinh doanh', 'tiệm', 'cơ sở', 
+          'nhà thầu', 'vật liệu', 'trang trí', 'nội thất', 'điện nước'
+        ];
+        
+        const cleanLines = text.split('\n')
+          .map(l => l.trim().replace(/[|\\\[\]{}()_*~]/g, ''))
+          .filter(l => l.length > 3);
+
+        if (cleanLines.length > 0) {
+          let nameLine = cleanLines.find(l => 
+            businessKeywords.some(kw => l.toLowerCase().includes(kw))
+          );
+
+          if (!nameLine) {
+            nameLine = cleanLines.find(l => {
+              const upperCount = (l.match(/[A-ZÀ-Ỹ]/g) || []).length;
+              const letterCount = (l.match(/[a-zA-ZÀ-ỹ]/g) || []).length;
+              return letterCount > 5 && (upperCount / letterCount) > 0.5;
+            });
+          }
+
+          if (!nameLine) {
+            nameLine = cleanLines.find(l => {
+              const hasFewNumbers = (l.match(/\d/g) || []).length < 5;
+              const notAddress = !/(số|đường|phường|quận|tp|huyện|tỉnh|địa chỉ|đ\/c)/i.test(l);
+              const notEmail = !/@/.test(l);
+              return hasFewNumbers && notAddress && notEmail;
+            });
+          }
+          extracted.tenDoanhNghiep = (nameLine || cleanLines[0]).trim();
         }
 
-        // Gán kết quả và làm sạch lần cuối
-        extracted.tenDoanhNghiep = (nameLine || cleanLines[0]).trim();
-      }
+        return extracted;
+      });
 
-      setScannedData(extracted);
       showToast("Đã nhận diện thông tin liên hệ!", "success");
     } catch (error) {
       console.error("OCR Error:", error);
