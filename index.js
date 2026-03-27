@@ -58,17 +58,16 @@ app.post('/api/gemini-extract', async (req, res) => {
     
     let prompt = "";
     if (type === 'card') {
-      prompt = `Bạn là một chuyên gia OCR tài liệu chính xác tuyệt đối. Hãy phân tích ảnh Card Visit hoặc Bảng hiệu này để trích xuất thông tin.
-      Yêu cầu:
-      1. "ten": Trích xuất tên doanh nghiệp hoặc tên cửa hàng rõ ràng nhất.
-      2. "sdt": Tìm số điện thoại liên hệ. Quy tắc nhận diện nghiêm ngặt:
-         - Ưu tiên tìm các dãy số đứng sau từ khóa: "Điện thoại:", "Tel:", "Telephone:", "Liên hệ:", "SĐT:", "Mobile:", "Hotline:".
-         - Định dạng: Số điện thoại thường có 10 chữ số (không tính các dấu chấm "." phân cách).
-         - Quy tắc bắt đầu: Phải bắt đầu bằng số 0 (đầu số Việt Nam) hoặc dấu "+" (quốc tế).
-         - Làm sạch dữ liệu: Chỉ lấy chữ số và dấu "+". Loại bỏ hoàn toàn dấu chấm (.), dấu gạch ngang (-) và khoảng trắng.
-         - Tuyệt đối không được ghép các cụm số nằm ở các dòng khác nhau hoặc vị trí cách xa nhau.
-      Lưu ý đặc biệt: Nếu không tìm thấy dãy số nào khớp với quy chuẩn thực tế hoặc số bị mờ không đọc rõ, hãy để giá trị là "". Tuyệt đối không tự bịa số.
-      Trả về JSON: {"ten": "...", "sdt": "..."}`;
+      prompt = `Bạn là một chuyên gia OCR chính xác tuyệt đối. Nhiệm vụ: Trích xuất tên và SĐT từ ảnh.
+      QUY TẮC NGHIÊM NGẶT ĐỂ TRÁNH SAI LỆCH:
+      1. "sdt": CHỈ trích xuất nếu dãy số đó đứng ngay sau các nhãn rõ ràng như: Tel, Mobile, Hotline, SĐT, Điện thoại, hoặc có icon điện thoại bên cạnh.
+      2. "sdt": Phải bắt đầu bằng số 0 hoặc +84 và có độ dài từ 10 đến 11 chữ số.
+      3. CẢNH BÁO: KHÔNG ĐƯỢC lấy Mã số thuế (MST), Số tài khoản (STK), Số hóa đơn hoặc Số nhà. Đây là những dãy số thường bị nhầm với SĐT.
+      4. KHÔNG tự ý ghép các nhóm số nằm rời rạc ở các dòng khác nhau.
+      5. NẾU KHÔNG THẤY SĐT rõ ràng hoặc nghi ngờ dãy số đó là MST/STK, bạn BẮT BUỘC phải để giá trị "sdt" là "".
+      6. TUYỆT ĐỐI KHÔNG ĐƯỢC BỊA SỐ (Hallucination). Nếu không có SĐT trong ảnh, hãy trả về chuỗi rỗng.
+      7. "ten": Trích xuất tên thương hiệu hoặc cửa hàng chính.
+      Trả về JSON duy nhất: {"ten": "...", "sdt": "..."}`;
     } else {
       prompt = `Bạn là một kế toán chuyên nghiệp. Hãy phân tích hóa đơn/biên lai vật tư xây dựng này.
       Yêu cầu:
