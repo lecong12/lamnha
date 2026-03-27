@@ -117,7 +117,14 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
     try {
       setUploading(true);
+      
+      // Tạo preview cục bộ
+      const localUrl = URL.createObjectURL(file);
       const isPdf = file.type === "application/pdf";
+      
+      // Tự động quét OCR ngay khi chọn ảnh (không áp dụng cho PDF)
+      if (!isPdf) handleOCR(file);
+
       const resourceType = isPdf ? "raw" : "image";
 
       const data = new FormData();
@@ -155,11 +162,12 @@ function EditModal({ item, onClose, onSave, showToast }) {
     }
   };
 
-  // Xử lý OCR (Quét hóa đơn)
-  const handleOCR = async () => {
-    const imageUrl = formData.hinhAnh;
-    if (!imageUrl) {
-      alert("Vui lòng tải ảnh lên hoặc chọn ảnh hóa đơn trước khi quét.");
+  // Xử lý OCR (Quét hóa đơn) - Hỗ trợ cả File và URL
+  const handleOCR = async (source) => {
+    // Nếu gọi từ nút bấm mà không truyền source, lấy từ state
+    const ocrSource = source || formData.hinhAnh;
+    if (!ocrSource) {
+      if (!source) alert("Vui lòng tải ảnh lên trước khi quét.");
       return;
     }
 
@@ -168,7 +176,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
     try {
       const result = await Tesseract.recognize(
-        imageUrl,
+        ocrSource,
         'vie', // Sử dụng ngôn ngữ tiếng Việt
         { logger: m => console.log(m) } // Log tiến độ ra console
       );

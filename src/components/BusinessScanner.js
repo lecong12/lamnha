@@ -35,11 +35,7 @@ function BusinessScanner({ showToast }) {
       const res = await fetchTableData("DanhBa", APP_ID);
       if (res.success && res.data) {
         // Lấy 10 bản ghi mới nhất (đảo ngược mảng)
-        setRecentContacts(res.data.slice().reverse().slice(0, 10).map(item => ({
-          id: item.ID || item.id,
-          ten: item.TenDoanhNghiep || item.ten || "Không tên",
-          sdt: item.SoDienThoai || item.sdt || "Không có số"
-        })));
+        setRecentContacts(res.data.slice().reverse().slice(0, 10));
       }
     } catch (e) {
       console.error("Lỗi tải danh bạ:", e);
@@ -62,29 +58,39 @@ function BusinessScanner({ showToast }) {
 
     try {
       setUploading(true);
+      
+      // 1. Tạo link xem trước cục bộ để hiển thị và quét OCR ngay lập tức
+      const localUrl = URL.createObjectURL(file);
+      setImage(localUrl);
+
+      const isPdf = file.type === "application/pdf";
+      // Nếu là ảnh thì quét OCR song song luôn, không đợi upload
+      if (!isPdf) {
+        handleOCR(file); 
+      }
+
+      // 2. Tiến hành upload lên Cloudinary đồng thời
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
       formData.append("resource_type", "auto");
 
-      // Sửa endpoint upload đúng chuẩn Cloudinary v1.1
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
         method: "POST",
-        body: formData
+        body: formData,
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (!res.ok) throw new Error(`Lỗi Cloudinary: ${res.status}`);
 
       const fileData = await res.json();
       if (fileData.secure_url) {
         const cleanUrl = getCleanUrl(fileData.secure_url);
-        const isPdf = file.type === "application/pdf";
-        setImage(cleanUrl);
         setScannedData(prev => ({ ...prev, hinhAnh: cleanUrl }));
         showToast("Tải ảnh chứng từ thành công!", "success");
-        
-        // Nếu là ảnh thì tự động kích hoạt OCR
-        if (!isPdf) handleOCR(cleanUrl);
       }
     } catch (error) {
       showToast("Lỗi upload: " + error.message, "error");
@@ -93,14 +99,14 @@ function BusinessScanner({ showToast }) {
     }
   };
 
-  // Xử lý quét văn bản (OCR)
-  const handleOCR = async (url) => {
-    if (!url) return;
+  // Xử lý quét văn bản (OCR) - Chấp nhận cả URL hoặc File object
+  const handleOCR = async (source) => {
+    if (!source) return;
     setScanning(true);
-    showToast("Đang phân tích hình ảnh...", "info");
+    if (!uploading) showToast("Đang phân tích hình ảnh...", "info");
     
     try {
-      const { data: { text } } = await Tesseract.recognize(url, 'vie');
+      const { data: { text } } = await Tesseract.recognize(source, 'vie');
 
       // Sử dụng functional update để tránh stale state (dữ liệu cũ ghi đè dữ liệu mới)
       setScannedData(prev => {
@@ -121,10 +127,10 @@ function BusinessScanner({ showToast }) {
         
         const cleanLines = text.split('\n')
           .map(l => l.trim()
-            .replace(/[|\\\[\]{}()_*~]/g, '') // Xóa ký tự lạ OCR
-            .replace(/^[^\w\sÀ-ỹ]+|[^\w\sÀ-ỹ]+$/g, '') // Xóa rác ở đầu/cuối dòng
+            .replace(/[|\\\[\]{}()_*~^]/g, '') // Xóa ký tự nhiễu OCR
+            .replace(/^[^\w\sÀ-ỹ0-9]+|[^\w\sÀ-ỹ0-9]+$/g, '') // Xóa rác đầu/cuối
           )
-          .filter(l => l.length > 3 && !/^\d+$/.test(l)); // Bỏ dòng chỉ toàn số
+          .filter(l => l.length > 2 && !/^\d+$/.test(l)); // Bỏ dòng chỉ toàn số
 
         if (cleanLines.length > 0) {
           let nameLine = cleanLines.find(l => 
@@ -142,7 +148,7 @@ function BusinessScanner({ showToast }) {
           if (!nameLine) {
             nameLine = cleanLines.find(l => {
               const hasFewNumbers = (l.match(/\d/g) || []).length < 5;
-              const notAddress = !/(số|đường|phường|quận|tp|huyện|tỉnh|địa chỉ|đ\/c|đc|hotline|tel|fax|mst|email|website|web)/i.test(l);
+              const notAddress = !/(số|đường|phường|quận|tp|huyện|tỉnh|địa chỉ|đ\/c|hotline|tel|fax|mst|email|website|web)/i.test(l);
               const notEmail = !/@/.test(l) && !/\.com|\.vn/.test(l);
               return hasFewNumbers && notAddress && notEmail;
             });
@@ -178,12 +184,12 @@ function BusinessScanner({ showToast }) {
       // Đảm bảo lấy link ảnh từ state image hoặc scannedData
       const currentImg = image || scannedData.hinhAnh;
       const payload = {
-        "ID": `DB_${Date.now()}`, 
-        "AnhCard": currentImg,
-        "TenDoanhNghiep": scannedData.tenDoanhNghiep,
-        "SoDienThoai": scannedData.soDienThoai,
-        "NgayQuet": new Date().toLocaleDateString('vi-VN'),
-        "TrangThai": "Hoàn thành"
+        "id": Date.now().toString(),
+        "Tên": scannedData.tenDoanhNghiep,
+        "SĐT": scannedData.soDienThoai,
+        "Ảnh": currentImg,
+        "Ngày lưu": new Date().toLocaleDateString('vi-VN'),
+        "ngay": new Date().toISOString().split('T')[0] // Bổ sung dự phòng
       };
 
       const res = await addRowToSheet("DanhBa", payload, APP_ID);
@@ -273,12 +279,12 @@ function BusinessScanner({ showToast }) {
               {recentContacts.map((contact, idx) => (
                 <div key={contact.id || idx} className="contact-mini-item">
                   <div className="contact-mini-info">
-                    <div className="contact-name">{contact.ten}</div>
-                    <div className="contact-phone">{contact.sdt}</div>
+                    <div className="contact-name">{contact.Tên || "Không tên"}</div>
+                    <div className="contact-phone">{contact.SĐT || "Không có số"}</div>
                   </div>
                   <div className="contact-mini-actions">
-                    {contact.sdt !== "Không có số" && (
-                      <a href={`tel:${contact.sdt}`} className="mini-call-btn" title="Gọi ngay">
+                    {contact.SĐT && (
+                      <a href={`tel:${contact.SĐT}`} className="mini-call-btn" title="Gọi ngay">
                         <FiPhoneCall size={14} />
                       </a>
                     )}
