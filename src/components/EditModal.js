@@ -61,6 +61,8 @@ function EditModal({ item, onClose, onSave, showToast }) {
   });
   const [uploading, setUploading] = useState(false);
   const [ocrScanning, setOcrScanning] = useState(false);
+  const [preview, setPreview] = useState(""); // State để hiển thị ảnh ngay lập tức
+  const [isPdfPreview, setIsPdfPreview] = useState(false); // Lưu trạng thái loại file
 
   useEffect(() => {
     if (item) {
@@ -75,6 +77,8 @@ function EditModal({ item, onClose, onSave, showToast }) {
         soTien: item.soTien ? new Intl.NumberFormat('vi-VN').format(item.soTien) : "",
         hinhAnh: item.hinhAnh || "",
       });
+      setPreview(item.hinhAnh || "");
+      setIsPdfPreview(item.hinhAnh ? item.hinhAnh.toLowerCase().endsWith('.pdf') : false);
     }
   }, [item]);
 
@@ -122,6 +126,10 @@ function EditModal({ item, onClose, onSave, showToast }) {
       const localUrl = URL.createObjectURL(file);
       const isPdf = file.type === "application/pdf";
       
+      setPreview(localUrl); // HIỂN THỊ ẢNH THẬT NGAY LẬP TỨC
+      setIsPdfPreview(isPdf);
+
+      
       // Tự động quét OCR ngay khi chọn ảnh (không áp dụng cho PDF)
       if (!isPdf) handleOCR(file);
 
@@ -152,6 +160,10 @@ function EditModal({ item, onClose, onSave, showToast }) {
       } else {
         alert("Lỗi upload: " + error.message);
       }
+      if (!formData.hinhAnh) {
+        setPreview(""); // Reset nếu lỗi và chưa có ảnh cũ
+        setIsPdfPreview(false);
+      }
     } finally {
       setUploading(false);
     }
@@ -160,7 +172,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
   // Xử lý OCR (Quét hóa đơn) - Hỗ trợ cả File và URL
   const handleOCR = async (source) => {
     // Nếu gọi từ nút bấm mà không truyền source, lấy từ state
-    const ocrSource = source || formData.hinhAnh;
+    const ocrSource = source || preview || formData.hinhAnh;
     if (!ocrSource) {
       if (!source) alert("Vui lòng tải ảnh lên trước khi quét.");
       return;
@@ -233,13 +245,14 @@ function EditModal({ item, onClose, onSave, showToast }) {
         }
       }
 
-      // 3. Tìm Nội dung (Tìm các từ khóa vật tư phổ biến)
-      const keywords = ['xi măng', 'cát', 'đá', 'gạch', 'sắt', 'thép', 'ống nước', 'dây điện'];
+      // 3. Tìm Nội dung (Tìm các từ khóa vật tư phổ biến có dấu tiếng Việt)
+      const keywords = ['xi măng', 'cát', 'đá', 'gạch', 'sắt', 'thép', 'ống nước', 'dây điện', 'thợ', 'nhân công', 'sơn', 'gỗ', 'thiết bị'];
       const lines = text.split('\n');
       for (const line of lines) {
         const lowerLine = line.toLowerCase();
+        // Tìm dòng chứa từ khóa và làm sạch nhiễu OCR xung quanh
         if (keywords.some(kw => lowerLine.includes(kw))) {
-          parsedData.noiDung = line.trim();
+          parsedData.noiDung = line.trim().replace(/[|\\\[\]{}()_*~^]/g, '');
           foundSomething = true;
           break; // Lấy dòng đầu tiên tìm thấy
         }
@@ -309,29 +322,31 @@ function EditModal({ item, onClose, onSave, showToast }) {
         {/* Khu vực Upload & Preview Ảnh */}
         <div className="image-upload-section">
           <div className="image-preview">
-            {formData.hinhAnh ? (
+            {preview ? (
               <div style={{ width: '100%', textAlign: 'center' }} className="preview-wrapper">
-                {formData.hinhAnh.toLowerCase().endsWith('.pdf') ? (
-                  <a href={formData.hinhAnh} target="_blank" rel="noreferrer" className="pdf-preview-placeholder">
+                {isPdfPreview ? (
+                  <a href={preview} target="_blank" rel="noreferrer" className="pdf-preview-placeholder">
                     <FiFileText size={40} />
-                    <span>File PDF đã tải lên</span>
+                    <span>File PDF Chứng từ</span>
                   </a>
                 ) : (
                   <div className="preview-container" onClick={() => !uploading && fileInputRef.current.click()}>
-                    <img src={formData.hinhAnh} alt="Chứng từ" />
+                    <img src={preview} alt="Chứng từ" />
                     {uploading && <div className="upload-overlay"><FiLoader className="spin" /></div>}
                     <button 
                       type="button" 
                       className="remove-image-btn" 
-                      onClick={(e) => { e.stopPropagation(); setFormData(prev => ({...prev, hinhAnh: ""})) }}
+                      onClick={(e) => { e.stopPropagation(); setFormData(prev => ({...prev, hinhAnh: ""})); setPreview(""); setIsPdfPreview(false); }}
                     >
                       <FiX />
                     </button>
                   </div>
                 )}
-                <div style={{ fontSize: '10px', color: '#16a34a', marginTop: '4px', wordBreak: 'break-all' }}>
-                  ✓ Đã có link: {formData.hinhAnh.substring(0, 30)}...
-                </div>
+                {formData.hinhAnh && !formData.hinhAnh.startsWith('blob:') && (
+                  <div style={{ fontSize: '10px', color: '#16a34a', marginTop: '4px', wordBreak: 'break-all' }}>
+                    ✓ Đã đồng bộ link Cloudinary
+                  </div>
+                )}
               </div>
             ) : (
               <div className="upload-placeholder" onClick={() => fileInputRef.current.click()}>

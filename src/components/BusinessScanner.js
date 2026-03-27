@@ -123,26 +123,38 @@ function BusinessScanner({ showToast }) {
       setScannedData(prev => {
         const extracted = { ...prev };
         
-        // Trích xuất SĐT
-        const digitsOnly = text.replace(/[^\d]/g, '');
-        const phoneMatch = digitsOnly.match(/(03|05|07|08|09|02)\d{8,9}/);
-        if (phoneMatch) extracted.soDienThoai = phoneMatch[0];
+        // 1. Trích xuất SĐT (Hỗ trợ dấu + quốc tế và các định dạng có dấu cách/chấm)
+        const phoneRegex = /(\+[\d\s.]{7,15}|(?:03|05|07|08|09|02)[\d\s.]{8,12})/g;
+        const phoneMatches = text.match(phoneRegex);
+        if (phoneMatches) {
+          const rawPhone = phoneMatches[0].trim();
+          const digits = rawPhone.replace(/[^\d]/g, '');
+          // Giữ lại dấu + ở đầu nếu là số quốc tế
+          extracted.soDienThoai = rawPhone.startsWith('+') ? `+${digits}` : digits;
+        }
 
         // Trích xuất Tên Doanh nghiệp
-        const businessKeywords = ['công ty', 'cửa hàng', 'đại lý', 'vật tư', 'xây dựng', 'nhà thầu', 'nội thất'];
+        const businessKeywords = ['công ty', 'cửa hàng', 'đại lý', 'vật tư', 'xây dựng', 'nhà thầu', 'nội thất', 'thiết kế', 'kiến trúc', 'điện nước'];
         const cleanLines = text.split('\n')
-          .map(l => l.trim().replace(/[|\\\[\]{}()_*~^]/g, '').replace(/^[^\w\sÀ-ỹ0-9]+|[^\w\sÀ-ỹ0-9]+$/g, ''))
-          .filter(l => l.length > 2 && !/^\d+$/.test(l));
+          .map(l => l.trim().replace(/[|\\\[\]{}()_*~^]/g, '').replace(/^[^a-zA-ZÀ-ỹ0-9]+|[^a-zA-ZÀ-ỹ0-9]+$/g, ''))
+          .filter(l => {
+            // Bỏ qua rác từ logo/icon: quá ngắn hoặc chứa từ khóa liên hệ (thường đi kèm icon)
+            if (l.length < 4) return false;
+            if (/^(fb|zalo|web|mst|stk|id|đc|add|tel|hotline|email|www|http)/i.test(l)) return false;
+            return !/^[\d\s.,\-:/]+$/.test(l); // Bỏ dòng chỉ toàn số/phân cách
+          });
 
         if (cleanLines.length > 0) {
           let nameLine = cleanLines.find(l => businessKeywords.some(kw => l.toLowerCase().includes(kw)));
           if (!nameLine) {
             nameLine = cleanLines.find(l => {
-              const upperCount = (l.match(/[A-ZÀ-Ỹ]/g) || []).length;
-              return l.length > 5 && (upperCount / l.length) > 0.5;
+              const upperCount = (l.match(/[A-ZÀ-ỸĐ]/g) || []).length; // Thêm Đ vào danh sách chữ hoa
+              // Chỉ lấy nếu đủ dài và tỉ lệ chữ hoa cao (thường là tên thương hiệu lớn trên biển hiệu)
+              return l.length > 6 && (upperCount / l.length) > 0.5;
             });
           }
-          const ten = (nameLine || cleanLines[0] || "").replace(/^(Tên|Cửa hàng|Cty|Công ty|Đ\/c|Địa chỉ|ĐC)[:\s\-]*/i, '').trim();
+          // Logic loại bỏ tiền tố nhưng giữ nguyên dấu tiếng Việt phía sau
+          const ten = (nameLine || cleanLines[0] || "").replace(/^(Tên|Cửa hàng|Cty|Công ty|Đ\/c|Địa chỉ|ĐC|SĐT|Tel|MST|Zalo|FB|Facebook)[:\s\-]*/i, '').trim();
           extracted.tenDoanhNghiep = ten;
         }
         return extracted;
@@ -206,10 +218,16 @@ function BusinessScanner({ showToast }) {
         <div className="scanner-body">
           {/* Khu vực xem trước / Upload */}
           <div className={`scan-preview-zone ${image ? 'has-img' : ''}`} onClick={() => !uploading && fileInputRef.current.click()}>
-            {uploading ? (
-              <div className="scan-overlay"><FiLoader className="spin" /> <span>Đang tải lên...</span></div>
-            ) : image ? (
-              <img src={image} alt="Preview" className="img-preview" />
+            {image ? (
+              <>
+                <img src={image} alt="Preview" className="img-preview" />
+                {uploading && (
+                  <div className="scan-overlay">
+                    <FiLoader className="spin" /> 
+                    <span>Đang tải lên Cloudinary...</span>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="scan-placeholder">
                 <FiImage size={40} />
