@@ -38,6 +38,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 app.post('/api/gemini-extract', async (req, res) => {
   try {
     const { imageUrl, type } = req.body; // type: 'card' hoặc 'invoice'
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY chưa được cấu hình trên server.' });
+    }
+
     if (!imageUrl) return res.status(400).json({ error: 'Thiếu link ảnh' });
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
