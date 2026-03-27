@@ -58,29 +58,17 @@ app.post('/api/gemini-extract', async (req, res) => {
     
     let prompt = "";
     if (type === 'card') {
-      prompt = "Bạn là một hệ thống OCR chuyên dụng, có nhiệm vụ trích xuất dữ liệu thực thể từ ảnh Card Visit hoặc Bảng hiệu các cửa hàng, cửa hiệu ở Việt Nam. Hãy thực hiện theo quy trình nghiêm ngặt sau:
-
-### BƯỚC 1: PHÂN TÍCH ẢNH
-- Xác định thực thể chính (Tên cửa hàng/Công ty) dựa trên kích thước chữ lớn nhất hoặc vị trí trung tâm gần logo.
-- Quét tất cả các dãy số có mặt trong ảnh.
-
-### BƯỚC 2: LỌC SỐ ĐIỆN THOẠI (SĐT)
-Chỉ giữ lại dãy số thỏa mãn TẤT CẢ các điều kiện sau:
-1. Bắt đầu bằng số "0" (đầu số VN: 09, 03, 07, 08, 05, 02) hoặc "+84".
-2. Độ dài: Phải đủ 10 hoặc 11 chữ số (sau khi đã loại bỏ dấu chấm, khoảng trắng, gạch ngang).
-3. Ngữ cảnh: Ưu tiên số nằm sau các từ khóa (Điện thoại, SĐT, ĐT, Tel, Telephone Hotline, Mobile, Zalo) hoặc biểu tượng điện thoại.
-4. CHỐNG SAI LỆCH: Tuyệt đối không ghép các cụm số từ các dòng khác nhau. Không lấy Mã số thuế, Số tài khoản ngân hàng hoặc Số nhà.
-
-### BƯỚC 3: ĐỊNH DẠNG ĐẦU RA
-- "ten": Viết hoa các chữ cái đầu, loại bỏ các mô tả dịch vụ rườm rà (Ví dụ: Thay vì "Tiệm sửa xe máy Tuấn", chỉ lấy "Tiệm Tuấn").
-- "sdt": Chỉ chứa chữ số và dấu "+" (nếu có). Không để lại khoảng trắng hay ký tự đặc biệt.
-
-### LƯU Ý ĐẶC BIỆT:
-- Nếu không tìm thấy SĐT hoặc SĐT bị mờ không thể đọc chính xác 100%, hãy để giá trị là "".
-- Tuyệt đối không tự bịa số hoặc đoán số dựa trên logic.
-
-Hãy trả về kết quả dưới định dạng JSON duy nhất:
-{"ten": "...", "sdt": "..."}
+      prompt = `Bạn là một chuyên gia OCR tài liệu chính xác tuyệt đối. Hãy phân tích ảnh Card Visit hoặc Bảng hiệu này để trích xuất thông tin.
+      Yêu cầu:
+      1. "ten": Trích xuất tên doanh nghiệp hoặc tên cửa hàng rõ ràng nhất.
+      2. "sdt": Tìm số điện thoại liên hệ. Quy tắc nhận diện nghiêm ngặt:
+         - Ưu tiên tìm các dãy số đứng sau từ khóa: "Điện thoại:", "Tel:", "Telephone:", "Liên hệ:", "SĐT:", "Mobile:", "Hotline:".
+         - Định dạng: Số điện thoại thường có 10 chữ số (không tính các dấu chấm "." phân cách).
+         - Quy tắc bắt đầu: Phải bắt đầu bằng số 0 (đầu số Việt Nam) hoặc dấu "+" (quốc tế).
+         - Làm sạch dữ liệu: Chỉ lấy chữ số và dấu "+". Loại bỏ hoàn toàn dấu chấm (.), dấu gạch ngang (-) và khoảng trắng.
+         - Tuyệt đối không được ghép các cụm số nằm ở các dòng khác nhau hoặc vị trí cách xa nhau.
+      Lưu ý đặc biệt: Nếu không tìm thấy dãy số nào khớp với quy chuẩn thực tế hoặc số bị mờ không đọc rõ, hãy để giá trị là "". Tuyệt đối không tự bịa số.
+      Trả về JSON: {"ten": "...", "sdt": "..."}`;
     } else {
       prompt = `Bạn là một kế toán chuyên nghiệp. Hãy phân tích hóa đơn/biên lai vật tư xây dựng này.
       Yêu cầu:
