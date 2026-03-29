@@ -11,8 +11,8 @@ function BusinessScanner({ showToast }) {
   const [debugLog, setDebugLog] = useState("");
 
   const callGemini = async (base64) => {
-    // THAY ĐỔI CHIẾN THUẬT: Dùng model 1.0 Pro Vision - Con này cực kỳ ổn định
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_KEY}`;
+    // ĐÂY LÀ ĐƯỜNG DẪN CHUẨN NHẤT: v1 + gemini-1.5-flash
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
     
     try {
       const response = await fetch(url, {
@@ -21,7 +21,7 @@ function BusinessScanner({ showToast }) {
         body: JSON.stringify({
           contents: [{
             parts: [
-              { text: "Đọc ảnh và trả về JSON: {\"ten\": \"...\", \"sdt\": \"...\"}. Nếu không thấy SĐT thì để trống." },
+              { text: "Đọc ảnh và trả về JSON: {\"ten\": \"...\", \"sdt\": \"...\"}" },
               { inline_data: { mime_type: "image/jpeg", data: base64 } }
             ]
           }]
@@ -31,22 +31,27 @@ function BusinessScanner({ showToast }) {
       const data = await response.json();
       
       if (data.error) {
-        setDebugLog(`Lỗi Google (Pro Vision): ${data.error.message}`);
+        setDebugLog(`Lỗi Google (v1): ${data.error.message}`);
         return null;
       }
 
-      const txt = data.candidates[0].content.parts[0].text;
-      setDebugLog(`AI nhả chữ: ${txt}`);
+      if (data.candidates && data.candidates[0].content) {
+        const txt = data.candidates[0].content.parts[0].text;
+        setDebugLog(`AI nhả chữ: ${txt}`);
 
-      const tenMatch = txt.match(/"ten":\s*"([^"]+)"/);
-      const sdtMatch = txt.match(/"sdt":\s*"([^"]+)"/);
-      
-      return {
-        ten: tenMatch ? tenMatch[1] : "",
-        sdt: sdtMatch ? sdtMatch[1] : ""
-      };
+        // Dùng Regex bóc tách cho chắc ăn
+        const tenMatch = txt.match(/"ten":\s*"([^"]+)"/);
+        const sdtMatch = txt.match(/"sdt":\s*"([^"]+)"/);
+        
+        return {
+          ten: tenMatch ? tenMatch[1] : "Không tìm thấy tên",
+          sdt: sdtMatch ? sdtMatch[1] : "Không tìm thấy SĐT"
+        };
+      }
+      setDebugLog("AI không trả về nội dung");
+      return null;
     } catch (err) {
-      setDebugLog(`Lỗi kết nối: ${err.message}`);
+      setDebugLog(`Lỗi mạng: ${err.message}`);
       return null;
     }
   };
@@ -57,7 +62,7 @@ function BusinessScanner({ showToast }) {
 
     setImage(URL.createObjectURL(file));
     setLoading(true);
-    setDebugLog("Đang nén ảnh 3MB...");
+    setDebugLog("Đang nén ảnh...");
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -66,7 +71,7 @@ function BusinessScanner({ showToast }) {
       img.src = reader.result;
       img.onload = async () => {
         const canvas = document.createElement('canvas');
-        // Nén ảnh xuống 800px để Pro Vision đọc tốt nhất
+        // Ép về 800px để AI đọc nhanh nhất
         const scale = 800 / img.width;
         canvas.width = 800;
         canvas.height = img.height * scale;
@@ -74,7 +79,7 @@ function BusinessScanner({ showToast }) {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         
         const base64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
-        setDebugLog("Đang bắt AI Pro Vision làm việc...");
+        setDebugLog("Đang gọi AI (v1)...");
         const res = await callGemini(base64);
         
         if (res) {
@@ -90,9 +95,9 @@ function BusinessScanner({ showToast }) {
     <div style={{ padding: '15px', maxWidth: '400px', margin: 'auto' }}>
       <div 
         onClick={() => !loading && fileInputRef.current.click()}
-        style={{ width: '100%', height: '200px', border: '3px dashed #007bff', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f7ff', cursor: 'pointer', overflow: 'hidden' }}
+        style={{ width: '100%', height: '200px', border: '3px dashed #28a745', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f6ffed', cursor: 'pointer', overflow: 'hidden' }}
       >
-        {loading ? <FiLoader className="spin" size={40} color="#007bff" /> : image ? <img src={image} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <div style={{textAlign:'center'}}><FiZap size={40}/><br/>Chụp Card</div>}
+        {loading ? <FiLoader className="spin" size={40} color="#28a745" /> : image ? <img src={image} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <div style={{textAlign:'center'}}><FiZap size={40} color="#28a745"/><br/>Chụp Card</div>}
         <input type="file" ref={fileInputRef} onChange={handleFile} hidden accept="image/*" />
       </div>
 
@@ -101,9 +106,9 @@ function BusinessScanner({ showToast }) {
         <input placeholder="Số điện thoại..." value={scannedData.sdt} onChange={(e) => setScannedData({...scannedData, sdt: e.target.value})} style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }} />
       </div>
 
-      <div style={{ marginTop: '20px', padding: '10px', background: '#000', color: '#0f0', borderRadius: '8px', fontSize: '11px', wordBreak: 'break-all' }}>
-        <strong>DEBUG LOG:</strong><br/>
-        {debugLog || "Sẵn sàng..."}
+      <div style={{ marginTop: '20px', padding: '10px', background: '#333', color: '#0f0', borderRadius: '8px', fontSize: '11px', wordBreak: 'break-all' }}>
+        <strong>BẢNG DEBUG:</strong><br/>
+        {debugLog || "Chờ lệnh..."}
       </div>
     </div>
   );
