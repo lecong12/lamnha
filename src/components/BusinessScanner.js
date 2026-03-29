@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { FiCamera, FiLoader, FiCheckCircle } from 'react-icons/fi';
 
 // CHỖ NÀY ANH TỰ DÁN KEY MỚI CỦA ANH VÀO NHÉ - ĐỪNG GỬI LÊN ĐÂY
-const GEMINI_KEY = AIzaSyDfyd86965EGsNgwhcNCuZQ1SZN3xzWty0; 
+const GEMINI_KEY = "AIzaSyDfyd86965EGsNgwhcNCuZQ1SZN3xzWty0"; 
 
 function BusinessScanner({ showToast }) {
   const fileInputRef = useRef(null);
