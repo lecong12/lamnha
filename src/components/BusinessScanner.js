@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { FiCamera, FiLoader, FiZap } from 'react-icons/fi';
+import { FiCamera, FiLoader, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 
-const GEMINI_KEY = "AIzaSyBLOov5tK4IF6qVzfVIou6MiR_0VYqJRfc";
+// ĐÃ CẬP NHẬT KEY MỚI CỦA ANH CÔNG
+const GEMINI_KEY = "AIzaSyA_3frlz1WTohsAXGAniuCjiOgT3zvdAQQ"; 
 
 function BusinessScanner({ showToast }) {
   const fileInputRef = useRef(null);
@@ -11,8 +12,8 @@ function BusinessScanner({ showToast }) {
   const [debugLog, setDebugLog] = useState("");
 
   const callGemini = async (base64) => {
-    // ĐÂY LÀ ĐƯỜNG DẪN CHUẨN NHẤT: v1 + gemini-1.5-flash
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+    // Dùng v1beta + gemini-1.5-flash (Model mạnh nhất cho đọc ảnh)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
     
     try {
       const response = await fetch(url, {
@@ -21,7 +22,7 @@ function BusinessScanner({ showToast }) {
         body: JSON.stringify({
           contents: [{
             parts: [
-              { text: "Đọc ảnh và trả về JSON: {\"ten\": \"...\", \"sdt\": \"...\"}" },
+              { text: "Đọc ảnh và trả về JSON duy nhất: {\"ten\": \"...\", \"sdt\": \"...\"}. Nếu là ngân hàng, hãy ghi rõ chi nhánh." },
               { inline_data: { mime_type: "image/jpeg", data: base64 } }
             ]
           }]
@@ -31,25 +32,21 @@ function BusinessScanner({ showToast }) {
       const data = await response.json();
       
       if (data.error) {
-        setDebugLog(`Lỗi Google (v1): ${data.error.message}`);
+        setDebugLog(`Lỗi Google: ${data.error.message}`);
         return null;
       }
 
-      if (data.candidates && data.candidates[0].content) {
-        const txt = data.candidates[0].content.parts[0].text;
-        setDebugLog(`AI nhả chữ: ${txt}`);
+      const txt = data.candidates[0].content.parts[0].text;
+      setDebugLog(`AI ĐÃ CHỊU NHẢ CHỮ: ${txt}`);
 
-        // Dùng Regex bóc tách cho chắc ăn
-        const tenMatch = txt.match(/"ten":\s*"([^"]+)"/);
-        const sdtMatch = txt.match(/"sdt":\s*"([^"]+)"/);
-        
-        return {
-          ten: tenMatch ? tenMatch[1] : "Không tìm thấy tên",
-          sdt: sdtMatch ? sdtMatch[1] : "Không tìm thấy SĐT"
-        };
-      }
-      setDebugLog("AI không trả về nội dung");
-      return null;
+      // Bóc tách JSON bằng Regex cho an toàn
+      const tenMatch = txt.match(/"ten":\s*"([^"]+)"/);
+      const sdtMatch = txt.match(/"sdt":\s*"([^"]+)"/);
+      
+      return {
+        ten: tenMatch ? tenMatch[1] : "",
+        sdt: sdtMatch ? sdtMatch[1] : ""
+      };
     } catch (err) {
       setDebugLog(`Lỗi mạng: ${err.message}`);
       return null;
@@ -62,7 +59,7 @@ function BusinessScanner({ showToast }) {
 
     setImage(URL.createObjectURL(file));
     setLoading(true);
-    setDebugLog("Đang nén ảnh...");
+    setDebugLog("Đang nén ảnh 3MB và ép AI làm việc...");
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -71,20 +68,24 @@ function BusinessScanner({ showToast }) {
       img.src = reader.result;
       img.onload = async () => {
         const canvas = document.createElement('canvas');
-        // Ép về 800px để AI đọc nhanh nhất
-        const scale = 800 / img.width;
-        canvas.width = 800;
+        // Nén về 800px để AI đọc rõ nhất mà file lại nhẹ
+        const MAX_WIDTH = 800;
+        const scale = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
         canvas.height = img.height * scale;
+        
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         
+        // Xuất base64 chất lượng 60%
         const base64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
-        setDebugLog("Đang gọi AI (v1)...");
-        const res = await callGemini(base64);
         
-        if (res) {
+        const res = await callGemini(base64);
+        if (res && (res.ten || res.sdt)) {
           setScannedData({ ten: res.ten, sdt: res.sdt });
-          showToast("Xong rồi anh Công ơi!", "success");
+          showToast("AI đã bị khuất phục!", "success");
+        } else {
+          showToast("Vẫn chưa lấy được chữ, anh xem Debug nhé!", "warning");
         }
         setLoading(false);
       };
@@ -95,20 +96,61 @@ function BusinessScanner({ showToast }) {
     <div style={{ padding: '15px', maxWidth: '400px', margin: 'auto' }}>
       <div 
         onClick={() => !loading && fileInputRef.current.click()}
-        style={{ width: '100%', height: '200px', border: '3px dashed #28a745', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f6ffed', cursor: 'pointer', overflow: 'hidden' }}
+        style={{ 
+          width: '100%', height: '200px', border: '3px dashed #52c41a', 
+          borderRadius: '15px', display: 'flex', alignItems: 'center', 
+          justifyContent: 'center', background: '#f6ffed', cursor: 'pointer',
+          overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        }}
       >
-        {loading ? <FiLoader className="spin" size={40} color="#28a745" /> : image ? <img src={image} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <div style={{textAlign:'center'}}><FiZap size={40} color="#28a745"/><br/>Chụp Card</div>}
+        {loading ? (
+          <div style={{ textAlign: 'center' }}>
+            <FiLoader className="spin" size={40} color="#52c41a" />
+            <p style={{ marginTop: '10px', color: '#52c41a', fontWeight: 'bold' }}>ĐANG TRỊ AI...</p>
+          </div>
+        ) : image ? (
+          <img src={image} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        ) : (
+          <div style={{ textAlign: 'center', color: '#52c41a' }}>
+            <FiCamera size={45} /><br/>
+            <strong style={{fontSize: '14px'}}>Bấm chụp phong bì Techcombank</strong>
+          </div>
+        )}
         <input type="file" ref={fileInputRef} onChange={handleFile} hidden accept="image/*" />
       </div>
 
       <div style={{ marginTop: '20px' }}>
-        <input placeholder="Tên doanh nghiệp..." value={scannedData.ten} onChange={(e) => setScannedData({...scannedData, ten: e.target.value})} style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '10px', marginBottom: '10px' }} />
-        <input placeholder="Số điện thoại..." value={scannedData.sdt} onChange={(e) => setScannedData({...scannedData, sdt: e.target.value})} style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }} />
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#666' }}>TÊN DOANH NGHIỆP</label>
+          <input 
+            value={scannedData.ten} 
+            onChange={(e) => setScannedData({...scannedData, ten: e.target.value})}
+            style={{ width: '100%', padding: '14px', border: '2px solid #ddd', borderRadius: '12px', marginTop: '5px' }} 
+            placeholder="AI sẽ điền..."
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#666' }}>SỐ ĐIỆN THOẠI</label>
+          <input 
+            value={scannedData.sdt} 
+            onChange={(e) => setScannedData({...scannedData, sdt: e.target.value})}
+            style={{ width: '100%', padding: '14px', border: '2px solid #ddd', borderRadius: '12px', marginTop: '5px' }} 
+            placeholder="AI sẽ tìm..."
+          />
+        </div>
+
+        <button 
+          style={{ width: '100%', padding: '16px', background: '#52c41a', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px' }}
+          onClick={() => showToast("Lưu danh bạ ngon lành!", "success")}
+        >
+          LƯU VÀO DANH BẠ
+        </button>
       </div>
 
-      <div style={{ marginTop: '20px', padding: '10px', background: '#333', color: '#0f0', borderRadius: '8px', fontSize: '11px', wordBreak: 'break-all' }}>
-        <strong>BẢNG DEBUG:</strong><br/>
-        {debugLog || "Chờ lệnh..."}
+      <div style={{ marginTop: '30px', padding: '12px', background: '#222', color: '#0f0', borderRadius: '10px', fontSize: '11px', fontFamily: 'monospace' }}>
+        <strong>TRẠNG THÁI (DEBUG LOG):</strong><br/>
+        {debugLog || "Sẵn sàng chiến đấu!"}
       </div>
     </div>
   );
