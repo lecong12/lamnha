@@ -46,7 +46,7 @@ function BusinessScanner() {
 
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const imagePart = await fileToAiPart(file);
       
       const prompt = "Trích xuất thông tin card/bảng hiệu. Trả về JSON: {\"name\": \"...\", \"phone\": \"...\", \"address\": \"...\"}. Chỉ trả về JSON.";
