@@ -89,7 +89,7 @@ function Dashboard({ stats, data, extraData }) {
           </div>
           <div className="stat-info">
             <span className="stat-label">Tổng Chi Phí</span>
-            <span className="stat-value">{formatCurrency(stats.tongChi)}</span>
+            <span className="stat-value" style={{ color: 'inherit' }}>{formatCurrency(stats.tongChi)}</span>
           </div>
         </div>
 
@@ -102,7 +102,7 @@ function Dashboard({ stats, data, extraData }) {
             <div className="progress-bar-container">
               <div className="progress-bar" style={{ width: `${completionPercentage}%` }}></div>
             </div>
-            <span className="stat-value">{completionPercentage}%</span>
+            <span className="stat-value" style={{ color: 'inherit' }}>{completionPercentage}%</span>
           </div>
         </div>
       </div>
@@ -174,7 +174,7 @@ function Dashboard({ stats, data, extraData }) {
         <div className="chart-card">
           <h3 className="chart-title">Top 5 Hạng mục chi tiêu nhiều nhất</h3>
           {barData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300} className="bar-chart-container">
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart data={barData} layout="vertical">
                 <XAxis
                   type="number"

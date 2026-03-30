@@ -120,7 +120,9 @@ function ConstructionContracts({ showToast }) {
   };
 
   // Lọc danh sách theo Tab đang chọn
-  const currentList = contracts.filter(c => c.category === activeCategory);
+  const currentList = [...contracts]
+    .filter(c => c.category === activeCategory)
+    .reverse(); // Đảo ngược để tệp mới nhất lên đầu
 
   return (
     <div className="contracts-container">

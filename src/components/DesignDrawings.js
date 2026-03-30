@@ -120,7 +120,9 @@ function DesignDrawings({ showToast }) {
     }
   };
 
-  const currentList = drawings.filter(d => d.category === activeCategory);
+  const currentList = [...drawings]
+    .filter(d => d.category === activeCategory)
+    .reverse(); // Đảo ngược để bản vẽ mới nhất lên đầu
 
   return (
     <div className="drawings-container">
