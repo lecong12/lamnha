@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiUpload, FiTrash2, FiEye, FiDownload, FiLoader, FiMap, FiX, FiFileText } from 'react-icons/fi';
 import { fetchTableData, addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
 import './DesignDrawings.css';
-import { fetchFileData } from '../utils/sheetsAPI'; // Import fetchFileData
+
 // Lấy cấu hình từ biến môi trường
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
 const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '');
@@ -25,8 +25,8 @@ function DesignDrawings({ showToast }) {
   useEffect(() => {
     const loadDrawings = async () => {
       setLoading(true);
-      try { // Use fetchFileData for better URL mapping
-        const res = await fetchFileData("BanVe", APP_ID);
+      try {
+        const res = await fetchTableData("BanVe", APP_ID);
         if (res.success) {
           setDrawings(res.data || []);
         }
@@ -73,7 +73,15 @@ function DesignDrawings({ showToast }) {
         body: data
       });
       
-      const fileData = await res.json();
+      // Kiểm tra phản hồi trước khi parse JSON
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || `Lỗi Cloudinary (${res.status})`);
+      }
+
+      let fileData;
+      try { fileData = text ? JSON.parse(text) : {}; } 
+      catch (e) { throw new Error("Phản hồi từ Cloudinary không hợp lệ."); }
       
       if (fileData.secure_url) {
         const rowData = {
@@ -105,7 +113,7 @@ function DesignDrawings({ showToast }) {
 
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa bản vẽ này?")) {
-      const res = await deleteRowFromSheet("BanVe", id, APP_ID); // Pass tableName
+      const res = await deleteRowFromSheet("BanVe", id, APP_ID);
       if (res.success) {
         setDrawings(drawings.filter(d => d.id !== id && d._RowNumber !== id));
       }
@@ -174,9 +182,8 @@ function DesignDrawings({ showToast }) {
               {viewingPdf.url && viewingPdf.url.toLowerCase().endsWith('.pdf') ? (
                 <object data={viewingPdf.url} type="application/pdf" width="100%" height="100%">
                   <div className="pdf-fallback">
-                   <FiFileText size={50} color="#94a3b8" />
-                   <p>Không thể hiển thị PDF trực tiếp trong khung này.</p>
-                   <a href={viewingPdf.url} target="_blank" rel="noreferrer" className="btn-open-new">
+                    <p>Không thể hiển thị PDF.</p>
+                    <a href={viewingPdf.url} target="_blank" rel="noreferrer" className="btn-open-new">
                       Mở trong tab mới
                     </a>
                   </div>

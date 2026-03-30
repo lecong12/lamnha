@@ -1,43 +1,36 @@
-import React, { useState } from "react";
-import { FiCamera, FiLoader, FiSave, FiX, FiCheckCircle, FiClock, FiAlertCircle } from "react-icons/fi";
-import './ProgressTracker.css';
+import React, { useState } from 'react';
+import { FiCamera, FiLoader, FiSave, FiX } from 'react-icons/fi';
 
-// Cấu hình Cloudinary từ môi trường
-const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, "");
-const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, "");
+// Cấu hình Cloudinary
+const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
+const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '');
 
-function ProgressTracker({ stages = [], onUpdateStage, showToast, isDarkMode }) {
-  const [pendingFiles, setPendingFiles] = useState({});
+function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
   const [uploadingStageId, setUploadingStageId] = useState(null);
+  const [pendingFiles, setPendingFiles] = useState({});
 
   const handleUpdateStatus = async (stageId, newStatus) => {
-    try {
-      if (onUpdateStage) {
-        await onUpdateStage(stageId, { status: newStatus });
-      }
-    } catch (error) {
-      showToast("Lỗi cập nhật trạng thái", "error");
-    }
+    await onUpdateStage(stageId, { status: newStatus });
   };
 
   const handleFileSelect = (e, stageId) => {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      showToast("Vui lòng chỉ chọn file ảnh.", "warning");
+      alert("Vui lòng chỉ chọn file ảnh.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      showToast("File ảnh quá lớn (> 10MB).", "warning");
+      alert("File ảnh quá lớn ( > 10MB). Vui lòng chọn ảnh nhỏ hơn.");
       return;
     }
     const preview = URL.createObjectURL(file);
-    setPendingFiles((prev) => ({ ...prev, [stageId]: { file, preview } }));
+    setPendingFiles(prev => ({ ...prev, [stageId]: { file, preview } }));
     e.target.value = null;
   };
 
   const handleCancelUpload = (stageId) => {
-    setPendingFiles((prev) => {
+    setPendingFiles(prev => {
       const newState = { ...prev };
       if (newState[stageId]?.preview) URL.revokeObjectURL(newState[stageId].preview);
       delete newState[stageId];
@@ -49,97 +42,120 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast, isDarkMode }) 
     const { file } = pendingFiles[stageId] || {};
     if (!file) return;
 
+    const notify = (message, type = "info") => {
+      if (showToast) showToast(message, type);
+      else alert(message);
+    };
+
     try {
       setUploadingStageId(stageId);
       const data = new FormData();
       data.append("file", file);
       data.append("upload_preset", UPLOAD_PRESET);
-      data.append("resource_type", "auto"); // Sử dụng auto để Cloudinary tự nhận diện
-      
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { 
-        method: "POST", 
-        body: data 
-      });
+      // data.append("resource_type", "image"); // Mặc định là image, không cần gửi auto
+      notify("Đang upload ảnh...", "info");
 
-      const fileData = await res.json();
-      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { 
+        method: "POST", 
+        body: data, 
+        signal: controller.signal 
+      });
+      clearTimeout(timeoutId);
+
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || `Lỗi HTTP ${res.status}`);
+      }
+
+      const fileData = text ? JSON.parse(text) : {};
+
       if (fileData.secure_url) {
-        const result = await onUpdateStage(stageId, {
-          "Ảnh nghiệm thu": fileData.secure_url,
-        });
+        // Gửi đúng tên cột "Ảnh nghiệm thu" lên AppSheet
+        const result = await onUpdateStage(stageId, { "Ảnh nghiệm thu": fileData.secure_url });
         if (result && result.success) {
-          showToast("Lưu ảnh thành công!", "success");
+          notify("Lưu thành công!", "success");
           handleCancelUpload(stageId);
         } else {
           throw new Error(result.message || "Không thể lưu link ảnh.");
         }
       } else {
-        throw new Error(fileData.error?.message || "Lỗi Cloudinary.");
+        throw new Error(fileData.error?.message || "Lỗi upload Cloudinary.");
       }
     } catch (error) {
-      showToast("Lỗi upload: " + error.message, "error");
+      let msg = "Lỗi upload: " + error.message;
+      if (error.name === 'AbortError') {
+        msg = "Upload thất bại: Quá thời gian chờ (Timeout).";
+      }
+      notify(msg, "error");
     } finally {
       setUploadingStageId(null);
     }
   };
 
-  if (!stages || stages.length === 0) {
-    return <div className="no-data"><FiAlertCircle /> Chưa có dữ liệu tiến độ.</div>;
-  }
-
   return (
-    <div className="progress-tracker-section">
-      <div className="stages-grid">
+    <div className="progress-tracker-section chart-card">
+      <h3 className="chart-title">Theo dõi tiến độ thi công</h3>
+      <div className="stages-grid" style={{ maxHeight: "80vh", overflowY: "auto", paddingRight: "10px" }}>
         {stages.map((stage) => (
-          <div key={stage.id} className="stage-card" style={{ color: isDarkMode ? '#ffffff' : 'inherit' }}>
-            <div className="stage-info">
-              <div className="stage-header-row">
-                {stage.status === 'Hoàn thành' ? <FiCheckCircle color="#22c55e" /> : <FiClock color="#64748b" />}
-                <span className="stage-name-text">{stage.name || stage.ten_hang_muc}</span>
-              </div>
-              <p className="stage-date-text">
-                {stage.ngayBatDau && stage.ngayKetThuc
-                  ? `${stage.ngayBatDau.toLocaleDateString('vi-VN')} - ${stage.ngayKetThuc.toLocaleDateString('vi-VN')}`
-                  : "Chưa xác định ngày"}
-              </p>
-            </div>
-
+          <div key={stage.id} className="stage-card">
+            <span className="stage-name">{stage.name.replace(/^\d+\.\s*/, "")}</span>
             <select
               value={stage.status}
               onChange={(e) => handleUpdateStatus(stage.id, e.target.value)}
-              className={`status-select-box status-${stage.status?.toLowerCase().replace(/\s+/g, "-")}`}
+              className={`status-select status-${stage.status.toLowerCase().replace(/\s+/g, "-")}`}
             >
               <option value="Chưa bắt đầu">Chưa bắt đầu</option>
               <option value="Đang thi công">Đang thi công</option>
               <option value="Hoàn thành">Hoàn thành</option>
             </select>
             
-            <div className="image-upload-zone">
+            <div className="stage-image-container" style={{ marginTop: '10px', position: 'relative' }}>
               {pendingFiles[stage.id] ? (
-                <div className="preview-container">
-                  <img src={pendingFiles[stage.id].preview} alt="Preview" className="img-preview" />
-                  <div className="upload-actions">
-                    <button onClick={() => handleConfirmUpload(stage.id)} disabled={uploadingStageId === stage.id} className="btn-confirm">
-                      {uploadingStageId === stage.id ? <FiLoader className="spin" /> : <FiSave />} Lưu
+                <div style={{ position: 'relative' }}>
+                  <img 
+                    src={pendingFiles[stage.id].preview} 
+                    alt="Preview" 
+                    style={{ width: '100%', borderRadius: '4px', objectFit: 'cover', maxHeight: '150px', display: 'block', border: '2px solid #3b82f6' }} 
+                  />
+                  <div style={{ position: 'absolute', bottom: 5, right: 5, display: 'flex', gap: '5px' }}>
+                    <button 
+                      onClick={() => handleConfirmUpload(stage.id)} 
+                      disabled={uploadingStageId === stage.id}
+                      style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
+                    >
+                      {uploadingStageId === stage.id ? <FiLoader className="spin" /> : <FiSave />} 
+                      Lưu
                     </button>
-                    <button onClick={() => handleCancelUpload(stage.id)} disabled={uploadingStageId === stage.id} className="btn-cancel">
+                    <button 
+                      onClick={() => handleCancelUpload(stage.id)}
+                      disabled={uploadingStageId === stage.id}
+                      style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
+                    >
                       <FiX /> Hủy
                     </button>
                   </div>
                 </div>
-              ) : (stage.anhNghiemThu || stage["Ảnh nghiệm thu"]) ? (
-                <div className="current-image">
-                  <img src={stage.anhNghiemThu || stage["Ảnh nghiệm thu"]} alt="Nghiệm thu" className="img-done" />
-                  <label className="edit-image-label">
-                    <FiCamera /> Sửa
-                    <input type="file" accept="image/*" hidden onChange={(e) => handleFileSelect(e, stage.id)} />
+              ) : stage.anhNghiemThu ? (
+                <div style={{ position: 'relative' }}>
+                  <img 
+                    src={stage.anhNghiemThu} 
+                    alt="Ảnh nghiệm thu" 
+                    style={{ width: '100%', borderRadius: '4px', objectFit: 'cover', maxHeight: '150px', display: 'block' }} 
+                  />
+                  <label className="upload-btn-overlay" style={{ position: 'absolute', bottom: 5, right: 5, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <FiCamera /> 
+                    <span>Sửa</span>
+                    <input type="file" accept="image/*" hidden onChange={(e) => handleFileSelect(e, stage.id)} disabled={uploadingStageId === stage.id} />
                   </label>
                 </div>
               ) : (
-                <label className="upload-placeholder-box">
-                  <FiCamera size={24} />
-                  <span>Thêm ảnh nghiệm thu</span>
-                  <input type="file" accept="image/*" hidden onChange={(e) => handleFileSelect(e, stage.id)} />
+                <label className="upload-placeholder" style={{ border: '1px dashed #cbd5e1', borderRadius: '4px', padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b', fontSize: '13px' }}>
+                  <FiCamera size={20} />
+                  <span style={{ marginTop: '5px' }}>Thêm ảnh nghiệm thu</span>
+                  <input type="file" accept="image/*" hidden onChange={(e) => handleFileSelect(e, stage.id)} disabled={uploadingStageId === stage.id} />
                 </label>
               )}
             </div>

@@ -137,9 +137,17 @@ function EditModal({ item, onClose, onSave, showToast }) {
       data.append("resource_type", resourceType); 
 
       const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: data });
-
-      const fileData = await res.json();
       
+      // Kiểm tra phản hồi trước khi parse JSON để tránh lỗi "Unexpected end of JSON input"
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || `Lỗi Cloudinary (${res.status})`);
+      }
+
+      let fileData;
+      try { fileData = text ? JSON.parse(text) : {}; } 
+      catch (e) { throw new Error("Phản hồi từ server không phải JSON."); }
+
       if (fileData.secure_url) {
         console.log("Upload thành công:", fileData.secure_url);
         setFormData((prev) => ({ ...prev, hinhAnh: fileData.secure_url }));

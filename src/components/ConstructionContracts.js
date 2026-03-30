@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiUpload, FiTrash2, FiFileText, FiDownload, FiLoader, FiBriefcase, FiEye, FiX } from 'react-icons/fi';
 import { fetchTableData, addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
 import './ConstructionContracts.css';
-import { fetchFileData } from '../utils/sheetsAPI'; // Import fetchFileData
+
 // Lấy cấu hình từ môi trường
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
 const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '');
@@ -25,8 +25,8 @@ function ConstructionContracts({ showToast }) {
     // Tải dữ liệu từ AppSheet
     const loadContracts = async () => {
       setLoading(true);
-      try { // Use fetchFileData for better URL mapping
-        const res = await fetchFileData("HopDong", APP_ID);
+      try {
+        const res = await fetchTableData("HopDong", APP_ID);
         if (res.success) {
           setContracts(res.data || []);
         }
@@ -69,7 +69,15 @@ function ConstructionContracts({ showToast }) {
         body: data,
       });
       
-      const fileData = await res.json();
+      // Xử lý phản hồi an toàn
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || `Lỗi Cloudinary (${res.status})`);
+      }
+
+      let fileData;
+      try { fileData = text ? JSON.parse(text) : {}; } 
+      catch (e) { throw new Error("Lỗi định dạng phản hồi từ server."); }
       
       if (fileData.secure_url) {
         // Chuẩn bị dữ liệu ghi xuống Google Sheets (AppSheet)
