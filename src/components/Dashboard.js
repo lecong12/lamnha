@@ -89,7 +89,7 @@ function Dashboard({ stats, data, extraData }) {
           </div>
           <div className="stat-info">
             <span className="stat-label">Tổng Chi Phí</span>
-            <span className="stat-value" style={{ color: 'inherit' }}>{formatCurrency(stats.tongChi)}</span>
+            <span className="stat-value" style={{ color: 'var(--text-primary, inherit)' }}>{formatCurrency(stats.tongChi)}</span>
           </div>
         </div>
 
@@ -102,7 +102,7 @@ function Dashboard({ stats, data, extraData }) {
             <div className="progress-bar-container">
               <div className="progress-bar" style={{ width: `${completionPercentage}%` }}></div>
             </div>
-            <span className="stat-value" style={{ color: 'inherit' }}>{completionPercentage}%</span>
+            <span className="stat-value" style={{ color: 'var(--text-primary, inherit)' }}>{completionPercentage}%</span>
           </div>
         </div>
       </div>

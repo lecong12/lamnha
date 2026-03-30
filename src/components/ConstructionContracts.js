@@ -122,7 +122,7 @@ function ConstructionContracts({ showToast }) {
   // Lọc danh sách theo Tab đang chọn
   const currentList = [...contracts]
     .filter(c => c.category === activeCategory)
-    .reverse(); // Đảo ngược để tệp mới nhất lên đầu
+    .sort((a, b) => (b._RowNumber || 0) - (a._RowNumber || 0)); // Sắp xếp theo RowNumber giảm dần
 
   return (
     <div className="contracts-container">
