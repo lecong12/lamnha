@@ -11,153 +11,140 @@ function App() {
   const [msg, setMsg] = useState("");
   const [viewUrl, setViewUrl] = useState(null);
 
-  // 1. Tải danh sách đồng bộ từ Cloudinary
+  // Form để điền thông tin sau khi quét
+  const [extractedData, setExtractedData] = useState({ name: "", phone: "", address: "", url: "" });
+  const [showForm, setShowForm] = useState(false);
+
   const loadData = async () => {
     try {
-      const timestamp = new Date().getTime();
-      const r = await fetch(`https://res.cloudinary.com/${CLOUD_NAME}/raw/upload/${LOG_ID}.txt?v=${timestamp}`);
-      
+      const r = await fetch(`https://res.cloudinary.com/${CLOUD_NAME}/raw/upload/${LOG_ID}.txt?v=${Date.now()}`);
       if (r.ok) {
         const text = await r.text();
-        const lines = text.split('\n').filter(l => l.trim().length > 10);
-        const data = lines.map(line => {
-          try { return JSON.parse(line); } catch(e) { return null; }
-        }).filter(item => item !== null);
-        
+        const data = text.split('\n').filter(l => l.length > 10).map(line => JSON.parse(line));
         setHistory(data.reverse()); 
       }
-    } catch (e) {
-      console.log("Đang chờ dữ liệu...");
-    }
+    } catch (e) { console.log("Chưa có dữ liệu."); }
   };
 
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 20000); // Tự động làm mới mỗi 20 giây
-    return () => clearInterval(interval);
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
-  const handleFileSelect = async (file) => {
+  const handleScan = async (e) => {
+    const file = e.target.files[0];
     if (!file) return;
     setLoading(true);
-    setMsg("Đang xử lý tệp...");
+    setMsg("Đang trích xuất dữ liệu...");
 
     try {
-      let cleanName = "Tai_lieu_" + Math.floor(Date.now() / 1000);
+      // 1. OCR Đọc toàn bộ chữ
+      const { data: { text } } = await Tesseract.recognize(file, 'vie');
+      
+      // 2. Thuật toán "nhặt" thông tin tự động
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+      const phoneMatch = text.match(/(0|\+84)[0-9]{9,10}/g); // Tìm số điện thoại
+      const name = lines[0] || "Khách hàng mới";
+      const phone = phoneMatch ? phoneMatch[0] : "";
+      const address = lines.find(l => l.toLowerCase().includes("đường") || l.toLowerCase().includes("tp") || l.toLowerCase().includes("quận")) || "";
 
-      // Nếu là ảnh thì mới chạy OCR để lấy tên
-      if (file.type.startsWith('image/')) {
-        setMsg("Đang đọc nội dung ảnh...");
-        const { data: { text } } = await Tesseract.recognize(file, 'vie');
-        const firstLine = text.split('\n').find(l => l.trim().length > 2);
-        if (firstLine) {
-          cleanName = firstLine.normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-zA-Z0-9]/g, "_")
-            .substring(0, 25);
-        }
-      } else {
-        // Nếu là PDF thì lấy tên gốc của file
-        cleanName = file.name.split('.')[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "_");
-      }
-
-      setMsg("Đang tải lên mây...");
+      // 3. Đẩy ảnh lên Cloudinary lấy link trước
       const fd = new FormData();
       fd.append("file", file);
       fd.append("upload_preset", UPLOAD_PRESET);
-      fd.append("public_id", `file_${cleanName}_${Date.now()}`);
-      fd.append("resource_type", "auto"); 
-
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { 
-        method: "POST", 
-        body: fd 
-      });
+      fd.append("resource_type", "auto");
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: fd });
       const cloud = await res.json();
 
-      if (res.ok) {
-        setMsg("Đồng bộ danh sách...");
-        const newItem = { n: cleanName, u: cloud.secure_url, t: new Date().toLocaleString('vi-VN') };
-        const oldData = [...history].reverse();
-        const updatedLog = [...oldData, newItem].map(h => JSON.stringify(h)).join('\n');
-        
-        const logFile = new File([updatedLog], `${LOG_ID}.txt`, { type: 'text/plain' });
-        const logFd = new FormData();
-        logFd.append("file", logFile);
-        logFd.append("upload_preset", UPLOAD_PRESET);
-        logFd.append("public_id", LOG_ID);
-        logFd.append("resource_type", "raw");
-
-        await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: logFd });
-        
-        setMsg("Thành công!");
-        setTimeout(() => { setMsg(""); loadData(); }, 1000);
-      }
+      // 4. Hiện Form để anh Công điền/sửa thông tin
+      setExtractedData({ name, phone, address, url: cloud.secure_url });
+      setShowForm(true);
+      setMsg("");
     } catch (err) {
-      setMsg("Lỗi: " + err.message);
+      setMsg("Lỗi quét: " + err.message);
     }
     setLoading(false);
   };
 
-  return (
-    <div style={{ padding: '15px', fontFamily: 'sans-serif', maxWidth: '500px', margin: 'auto' }}>
-      <h3 style={{ color: '#2c3e50', textAlign: 'center', borderBottom: '2px solid #3498db', paddingBottom: '10px' }}>
-        HỒ SƠ XÂY DỰNG - LÊ CÔNG
-      </h3>
+  const saveToCloud = async () => {
+    setLoading(true);
+    setMsg("Đang lưu hồ sơ...");
+    try {
+      const newItem = { 
+        n: extractedData.name, 
+        p: extractedData.phone, 
+        a: extractedData.address, 
+        u: extractedData.url, 
+        t: new Date().toLocaleString('vi-VN') 
+      };
       
-      <div style={{ background: '#f8f9fa', padding: '30px', borderRadius: '15px', textAlign: 'center', border: '2px dashed #3498db', marginBottom: '20px' }}>
-        {loading ? (
-          <div style={{ color: '#e67e22', fontWeight: 'bold' }}>{msg}</div>
-        ) : (
-          <div>
-            <input 
-              type="file" 
-              accept="image/*,application/pdf" 
-              onChange={e => handleFileSelect(e.target.files[0])} 
-              id="file-input"
-              style={{ display: 'none' }}
-            />
-            <label htmlFor="file-input" style={{ background: '#3498db', color: '#fff', padding: '15px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-block' }}>
-               📁 CHỌN ẢNH HOẶC PDF
+      const updatedLog = [...history].reverse().concat(newItem).map(h => JSON.stringify(h)).join('\n');
+      const logFile = new File([updatedLog], `${LOG_ID}.txt`, { type: 'text/plain' });
+      
+      const logFd = new FormData();
+      logFd.append("file", logFile);
+      logFd.append("upload_preset", UPLOAD_PRESET);
+      logFd.append("public_id", LOG_ID);
+      logFd.append("resource_type", "raw");
+
+      await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: logFd });
+      
+      setShowForm(false);
+      loadData();
+      alert("Đã lưu thông tin thành công!");
+    } catch (e) { alert("Lỗi lưu trữ!"); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ padding: '15px', fontFamily: 'Arial', maxWidth: '500px', margin: 'auto' }}>
+      <h3 style={{ textAlign: 'center', color: '#007bff' }}>TRÍCH XUẤT THÔNG TIN CARD</h3>
+
+      {!showForm ? (
+        <div style={{ background: '#f0f2f5', padding: '30px', borderRadius: '15px', textAlign: 'center', border: '2px dashed #007bff' }}>
+          {loading ? <b>{msg}</b> : (
+            <label style={{ background: '#007bff', color: '#fff', padding: '15px 20px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
+               📸 QUÉT THẺ HOẶC CHỌN ẢNH
+               <input type="file" accept="image/*" onChange={handleScan} style={{ display: 'none' }} />
             </label>
-            <p style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '10px' }}>Anh có thể chụp mới hoặc chọn từ Album</p>
+          )}
+        </div>
+      ) : (
+        <div style={{ background: '#fff', padding: '20px', borderRadius: '15px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+          <h4 style={{ marginTop: 0 }}>KIỂM TRA THÔNG TIN</h4>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Tên/Đơn vị:</label>
+            <input style={{ width: '100%', padding: '8px' }} value={extractedData.name} onChange={e => setExtractedData({...extractedData, name: e.target.value})} />
           </div>
-        )}
-      </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Số điện thoại:</label>
+            <input style={{ width: '100%', padding: '8px' }} value={extractedData.phone} onChange={e => setExtractedData({...extractedData, phone: e.target.value})} />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Địa chỉ:</label>
+            <textarea style={{ width: '100%', padding: '8px' }} value={extractedData.address} onChange={e => setExtractedData({...extractedData, address: e.target.value})} />
+          </div>
+          <button onClick={saveToCloud} style={{ width: '100%', padding: '12px', background: '#28a745', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>
+             XÁC NHẬN & LƯU LÊN MÂY
+          </button>
+          <button onClick={() => setShowForm(false)} style={{ width: '100%', marginTop: '10px', background: 'none', border: 'none', color: 'red' }}>Hủy bỏ</button>
+        </div>
+      )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <b style={{ color: '#34495e' }}>HỒ SƠ ĐÃ LÊN KỆ ({history.length})</b>
-        <button onClick={loadData} style={{ border: 'none', background: 'none', color: '#3498db' }}>🔄 Làm mới</button>
-      </div>
-
-      <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
+      <div style={{ marginTop: '20px' }}>
+        <b>DANH SÁCH KHÁCH HÀNG / HỒ SƠ</b>
         {history.map((item, i) => (
-          <div key={i} style={{ padding: '12px', borderBottom: '1px solid #ecf0f1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', marginBottom: '5px', borderRadius: '8px' }}>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{item.n}</div>
-              <div style={{ fontSize: '11px', color: '#95a5a6' }}>{item.t}</div>
+          <div key={i} style={{ padding: '10px', borderBottom: '1px solid #ddd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontWeight: 'bold' }}>{item.n}</div>
+              <div style={{ fontSize: '12px', color: '#555' }}>📞 {item.p}</div>
             </div>
-            <button 
-              onClick={() => setViewUrl(item.u)} 
-              style={{ background: '#2ecc71', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '6px', marginLeft: '10px' }}
-            >
-              XEM
-            </button>
+            <button onClick={() => setViewUrl(item.u)} style={{ background: '#17a2b8', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '5px' }}>XEM ẢNH</button>
           </div>
         ))}
       </div>
 
       {viewUrl && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 999, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '10px', textAlign: 'right' }}>
-            <button onClick={() => setViewUrl(null)} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '5px', fontWeight: 'bold' }}>ĐÓNG</button>
-          </div>
-          <div style={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-             {viewUrl.toLowerCase().includes('.pdf') ? (
-               <iframe src={viewUrl} style={{ width: '100%', height: '100%', border: 'none' }} title="pdf-viewer" />
-             ) : (
-               <img src={viewUrl} style={{ maxWidth: '100%', maxHeight: '100%' }} alt="view" />
-             )}
-          </div>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zLogIndex: 99 }}>
+          <button onClick={() => setViewUrl(null)} style={{ position: 'absolute', top: 10, right: 10, background: 'red', color: '#fff' }}>ĐÓNG</button>
+          <img src={viewUrl} style={{ width: '100%', marginTop: '50px' }} alt="view" />
         </div>
       )}
     </div>
