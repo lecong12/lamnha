@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiSave, FiCamera, FiImage, FiLoader, FiFileText } from "react-icons/fi";
-import Tesseract from 'tesseract.js';
+import { extractInfoWithAI } from "../utils/aiService";
 import "./EditModal.css";
 
 // Danh sách hạng mục ngân sách, đồng bộ với Sheet 'NganSach'
@@ -129,9 +129,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
       setPreview(localUrl); // HIỂN THỊ ẢNH THẬT NGAY LẬP TỨC
       setIsPdfPreview(isPdf);
 
-      // Tự động quét OCR ngay khi chọn ảnh (không áp dụng cho PDF)
-      if (!isPdf) handleOCR(file);
-
       const resourceType = isPdf ? "raw" : "image";
 
       const data = new FormData();
@@ -146,8 +143,9 @@ function EditModal({ item, onClose, onSave, showToast }) {
       if (fileData.secure_url) {
         console.log("Upload thành công:", fileData.secure_url);
         setFormData((prev) => ({ ...prev, hinhAnh: fileData.secure_url }));
-        // Sau khi có link ảnh từ Cloudinary, gọi Gemini để trích xuất AI chính xác hơn
-        if (!isPdf) extractWithGemini(fileData.secure_url);
+        
+        // Tự động trích xuất bằng AI sau khi upload thành công
+        if (!isPdf) handleOCR(fileData.secure_url);
       } else {
         throw new Error(fileData.error?.message || `Lỗi HTTP: ${res.status}`);
       }
@@ -167,20 +165,27 @@ function EditModal({ item, onClose, onSave, showToast }) {
     }
   };
 
-  // Hàm trích xuất thông tin hóa đơn bằng Gemini AI
-  const extractWithGemini = async (imageUrl) => {
+  // Xử lý trích xuất bằng AI Service
+  const handleOCR = async (url) => {
+    const ocrSource = url || formData.hinhAnh;
+    if (!ocrSource) {
+      alert("Vui lòng tải ảnh lên trước khi quét.");
+      return;
+    }
+    
+    if (ocrSource.startsWith('blob:')) {
+      showToast("Đang chờ ảnh upload xong...", "info");
+      return;
+    }
+
     setOcrScanning(true);
+    showToast("AI đang phân tích hóa đơn...", "info");
+
     try {
-      const res = await fetch('/api/gemini-extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl, type: 'invoice' })
-      });
-      const data = await res.json();
+      const data = await extractInfoWithAI(ocrSource, 'invoice');
       
       if (data && !data.error) {
-        // Gộp Tên cửa hàng, SĐT và nội dung vào trường noiDung nếu không có cột riêng
-        const shopInfo = data.ten ? data.ten : "";
+        const shopInfo = data.ten || "";
         const phoneInfo = data.sdt ? `(SĐT: ${data.sdt})` : "";
         const detailText = data.noiDung || "";
         const combinedNoiDung = [shopInfo, phoneInfo, detailText].filter(Boolean).join(" - ");
@@ -188,117 +193,14 @@ function EditModal({ item, onClose, onSave, showToast }) {
         setFormData(prev => ({
           ...prev,
           ngay: data.ngay || prev.ngay,
-          // Format số tiền trả về từ AI thành dạng 1.000.000
           soTien: data.soTien ? new Intl.NumberFormat('vi-VN').format(data.soTien) : prev.soTien,
           noiDung: combinedNoiDung
         }));
-        showToast("Gemini AI đã tối ưu hóa thông tin hóa đơn!", "success");
-      }
-    } catch (e) {
-      console.error("Lỗi Gemini AI:", e);
-    } finally {
-      setOcrScanning(false);
-    }
-  };
-
-  // Xử lý OCR (Quét hóa đơn) - Hỗ trợ cả File và URL
-  const handleOCR = async (source) => {
-    // Nếu gọi từ nút bấm mà không truyền source, lấy từ state
-    const ocrSource = source || preview || formData.hinhAnh; // Ưu tiên preview, sau đó đến formData.hinhAnh
-    if (!ocrSource) {
-      if (!source) alert("Vui lòng tải ảnh lên trước khi quét.");
-      return;
-    }
-
-    setOcrScanning(true);
-    showToast("Đang quét nội dung hóa đơn...", "info");
-
-    try {
-      const result = await Tesseract.recognize(
-        ocrSource,
-        'vie', // Sử dụng ngôn ngữ tiếng Việt
-        { logger: m => console.log(m) } // Log tiến độ ra console
-      );
-
-      const text = result.data.text;
-      console.log("Kết quả OCR:", text);
-
-      const parsedData = { noiDung: formData.noiDung, soTien: formData.soTien, ngay: formData.ngay };
-      let foundSomething = false;
-
-      // 1. Tìm Ngày tháng (dd/mm/yyyy hoặc dd-mm-yyyy)
-      const dateRegex = /(\d{1,2})[\s\/\-\.]+(\d{1,2})[\s\/\-\.]+(\d{4})/g;
-      const dateMatches = [...text.matchAll(dateRegex)];
-      
-      if (dateMatches.length > 0) {
-        const currentYear = new Date().getFullYear();
-        
-        // Chuyển đổi và sửa lỗi OCR (ví dụ: Tesseract hay đọc nhầm 202x thành 201x)
-        const validDates = dateMatches.map(m => {
-          const day = m[1].padStart(2, '0');
-          const month = m[2].padStart(2, '0');
-          let year = m[3];
-          
-          // Logic sửa lỗi: Nếu năm đọc ra là 201x nhưng thực tế là 202x
-          if (year.startsWith("201") && currentYear >= 2024) {
-            year = year.replace("201", "202");
-          }
-          
-          return { day, month, year, full: `${year}-${month}-${day}` };
-        }).filter(d => {
-          const y = parseInt(d.year);
-          return y >= currentYear - 1 && y <= currentYear + 1;
-        });
-
-        if (validDates.length > 0) {
-          const bestDate = validDates[validDates.length - 1];
-          parsedData.ngay = bestDate.full;
-          foundSomething = true;
-        } else {
-          // Nếu không có ngày nào trong dải năm hợp lý, lấy ngày đầu tiên tìm được
-          parsedData.ngay = `${dateMatches[0][3]}-${dateMatches[0][2].padStart(2, '0')}-${dateMatches[0][1].padStart(2, '0')}`;
-        }
-      }
-
-      // 2. Tìm Số tiền (Lấy số lớn nhất tìm thấy trong văn bản)
-      // Regex tìm các chuỗi số (VD: 1.000.000 hoặc 1,000,000)
-      const numbers = text.match(/\d{1,3}(?:[.,]\d{3})*(?:,\d+)?/g);
-      if (numbers) {
-        let maxVal = 0;
-        numbers.forEach(numStr => {
-          const cleanNum = parseFloat(numStr.replace(/[.,]/g, ''));
-          if (!isNaN(cleanNum) && cleanNum > 1000 && cleanNum < 10000000000) { // Giảm ngưỡng xuống 1.000
-            if (cleanNum > maxVal) maxVal = cleanNum;
-          }
-        });
-        if (maxVal > 0) {
-          parsedData.soTien = maxVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-          foundSomething = true;
-        }
-      }
-
-      // 3. Tìm Nội dung (Tìm các từ khóa vật tư phổ biến có dấu tiếng Việt)
-      const keywords = ['xi măng', 'cát', 'đá', 'gạch', 'sắt', 'thép', 'ống nước', 'dây điện', 'thợ', 'nhân công', 'sơn', 'gỗ', 'thiết bị', 'đá 1x2', 'đá 4x6', 'tôn', 'xà gồ', 'gạch men', 'thiết bị vệ sinh', 'đèn', 'công thợ'];
-      const lines = text.split('\n');
-      for (const line of lines) {
-        const lowerLine = line.toLowerCase();
-        // Tìm dòng chứa từ khóa và làm sạch nhiễu OCR xung quanh
-        if (keywords.some(kw => lowerLine.includes(kw))) {
-          parsedData.noiDung = line.trim().replace(/[|\\\[\]{}()_*~^]/g, '').replace(/^[^a-zA-ZÀ-ỹđĐ0-9]+|[^a-zA-ZÀ-ỹđĐ0-9]+$/g, '');
-          foundSomething = true;
-          break; // Lấy dòng đầu tiên tìm thấy
-        }
-      }
-
-      setFormData(prev => ({ ...prev, ...parsedData }));
-      if (foundSomething) {
-        showToast("Đã nhận diện được thông tin từ ảnh!", "success");
-      } else {
-        showToast("Không nhận diện được thông tin rõ ràng, vui lòng nhập thủ công.", "warning");
+        showToast("AI đã nhận diện thành công!", "success");
       }
     } catch (error) {
       console.error("OCR Error:", error);
-      showToast("Lỗi khi quét OCR: " + error.message, "error");
+      showToast("AI không đọc được ảnh này.", "error");
     } finally {
       setOcrScanning(false);
     }

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { FiCamera, FiLoader } from 'react-icons/fi';
+import { extractInfoWithAI } from '../utils/aiService';
 
 function BusinessScanner({ showToast }) {
   const fileInputRef = useRef(null);
@@ -10,24 +11,9 @@ function BusinessScanner({ showToast }) {
 
   const callGemini = async (base64) => {
     try {
-      const response = await fetch('/api/gemini-extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageUrl: `data:image/jpeg;base64,${base64}`,
-          type: 'card'
-        })
-      });
+      const data = await extractInfoWithAI(`data:image/jpeg;base64,${base64}`, 'card');
 
-      if (!response.ok) {
-        throw new Error(`Server trả về lỗi ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.error) throw new Error(data.error);
-
-      // Vì Backend index.js đã trả về JSON trích xuất sẵn {ten, sdt, ...}
+      // Xử lý dữ liệu trích xuất từ AI Service
       if (data && (data.ten || data.sdt)) {
         setDebugLog(`AI ĐÃ TRÍCH XUẤT: ${data.ten || "N/A"} - ${data.sdt || "N/A"}`);
         return {
