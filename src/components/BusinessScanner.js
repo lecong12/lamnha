@@ -6,7 +6,7 @@ function BusinessScanner() {
   const UPLOAD_PRESET = "ml_default";
   const LOG_ID = "nhat_ky_du_lieu";
   // ANH DÁN LẠI KEY CHUẨN CỦA ANH VÀO ĐÂY
-  const GEMINI_KEY = "AIzaSyDfyd86965EGsNgwhcNCuZQ1SZN3xzWty0"; 
+  const GEMINI_KEY = "AIzaSyCPeb3SKqrbQ432ESGlzvQTq5lJMLUOGIo"; 
 
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
