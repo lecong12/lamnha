@@ -27,14 +27,13 @@ function BusinessScanner({ showToast }) {
       setDebugLog("AI không tìm thấy thông tin phù hợp.");
       return null;
     } catch (err) {
-      // Xử lý lỗi JSON hoặc kết nối một cách thân thiện hơn
-      let errorMsg = err.message;
-      if (errorMsg.includes("Unexpected end of JSON")) {
-        errorMsg = "Server AI trả về phản hồi rỗng. Có thể do ảnh quá mờ hoặc server đang quá tải.";
-      } else if (errorMsg.includes("Failed to fetch")) {
-        errorMsg = "Không thể kết nối đến server. Vui lòng kiểm tra lại Internet.";
-      }
-      setDebugLog(`SỰ CỐ: ${errorMsg}`);
+      const isJsonError = err.message.includes("Unexpected end of JSON");
+      const errorMsg = isJsonError 
+        ? "Server AI không phản hồi dữ liệu. Vui lòng thử lại với ảnh rõ nét hơn." 
+        : err.message;
+      
+      setDebugLog(`LỖI: ${errorMsg}`);
+      if (showToast) showToast(errorMsg, "error");
       return null;
     }
   };
