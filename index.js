@@ -32,58 +32,59 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: 'v4', auth });
 
 // Cấu hình Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const apiKey = process.env.GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
 
 // API trích xuất thông tin bằng AI
 app.post('/api/gemini-extract', async (req, res) => {
   try {
     const { imageUrl, type } = req.body; // type: 'card' hoặc 'invoice'
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!apiKey) {
       return res.status(500).json({ error: 'GEMINI_API_KEY chưa được cấu hình trên server.' });
     }
 
     if (!imageUrl) return res.status(400).json({ error: 'Thiếu link ảnh' });
 
     // Cấu hình Model với hướng dẫn hệ thống nghiêm ngặt
+    // Dùng gemini-1.5-flash vì nó hỗ trợ JSON mode cực tốt và miễn phí/rẻ hơn
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
-      // Buộc AI trả về định dạng JSON chuẩn
       generationConfig: {
         responseMimeType: "application/json",
       }
     });
     
-    // Tải ảnh từ Cloudinary để gửi cho Gemini
     const imageResp = await fetch(imageUrl).then(response => response.arrayBuffer());
     
-    // Cải tiến việc nhận diện mimeType (xử lý cả URL có tham số phía sau)
     const urlLower = imageUrl.toLowerCase();
     let mimeType = "image/jpeg";
     if (urlLower.includes(".png")) mimeType = "image/png";
     else if (urlLower.includes(".pdf")) mimeType = "application/pdf";
     else if (urlLower.includes(".webp")) mimeType = "image/webp";
-    else if (urlLower.includes(".heic")) mimeType = "image/heic";
     
     let prompt = "";
     if (type === 'card') {
-      prompt = `Phân tích ảnh danh thiếp này và trích xuất dữ liệu JSON:
-      1. "ten": Tìm tên cửa hàng, doanh nghiệp hoặc thương hiệu. Thường là dòng chữ to nhất hoặc nằm trên cùng.
-      2. "sdt": Tìm số điện thoại (bắt đầu bằng số 0, dài 10-11 chữ số). Tìm gần các biểu tượng điện thoại hoặc từ khóa 'ĐT', 'Tel', 'Hotline', 'Zalo'.
-      3. "diaChi": Địa chỉ văn phòng/cửa hàng.
-      4. "mst": Mã số thuế nếu có.
-      
-      Nếu thông tin nào không có, hãy để giá trị "". Trả về JSON thuần túy.`;
+      prompt = `Bạn là một máy quét danh thiếp chuyên nghiệp tại Việt Nam. Trích xuất dữ liệu sau thành JSON:
+      {
+        "ten": "Tên công ty, cửa hàng hoặc thương hiệu (ưu tiên chữ to nhất, thường nằm ở phần trên)",
+        "sdt": "Chỉ lấy các chữ số của số điện thoại liên hệ (bắt đầu bằng 0, dài 10-11 số). Loại bỏ dấu cách, dấu chấm, gạch ngang",
+        "diaChi": "Địa chỉ ghi trên danh thiếp",
+        "mst": "Mã số thuế (nếu có)"
+      }
+      Lưu ý: Nếu không chắc chắn về SĐT, hãy tìm cạnh các chữ 'ĐT', 'Tel', 'Hotline' hoặc 'Zalo'.`;
     } else {
-      prompt = `Phân tích hóa đơn này và chỉ lấy thông tin của NGƯỜI BÁN (đơn vị cung cấp hàng):
-      1. "ten": Tên cửa hàng hoặc doanh nghiệp bán hàng (thường nằm ở tiêu đề trên cùng hóa đơn).
-      2. "sdt": Số điện thoại của người bán.
-      3. "ngay": Ngày lập hóa đơn (định dạng YYYY-MM-DD).
-      4. "soTien": Tổng số tiền thanh toán cuối cùng (Số nguyên).
-      5. "noiDung": Tóm tắt mặt hàng đã mua kèm tên cửa hàng. VD: "Mua sắt thép tại Cửa hàng A".
-      
-      Tuyệt đối KHÔNG lấy thông tin người mua. Trả về JSON thuần túy.`;
+      prompt = `Phân tích hóa đơn/phiếu thu này. Chỉ tập trung trích xuất thông tin của NGƯỜI BÁN (đơn vị cung cấp):
+      {
+        "ten": "Tên cửa hàng hoặc doanh nghiệp bán hàng (thường nằm ở tiêu đề trên cùng)",
+        "sdt": "Số điện thoại của người bán (dãy số bắt đầu bằng 0)",
+        "ngay": "Ngày mua hàng (định dạng YYYY-MM-DD)",
+        "soTien": 0,
+        "noiDung": "Tóm tắt ngắn gọn mặt hàng đã mua. Ví dụ: 'Mua xi măng tại Cửa hàng A'"
+      }
+      Lưu ý: Tuyệt đối không lấy thông tin người mua. Nếu không thấy SĐT người bán, để "".`;
     }
+
     const result = await model.generateContent([
       {
         inlineData: {
@@ -96,7 +97,8 @@ app.post('/api/gemini-extract', async (req, res) => {
 
     const response = await result.response;
     let text = response.text();
-    // Loại bỏ markdown code blocks nếu AI vô tình thêm vào
+    
+    // Làm sạch dữ liệu trả về để đảm bảo JSON.parse không lỗi
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
     
     res.json(JSON.parse(text));
