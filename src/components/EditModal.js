@@ -190,17 +190,21 @@ function EditModal({ item, onClose, onSave, showToast }) {
         const detailText = data.noiDung || "";
         const combinedNoiDung = [shopInfo, phoneInfo, detailText].filter(Boolean).join(" - ");
 
+        // Xử lý số tiền: Nếu AI trả về chuỗi có dấu chấm/phẩy thì làm sạch trước khi format
+        const cleanAmount = data.soTien ? String(data.soTien).replace(/\D/g, "") : "";
+
         setFormData(prev => ({
           ...prev,
           ngay: data.ngay || prev.ngay,
-          soTien: data.soTien ? new Intl.NumberFormat('vi-VN').format(data.soTien) : prev.soTien,
+          soTien: cleanAmount ? new Intl.NumberFormat('vi-VN').format(cleanAmount) : prev.soTien,
           noiDung: combinedNoiDung
         }));
         showToast("AI đã nhận diện thành công!", "success");
       }
     } catch (error) {
       console.error("OCR Error:", error);
-      showToast("AI không đọc được ảnh này.", "error");
+      // Hiển thị lỗi cụ thể để dễ debug
+      showToast(error.message || "AI không đọc được ảnh này.", "error");
     } finally {
       setOcrScanning(false);
     }

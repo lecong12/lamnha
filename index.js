@@ -8,7 +8,8 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const app = express();
 
 // Cho phép nhận JSON từ client
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Cấu hình CORS thủ công (Cho phép Frontend gọi API)
 app.use((req, res, next) => {
@@ -69,9 +70,12 @@ app.post('/api/gemini-extract', async (req, res) => {
       imageData = base64Data;
       mimeType = imageUrl.split(";")[0].split(":")[1];
     } else {
-      // Nếu là URL (Cloudinary), tải về và chuyển sang Base64
-      const imageResp = await fetch(imageUrl).then(response => response.arrayBuffer());
-      imageData = Buffer.from(imageResp).toString("base64");
+      // Nếu là URL (Cloudinary), tải về an toàn hơn
+      const imageResp = await fetch(imageUrl);
+      if (!imageResp.ok) throw new Error("Không thể tải ảnh từ Cloudinary");
+      
+      const arrayBuffer = await imageResp.arrayBuffer();
+      imageData = Buffer.from(arrayBuffer).toString("base64");
 
       const urlLower = imageUrl.toLowerCase();
       if (urlLower.includes(".png")) mimeType = "image/png";
