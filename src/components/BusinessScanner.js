@@ -12,8 +12,8 @@ function BusinessScanner({ showToast }) {
   const [debugLog, setDebugLog] = useState("");
 
   const callGemini = async (base64) => {
-    // THAY ĐỔI CUỐI CÙNG: Dùng gemini-pro-vision (Con này lỳ đòn nhất lịch sử)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_KEY}`;
+    // gemini-pro-vision đã bị khai tử, phải chuyển sang gemini-1.5-flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
     
     try {
       const response = await fetch(url, {
