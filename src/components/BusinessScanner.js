@@ -6,7 +6,7 @@ function App() {
   const UPLOAD_PRESET = "ml_default";
   const LOG_ID = "nhat_ky_du_lieu";
   // Anh dán lại API Key Gemini của anh vào đây nhé
-  const GEMINI_KEY = "AIzaSy..."; 
+  const GEMINI_KEY = "AIzaSyDfyd86965EGsNgwhcNCuZQ1SZN3xzWty0"; 
 
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
