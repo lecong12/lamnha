@@ -1,15 +1,7 @@
 // AppSheet API Configuration
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 const formatRowId = (id) => {
-  if (id === null || id === undefined) return id;
-  if (typeof id === 'string') {
-    // Nếu chuỗi có định dạng PREFIX_12345 hoặc chỉ là số
-    const parts = id.split('_');
-    const possibleNum = parts.length > 1 ? parts[1] : parts[0];
-    if (!isNaN(possibleNum) && possibleNum.trim() !== "") {
-      return Number(possibleNum);
-    }
-  }
+  // Giữ nguyên ID gốc để tránh lỗi không khớp Key trong AppSheet (Ví dụ: NOTE_123 không được biến thành 123)
   return id;
 };
 

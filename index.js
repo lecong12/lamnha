@@ -54,7 +54,7 @@ app.post('/api/gemini-extract', async (req, res) => {
     // Cấu hình Model với hướng dẫn hệ thống nghiêm ngặt
     // Dùng gemini-1.5-flash vì nó hỗ trợ JSON mode cực tốt và miễn phí/rẻ hơn
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-latest",
       generationConfig: {
         temperature: 0.1, // Giảm độ sáng tạo để trích xuất chính xác hơn
         responseMimeType: "application/json",

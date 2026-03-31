@@ -19,8 +19,15 @@ function QuickNotes({ showToast }) {
         // Giả định bảng tên là "GhiChu" trong AppSheet
         const res = await fetchTableData("GhiChu", APP_ID);
         if (res.success) {
-          // Sắp xếp theo ngày mới nhất
-          const sorted = (res.data || []).sort((a, b) => new Date(b.ngay) - new Date(a.ngay));
+          // Chuẩn hóa dữ liệu đầu vào: Map các tên cột Tiếng Việt/AppSheet sang tên biến code
+          const mappedNotes = (res.data || []).map(item => ({
+            id: item.id || item.ID || item._RowNumber,
+            ngay: item.ngay || item["Ngày"] || item.Ngay || "",
+            noiDung: item.noiDung || item["Nội dung"] || item.NoiDung || "",
+            _RowNumber: item._RowNumber || ""
+          })).filter(n => n.noiDung); // Lọc bỏ dòng rỗng
+
+          const sorted = mappedNotes.sort((a, b) => new Date(b.ngay || 0) - new Date(a.ngay || 0));
           setNotes(sorted);
         }
       } catch (e) {
@@ -38,19 +45,29 @@ function QuickNotes({ showToast }) {
     
     setAdding(true);
     const now = new Date();
-    // Cấu trúc dữ liệu gửi lên Sheet
-    const noteData = {
-      id: `NOTE_${Date.now()}`,
-      ngay: now.toISOString(), // Lưu ISO string để sort chính xác
-      noiDung: newNote
+    const dateStr = now.toISOString().split('T')[0];
+    const noteId = `NOTE_${Date.now()}`;
+
+    // 1. Cấu trúc dữ liệu gửi lên API (Gửi đa dạng tên cột để đảm bảo trúng đích)
+    const apiPayload = {
+      "id": noteId, 
+      "ngay": dateStr,
+      "noiDung": newNote.trim(),
+      "Ngày": dateStr,
+      "Nội dung": newNote.trim()
+    };
+
+    // 2. Cấu trúc dữ liệu để hiển thị ngay trên UI (Dùng tên biến code)
+    const uiNote = {
+      id: noteId,
+      ngay: now,
+      noiDung: newNote.trim()
     };
 
     try {
-        const res = await addRowToSheet("GhiChu", noteData, APP_ID);
+        const res = await addRowToSheet("GhiChu", apiPayload, APP_ID);
         if (res.success) {
-            // Nếu server trả về row mới, dùng nó để có _RowNumber chính xác
-            const savedNote = (res.data && res.data[0]) ? res.data[0] : noteData;
-            setNotes([savedNote, ...notes]);
+            setNotes(prevNotes => [uiNote, ...prevNotes]);
             setNewNote("");
             if (showToast) showToast("Đã lưu ghi chú", "success");
         } else {
@@ -64,14 +81,11 @@ function QuickNotes({ showToast }) {
   };
 
   const deleteNote = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa ghi chú này?")) {
-        const noteToDelete = notes.find(n => n.id === id || n._RowNumber === id);
-        const targetId = noteToDelete?._RowNumber || id;
-
+    if (window.confirm("Bạn có chắc chắn muốn xóa ghi chú này?")) {
         try {
-            const res = await deleteRowFromSheet("GhiChu", targetId, APP_ID);
+            const res = await deleteRowFromSheet("GhiChu", id, APP_ID);
             if (res.success) {
-                setNotes(notes.filter(n => (n.id !== id && n._RowNumber !== id)));
+                setNotes(notes.filter(n => n.id !== id));
                 if (showToast) showToast("Đã xóa", "success");
             } else {
                 throw new Error(res.message);
@@ -99,9 +113,6 @@ function QuickNotes({ showToast }) {
       <div className="notes-header">
         <h3 className="chart-title">Ghi chú nhanh & Liên kết</h3>
         <div className="external-links">
-          <button className="ext-btn notion" onClick={() => openExternalApp('https://www.notion.so/')} title="Mở Notion">
-             Notion <FiExternalLink />
-          </button>
           <button className="ext-btn keep" onClick={() => openExternalApp('https://keep.google.com/')} title="Mở Google Keep">
              Keep <FiExternalLink />
           </button>
