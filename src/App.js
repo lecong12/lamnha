@@ -71,16 +71,17 @@ function App() {
     if (mode === 'BILL') {
       setEditingItem({
         ngay: result.ngay || new Date().toISOString().split("T")[0],
-        soTien: result.so_tien || 0,
+        soTien: result.soTien || 0,
         loaiThuChi: "Chi",
-        noiDung: result.noi_dung || "",
-        doiTuongThuChi: result.don_vi || "", // Tên cửa hàng (ví dụ: Kim Long)
+        noiDung: result.noiDung || "",
+        doiTuongThuChi: result.ten || "", // Tên cửa hàng từ AI
         nguoiCapNhat: "Gemini AI Scanner",
         hinhAnh: result.image_url || ""
       });
     } else {
-      // Nếu là quét Card, có thể lưu vào ghi chú hoặc danh bạ
-      showToast(`Đã tìm thấy: ${result.ten_don_vi}`, "success");
+      // Nếu là quét Card hoặc Bảng hiệu
+      const info = [result.ten, result.sdt].filter(Boolean).join(" - ");
+      showToast(`Đã trích xuất: ${info || "Không tìm thấy thông tin rõ ràng"}`, info ? "success" : "warning");
     }
   };
 

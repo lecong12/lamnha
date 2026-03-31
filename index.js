@@ -85,14 +85,14 @@ app.post('/api/gemini-extract', async (req, res) => {
     
     let prompt = "";
     if (type === 'card') {
-      prompt = `Hãy đóng vai một máy quét OCR chuyên nghiệp. Phân tích ảnh danh thiếp (business card) Việt Nam này và trả về JSON:
+      prompt = `Hãy đóng vai một máy quét OCR chuyên nghiệp. Phân tích ảnh danh thiếp (business card) hoặc biển hiệu cửa hàng (signage) Việt Nam này và trả về JSON:
       {
-        "ten": "Tên công ty/cửa hàng (thường là chữ to nhất ở trên cùng)",
+        "ten": "Tên công ty/cửa hàng/đơn vị (thường là chữ to nhất)",
         "sdt": "Số điện thoại liên hệ (Chỉ lấy các chữ số, bắt đầu bằng số 0, dài 10-11 ký tự)",
         "diaChi": "Địa chỉ đầy đủ",
         "mst": "Mã số thuế (nếu có)"
       }
-      Lưu ý: Tìm kỹ các từ khóa 'ĐT', 'Tel', 'Hotline', 'Zalo'. Nếu không thấy thông tin nào, hãy để "".`;
+      Lưu ý: Tìm kỹ các từ khóa 'ĐT', 'Tel', 'Hotline', 'Zalo'. Nếu không thấy thông tin nào, hãy để "". Trả về JSON thuần túy.`;
     } else {
       prompt = `Phân tích ảnh hóa đơn/phiếu thu này. Chỉ tập trung vào thông tin của BÊN BÁN (NGƯỜI BÁN):
       {
@@ -197,6 +197,15 @@ module.exports = app;
 // Khởi động server nếu chạy trực tiếp (Localhost)
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;
+  
+  // Kiểm tra cấu hình biến môi trường khi khởi động
+  console.log("=== KIỂM TRA CẤU HÌNH HỆ THỐNG ===");
+  console.log("PORT:", PORT);
+  console.log("GEMINI_API_KEY:", apiKey ? "✅ Đã cài đặt" : "❌ THIẾU");
+  console.log("GOOGLE_SHEETS_AUTH:", (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) ? "✅ Đã cài đặt" : "❌ THIẾU");
+  console.log("SPREADSHEET_ID:", process.env.SPREADSHEET_ID ? "✅ Đã cài đặt" : "❌ THIẾU");
+  console.log("==================================");
+
   app.listen(PORT, () => {
     console.log(`Server đang chạy tại http://localhost:${PORT}`);
   });
