@@ -14,15 +14,6 @@ const normalizeKey = (key) => {
   return key;
 };
 
-// Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
-const normalizeKey = (key) => {
-  const k = key.toLowerCase().trim();
-  if (k === 'ngày' || k === 'ngay' || k === 'date') return 'ngay';
-  if (k === 'nội dung' || k === 'noi dung' || k === 'description') return 'noiDung';
-  if (k === 'id' || k === 'tt' || k === 'stt') return 'id';
-  return key;
-};
-
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
 const getCleanLink = (rawLink) => {
   if (!rawLink) return "";
