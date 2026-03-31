@@ -11,31 +11,33 @@ function QuickNotes({ showToast }) {
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
 
+  // Đưa hàm loadNotes ra ngoài để có thể gọi lại từ nhiều nơi
+  const loadNotes = async () => {
+    setLoading(true);
+    try {
+      // Giả định bảng tên là "GhiChu" trong AppSheet
+      const res = await fetchTableData("GhiChu", APP_ID);
+      if (res.success) {
+        // Chuẩn hóa dữ liệu đầu vào: Map các tên cột Tiếng Việt/AppSheet sang tên biến code
+        const mappedNotes = (res.data || []).map(item => ({
+          id: item.id || item.ID || item.Id || item._RowNumber,
+          ngay: item.ngay || item["Ngày"] || item.Ngay || "",
+          noiDung: item.noiDung || item["Nội dung"] || item.NoiDung || item["Ghi chú"] || "",
+          _RowNumber: item._RowNumber || item.rowNumber || ""
+        })).filter(n => n.noiDung); // Lọc bỏ dòng rỗng
+
+        const sorted = mappedNotes.sort((a, b) => new Date(b.ngay || 0) - new Date(a.ngay || 0));
+        setNotes(sorted);
+      }
+    } catch (e) {
+      console.error("Lỗi đọc ghi chú:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Tải ghi chú từ AppSheet (Thay thế LocalStorage)
   useEffect(() => {
-    const loadNotes = async () => {
-      setLoading(true);
-      try {
-        // Giả định bảng tên là "GhiChu" trong AppSheet
-        const res = await fetchTableData("GhiChu", APP_ID);
-        if (res.success) {
-          // Chuẩn hóa dữ liệu đầu vào: Map các tên cột Tiếng Việt/AppSheet sang tên biến code
-          const mappedNotes = (res.data || []).map(item => ({
-            id: item.id || item.ID || item.Id || item._RowNumber,
-            ngay: item.ngay || item["Ngày"] || item.Ngay || "",
-            noiDung: item.noiDung || item["Nội dung"] || item.NoiDung || item["Ghi chú"] || "",
-            _RowNumber: item._RowNumber || item.rowNumber || ""
-          })).filter(n => n.noiDung); // Lọc bỏ dòng rỗng
-
-          const sorted = mappedNotes.sort((a, b) => new Date(b.ngay || 0) - new Date(a.ngay || 0));
-          setNotes(sorted);
-        }
-      } catch (e) {
-        console.error("Lỗi đọc ghi chú:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadNotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -51,25 +53,20 @@ function QuickNotes({ showToast }) {
     // 1. Cấu trúc dữ liệu gửi lên API (Gửi đa dạng tên cột để đảm bảo trúng đích)
     const apiPayload = {
       "id": noteId, 
+      "ID": noteId,
       "ngay": dateStr,
       "noiDung": newNote.trim(),
       "Ngày": dateStr,
       "Nội dung": newNote.trim()
     };
 
-    // 2. Cấu trúc dữ liệu để hiển thị ngay trên UI (Dùng tên biến code)
-    const uiNote = {
-      id: noteId,
-      ngay: now,
-      noiDung: newNote.trim()
-    };
-
     try {
         const res = await addRowToSheet("GhiChu", apiPayload, APP_ID);
         if (res.success) {
-            setNotes(prevNotes => [uiNote, ...prevNotes]);
             setNewNote("");
             if (showToast) showToast("Đã lưu ghi chú", "success");
+            // Tải lại dữ liệu thật từ server để đảm bảo đồng bộ 100%
+            await loadNotes();
         } else {
             if (showToast) showToast("Lỗi lưu ghi chú: " + res.message, "error");
         }
@@ -87,9 +84,9 @@ function QuickNotes({ showToast }) {
             const res = await deleteRowFromSheet("GhiChu", id, APP_ID); 
             
             if (res.success) {
-                // Cập nhật UI ngay lập tức
-                setNotes(notes.filter(n => n.id !== id));
                 if (showToast) showToast("Đã xóa ghi chú thành công", "success");
+                // Tải lại dữ liệu để đồng bộ
+                await loadNotes();
             } else {
                 throw new Error(res.message);
             }

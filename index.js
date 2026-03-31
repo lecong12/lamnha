@@ -52,13 +52,13 @@ app.post('/api/gemini-extract', async (req, res) => {
     if (!imageUrl) return res.status(400).json({ error: 'Thiếu link ảnh' });
 
     // Cấu hình Model với hướng dẫn hệ thống nghiêm ngặt
-    // Dùng gemini-1.5-flash vì nó hỗ trợ JSON mode cực tốt và miễn phí/rẻ hơn
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
       generationConfig: {
         temperature: 0.1, // Giảm độ sáng tạo để trích xuất chính xác hơn
         responseMimeType: "application/json",
-      }
+      },
+      systemInstruction: "Bạn là một chuyên gia OCR hóa đơn xây dựng tại Việt Nam. Phải luôn trả về JSON đúng định dạng. Nếu không tìm thấy số tiền, hãy để là 0. Nếu không thấy ngày, hãy để null."
     });
     
     let imageData;
@@ -90,19 +90,19 @@ app.post('/api/gemini-extract', async (req, res) => {
         "ten": "Tên công ty/cửa hàng/đơn vị (thường là chữ to nhất)",
         "sdt": "Số điện thoại liên hệ (Chỉ lấy các chữ số, bắt đầu bằng số 0, dài 10-11 ký tự)",
         "diaChi": "Địa chỉ đầy đủ",
-        "mst": "Mã số thuế (nếu có)"
+        "mst": "Mã số thuế"
       }
-      Lưu ý: Tìm kỹ các từ khóa 'ĐT', 'Tel', 'Hotline', 'Zalo'. Nếu không thấy thông tin nào, hãy để "". Trả về JSON thuần túy.`;
+      Lưu ý: Tìm kỹ các từ khóa 'ĐT', 'Tel', 'Hotline', 'Zalo'. Nếu không thấy thông tin nào, hãy để \"\".`;
     } else {
-      prompt = `Phân tích ảnh hóa đơn/phiếu thu này. Chỉ tập trung vào thông tin của BÊN BÁN (NGƯỜI BÁN):
+      prompt = `Trích xuất thông tin từ hóa đơn/phiếu thu vật tư xây dựng này. Chỉ lấy thông tin của BÊN BÁN:
       {
-        "ten": "Tên cửa hàng hoặc doanh nghiệp bán vật tư (Ví dụ: VLXD A)",
-        "sdt": "Số điện thoại của người bán (Tìm gần địa chỉ hoặc tên cửa hàng, bắt đầu bằng 0)",
+        "ten": "Tên cửa hàng/doanh nghiệp bán",
+        "sdt": "Số điện thoại người bán (bắt đầu bằng 0)",
         "ngay": "Ngày mua hàng (Định dạng YYYY-MM-DD)",
         "soTien": 0,
-        "noiDung": "Tóm tắt các mặt hàng chính đã mua (Ví dụ: Gạch ống, Xi măng Hà Tiên)"
+        "noiDung": "Tóm tắt vật tư (Ví dụ: 50 bao xi măng Hà Tiên, 2 khối cát)"
       }
-      Lưu ý: KHÔNG lấy thông tin người mua. Nếu không thấy SĐT, hãy để "". Trả về JSON thuần túy.`;
+      Lưu ý: soTien phải là số nguyên (ví dụ: 500000). KHÔNG lấy thông tin người mua.`;
     }
 
     const result = await model.generateContent([
@@ -118,8 +118,12 @@ app.post('/api/gemini-extract', async (req, res) => {
     const response = await result.response;
     let text = response.text();
     
-    // Làm sạch dữ liệu trả về để đảm bảo JSON.parse không lỗi
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    // Làm sạch dữ liệu trả về: tìm vị trí { đầu tiên và } cuối cùng để trích xuất JSON thuần
+    const startIdx = text.indexOf('{');
+    const endIdx = text.lastIndexOf('}');
+    if (startIdx !== -1 && endIdx !== -1) {
+      text = text.substring(startIdx, endIdx + 1);
+    }
     
     res.json(JSON.parse(text));
   } catch (error) {
@@ -147,6 +151,10 @@ app.get('/api/data', async (req, res) => {
     const response = await sheets.spreadsheets.values.get({ spreadsheetId, range });
     const values = response.data.values || [];
     res.header('Content-Type', 'application/json');
+    
+    // Log để kiểm tra số cột thực tế từ Sheet
+    console.log(`Đã tải ${values.length} dòng từ Sheet.`);
+    
     res.json({ data: values });
   } catch (error) {
     console.error('Lỗi khi đọc Google Sheet:', error);
@@ -160,11 +168,11 @@ app.post('/api/data', async (req, res) => {
     const spreadsheetId = process.env.SPREADSHEET_ID;
     const range = 'GiaoDich!A:G'; // Cập nhật range A:G
 
-    // Dữ liệu gửi từ client, ví dụ: { values: ["2024-05-20", "Vật tư", "Xi măng", 500000, "Đợt 1"] }
-     const { values } = req.body;
+    const { values } = req.body;
 
     if (!values || !Array.isArray(values)) {
-      return res.status(400).json({ error: 'Dữ liệu "values" không hợp lệ, phải là một mảng.' });
+      console.error('Dữ liệu không hợp lệ:', req.body);
+      return res.status(400).json({ error: 'Dữ liệu "values" phải là một mảng (Array).' });
     }
 
     await sheets.spreadsheets.values.append({
