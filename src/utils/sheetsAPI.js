@@ -115,10 +115,10 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         throw new Error("Thiếu 'id' để cập nhật dòng.");
     }
 
-    // Đảm bảo ID được định dạng là số nếu AppSheet yêu cầu (loại bỏ GD_, CT_, BV_...)
+    // Đảm bảo ID được định dạng chuẩn (giữ nguyên chuỗi nếu cần)
     const formattedPayload = { 
       ...payload, 
-      id: formatRowId(payload.id) 
+      id: payload.id // Không ép kiểu sang số ở đây nếu payload.id là chuỗi NOTE_...
     };
 
     // AppSheet cần ID để biết dòng nào cần sửa, và các trường khác để cập nhật
@@ -143,7 +143,13 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       throw new Error(errorText);
     }
 
-    return { success: true, message: "Cập nhật thành công" };
+    const result = await response.json();
+    // AppSheet trả về Rows rỗng nếu không tìm thấy ID để sửa hoặc có lỗi logic
+    if (result && result.Rows && result.Rows.length === 0) {
+      throw new Error("AppSheet không tìm thấy dòng để cập nhật. Hãy kiểm tra ID.");
+    }
+
+    return { success: true, message: "Cập nhật thành công", data: result };
   } catch (error) {
     console.error(`Error updating ${tableName}:`, error);
     return { success: false, message: error.message };
@@ -156,9 +162,9 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
     // Đảm bảo ID được định dạng chuẩn số trước khi thêm mới
+    // Nếu payload không có id, không được ép vào để tránh lỗi AppSheet Missing Column
     const formattedPayload = { 
-      ...payload, 
-      id: formatRowId(payload.id) 
+      ...payload
     };
 
     const response = await fetch(getApiUrl(appId, tableName), {
@@ -182,7 +188,13 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       throw new Error(errorText);
     }
 
-    return { success: true, message: "Thêm mới thành công" };
+    const result = await response.json();
+    // Kiểm tra nếu AppSheet báo lỗi trong body (thường nằm trong kết quả trả về)
+    if (result && result.Rows && result.Rows.length === 0) {
+      throw new Error("AppSheet xác nhận thành công nhưng không có dòng nào được tạo.");
+    }
+
+    return { success: true, message: "Thêm mới thành công", data: result };
   } catch (error) {
     console.error(`Error adding to ${tableName}:`, error);
     return { success: false, message: error.message };
