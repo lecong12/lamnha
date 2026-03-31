@@ -5,6 +5,15 @@ const formatRowId = (id) => {
   return id;
 };
 
+// Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
+const normalizeKey = (key) => {
+  const k = key.toLowerCase().trim();
+  if (k === 'ngày' || k === 'ngay' || k === 'date') return 'ngay';
+  if (k === 'nội dung' || k === 'noi dung' || k === 'description') return 'noiDung';
+  if (k === 'id' || k === 'tt' || k === 'stt') return 'id';
+  return key;
+};
+
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
 const getCleanLink = (rawLink) => {
   if (!rawLink) return "";
@@ -76,16 +85,26 @@ export const fetchTableData = async (tableName, appId) => {
 
     // Đọc text trước để tránh lỗi "Unexpected end of JSON input" nếu body rỗng
     const responseText = await response.text();
-    let data = [];
+    let rawData = [];
     if (responseText) {
       try {
-        data = JSON.parse(responseText);
+        rawData = JSON.parse(responseText);
       } catch (e) {
         console.error("Lỗi parse JSON từ AppSheet:", e);
       }
     }
+
+    // Chuẩn hóa dữ liệu trả về để các thành phần như QuickNotes có thể đọc được ngay, noiDung
+    const data = (Array.isArray(rawData) ? rawData : []).map(row => {
+      const normalizedRow = {};
+      Object.keys(row).forEach(key => {
+        normalizedRow[normalizeKey(key)] = row[key];
+      });
+      return normalizedRow;
+    });
+
     // AppSheet trả về mảng object hoặc object rỗng nếu lỗi/không có dữ liệu
-    return { success: true, data: Array.isArray(data) ? data : [] };
+    return { success: true, data };
   } catch (error) {
     console.error(`Error fetching ${tableName}:`, error);
     return { success: false, message: error.message };
@@ -124,11 +143,17 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         throw new Error("Thiếu 'id' để cập nhật dòng.");
     }
 
-    // Đảm bảo ID được định dạng chuẩn (giữ nguyên chuỗi nếu cần)
-    const formattedPayload = { 
-      ...payload, 
-      id: payload.id // Không ép kiểu sang số ở đây nếu payload.id là chuỗi NOTE_...
-    };
+    // Khôi phục logic mapping ổn định: Chuyển từ camelCase sang tên cột thực tế của Sheet
+    let formattedPayload = { ...payload };
+    
+    if (tableName === "GhiChu") {
+      formattedPayload = {
+        "_RowNumber": payload._RowNumber || payload.id,
+        "ID": payload.id,
+        "Ngày": payload.ngay,
+        "Nội dung": payload.noiDung
+      };
+    }
 
     // AppSheet cần ID để biết dòng nào cần sửa, và các trường khác để cập nhật
     const response = await fetch(getApiUrl(appId, tableName), {
@@ -180,11 +205,16 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
  */
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
-    // Đảm bảo ID được định dạng chuẩn số trước khi thêm mới
-    // Nếu payload không có id, không được ép vào để tránh lỗi AppSheet Missing Column
-    const formattedPayload = { 
-      ...payload
-    };
+    // Mapping cho bảng GhiChu để đảm bảo dữ liệu vào đúng cột tiếng Việt
+    let formattedPayload = { ...payload };
+
+    if (tableName === "GhiChu") {
+      formattedPayload = {
+        "ID": payload.id,
+        "Ngày": payload.ngay,
+        "Nội dung": payload.noiDung
+      };
+    }
 
     const response = await fetch(getApiUrl(appId, tableName), {
       method: "POST",
