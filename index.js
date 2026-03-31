@@ -118,14 +118,17 @@ app.post('/api/gemini-extract', async (req, res) => {
     const response = await result.response;
     let text = response.text();
     
-    // Làm sạch dữ liệu trả về: tìm vị trí { đầu tiên và } cuối cùng để trích xuất JSON thuần
-    const startIdx = text.indexOf('{');
-    const endIdx = text.lastIndexOf('}');
-    if (startIdx !== -1 && endIdx !== -1) {
-      text = text.substring(startIdx, endIdx + 1);
+    try {
+      const startIdx = text.indexOf('{');
+      const endIdx = text.lastIndexOf('}');
+      if (startIdx !== -1 && endIdx !== -1) {
+        text = text.substring(startIdx, endIdx + 1);
+      }
+      return res.json(JSON.parse(text));
+    } catch (parseError) {
+      console.error("Lỗi parse JSON từ Gemini:", text);
+      return res.status(500).json({ error: 'AI trả về dữ liệu không đúng định dạng JSON' });
     }
-    
-    res.json(JSON.parse(text));
   } catch (error) {
     console.error('Gemini Error:', error);
     res.status(500).json({ error: 'AI không thể phân tích ảnh lúc này' });
@@ -142,7 +145,7 @@ app.get('/api/status', (req, res) => {
 app.get('/api/data', async (req, res) => {
   try {
     const spreadsheetId = process.env.SPREADSHEET_ID;
-    const range = 'GiaoDich!A:G'; // Cập nhật range A:G theo cấu trúc mới
+    const range = 'GiaoDich!A:H'; // Mở rộng tới cột H để chứa Ghi chú
 
     if (!spreadsheetId) {
       return res.status(500).json({ error: 'SPREADSHEET_ID chưa được cấu hình trên server.' });
@@ -166,7 +169,7 @@ app.get('/api/data', async (req, res) => {
 app.post('/api/data', async (req, res) => {
   try {
     const spreadsheetId = process.env.SPREADSHEET_ID;
-    const range = 'GiaoDich!A:G'; // Cập nhật range A:G
+    const range = 'GiaoDich!A:H'; // Cập nhật range A:H
 
     const { values } = req.body;
 

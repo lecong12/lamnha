@@ -74,7 +74,16 @@ export const fetchTableData = async (tableName, appId) => {
       throw new Error(`HTTP error! status: ${response.status} - ${text}`);
     }
 
-    const data = await response.json();
+    // Đọc text trước để tránh lỗi "Unexpected end of JSON input" nếu body rỗng
+    const responseText = await response.text();
+    let data = [];
+    if (responseText) {
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Lỗi parse JSON từ AppSheet:", e);
+      }
+    }
     // AppSheet trả về mảng object hoặc object rỗng nếu lỗi/không có dữ liệu
     return { success: true, data: Array.isArray(data) ? data : [] };
   } catch (error) {
@@ -143,7 +152,17 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       throw new Error(errorText);
     }
 
-    const result = await response.json();
+    // Đọc text trước để tránh lỗi nếu AppSheet trả về body rỗng
+    const responseText = await response.text();
+    let result = null;
+    if (responseText) {
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.warn("Không thể parse JSON phản hồi cập nhật:", e);
+      }
+    }
+    
     // AppSheet trả về Rows rỗng nếu không tìm thấy ID để sửa hoặc có lỗi logic
     if (result && result.Rows && result.Rows.length === 0) {
       throw new Error("AppSheet không tìm thấy dòng để cập nhật. Hãy kiểm tra ID.");
@@ -188,7 +207,17 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       throw new Error(errorText);
     }
 
-    const result = await response.json();
+    // Đọc text trước để tránh lỗi nếu AppSheet trả về body rỗng
+    const responseText = await response.text();
+    let result = null;
+    if (responseText) {
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.warn("Không thể parse JSON phản hồi thêm mới:", e);
+      }
+    }
+    
     // Kiểm tra nếu AppSheet báo lỗi trong body (thường nằm trong kết quả trả về)
     if (result && result.Rows && result.Rows.length === 0) {
       throw new Error("AppSheet xác nhận thành công nhưng không có dòng nào được tạo.");
