@@ -143,29 +143,39 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     
     if (tableName === "GhiChu") {
       formattedPayload = {
-        "_RowNumber": payload._RowNumber || payload.rowNumber,
-        "ID": payload.id || payload.ID,
-        "id": payload.id || payload.ID,
-        "Ngày": payload.ngay ? (payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay).split('T')[0]) : undefined,
-        "Nội dung": payload.noiDung || payload.noiDung
+        "_RowNumber": payload._RowNumber || payload.rowNumber, // AppSheet's internal row number for updates
+        "ID": payload.id || payload.ID, // Assuming "ID" is the key column in AppSheet
+        "Ngày": payload.ngay ? (payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay).split('T')[0]) : new Date().toISOString().split('T')[0],
+        "Nội dung": payload.noiDung || ""
       };
     } else if (tableName === "GiaoDich" || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH) {
       // Đảm bảo số tiền luôn là số nguyên, không được là NaN
-      const cleanAmount = payload.soTien !== undefined ? parseInt(String(payload.soTien).replace(/\D/g, "")) || 0 : undefined;
+      const cleanAmount = payload.soTien !== undefined ? parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0 : 0;
 
       formattedPayload = {
-        "_RowNumber": payload.appSheetId || payload._RowNumber || payload.id,
-        "ID": payload.keyId || payload.id,
-        "id": payload.keyId || payload.id,
-        "Ngày": payload.ngay ? (payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay).split('T')[0]) : undefined,
-        "Loại Thu Chi": payload.loaiThuChi,
-        "Nội dung": payload.noiDung,
+        "_RowNumber": payload.appSheetId || payload._RowNumber, // AppSheet's internal row number for updates
+        "ID": payload.keyId || payload.id, // Assuming "ID" is the key column in AppSheet
+        "Ngày": payload.ngay ? (payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay).split('T')[0]) : new Date().toISOString().split('T')[0],
+        "Loại Thu Chi": payload.loaiThuChi || "Chi",
+        "Nội dung": payload.noiDung || "",
         "Số tiền": cleanAmount,
-        "Hạng mục": payload.doiTuongThuChi,
-        "Hình ảnh": payload.hinhAnh,
-        "Người cập nhật": payload.nguoiCapNhat,
-        "Ghi chú": payload.ghiChu
+        "Hạng mục": payload.doiTuongThuChi || "",
+        "Hình ảnh": payload.hinhAnh || "",
+        "Người cập nhật": payload.nguoiCapNhat || "",
+        "Ghi chú": payload.ghiChu || ""
       };
+      // Ensure ID is always present for updates
+      if (!formattedPayload["ID"] && !formattedPayload["_RowNumber"]) 
+        throw new Error("Missing ID or _RowNumber for GiaoDich update.");
+    } else if (tableName === "NganSach" || tableName === process.env.REACT_APP_APPSHEET_TABLE_NGANSACH) {
+      formattedPayload = {
+        "_RowNumber": payload._RowNumber || payload.rowNumber,
+        "ID": payload.id || payload.ID, // Assuming 'ID' or 'Hạng mục' is the key
+        "Hạng mục": payload["Hạng mục"] || payload.hangMuc,
+        "Dự kiến (VNĐ)": payload["Dự kiến (VNĐ)"] || payload.duKien
+      };
+      if (!formattedPayload["ID"] && !formattedPayload["_RowNumber"])
+        throw new Error("Missing ID or _RowNumber for NganSach update.");
     }
 
     // Xóa các trường undefined để tránh gửi dữ liệu rác lên AppSheet

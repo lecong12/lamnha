@@ -26,7 +26,15 @@ function QuickNotes({ showToast }) {
           _RowNumber: item._RowNumber || item.rowNumber || ""
         })).filter(n => n.noiDung); // Lọc bỏ dòng rỗng
 
-        const sorted = mappedNotes.sort((a, b) => new Date(b.ngay || 0) - new Date(a.ngay || 0));
+        // Sắp xếp: Ưu tiên ngày mới nhất, nếu cùng ngày thì dựa vào ID (timestamp) mới nhất
+        const sorted = mappedNotes.sort((a, b) => {
+          const dateA = new Date(a.ngay || 0);
+          const dateB = new Date(b.ngay || 0);
+          if (dateB - dateA !== 0) {
+            return dateB - dateA; // Sắp xếp theo ngày giảm dần
+          }
+          return String(b.id).localeCompare(String(a.id)); // Nếu cùng ngày, so sánh ID (timestamp)
+        });
         setNotes(sorted);
       }
     } catch (e) {
@@ -52,10 +60,7 @@ function QuickNotes({ showToast }) {
 
     // 1. Cấu trúc dữ liệu gửi lên API (Gửi đa dạng tên cột để đảm bảo trúng đích)
     const apiPayload = {
-      id: noteId,
-      ngay: dateStr,
-      noiDung: newNote.trim()
-    };
+      id: noteId, ngay: dateStr, noiDung: newNote.trim() };
 
     try {
         const res = await addRowToSheet("GhiChu", apiPayload, APP_ID);

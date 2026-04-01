@@ -124,7 +124,11 @@ function App() {
       });
       const fileData = await res.json();
       if (fileData.secure_url) {
-        const result = await updateRowInSheet(tableName, { id, [columnName]: fileData.secure_url }, APP_ID);
+        const updatePayload = {
+          _RowNumber: id.startsWith('stage_idx_') ? undefined : id, // If it's a generated ID, don't send _RowNumber
+          ID: id, // Assuming ID is the key column
+          [columnName]: fileData.secure_url };
+        const result = await updateRowInSheet(tableName, updatePayload, APP_ID);
         if (result.success) { showToast("Thành công!", "success"); await fetchAllData(); }
       }
     } catch (error) { showToast(error.message, "error"); } finally { setUploadingId(null); }

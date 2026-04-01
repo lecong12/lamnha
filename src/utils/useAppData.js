@@ -146,8 +146,9 @@ export const useAppData = (isLoggedIn) => {
         setNganSach(prev => prev.map(i => i.id === item.id ? updatedItem : i));
 
         const payload = {
-            "Hạng mục": item.keyId,
-            "Dự kiến": newDuKien
+            id: item.keyId, // Assuming 'Hạng mục' is the key column in AppSheet for NganSach
+            "Hạng mục": item.keyId, // Also send the actual column name
+            "Dự kiến (VNĐ)": newDuKien // Ensure this matches the column name in AppSheet
         };
 
         const result = await updateRowInSheet(TABLE_NGANSACH, payload, APP_ID);
