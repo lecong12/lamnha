@@ -150,17 +150,20 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       formattedPayload = {
         "_RowNumber": payload._RowNumber || payload.id,
         "ID": payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : payload.ngay,
+        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
         "Nội dung": payload.noiDung
       };
-    } else if (tableName === "GiaoDich") {
+    } else if (tableName === "GiaoDich" || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH) {
+      // Đảm bảo số tiền luôn là số nguyên, không được là NaN
+      const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
+
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber || payload.id,
         "ID": payload.keyId || payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : payload.ngay,
+        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
-        "Số tiền": Number(String(payload.soTien || 0).replace(/\D/g, "")),
+        "Số tiền": cleanAmount,
         "Hạng mục": payload.doiTuongThuChi,
         "Hình ảnh": payload.hinhAnh,
         "Người cập nhật": payload.nguoiCapNhat,
@@ -168,9 +171,13 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       };
     }
 
-    // AppSheet cần ID để biết dòng nào cần sửa, và các trường khác để cập nhật
+    // Thêm Timeout để tránh lỗi khi upload ảnh nặng
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 giây
+
     const response = await fetch(getApiUrl(appId, tableName), {
       method: "POST",
+      signal: controller.signal,
       headers: {
         "ApplicationAccessKey": APPSHEET_ACCESS_KEY,
         "Content-Type": "application/json",
@@ -184,14 +191,13 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         Rows: [formattedPayload],
       }),
     });
+    clearTimeout(timeoutId);
 
+    const responseText = await response.text();
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText);
+      throw new Error(responseText || `Lỗi HTTP ${response.status}`);
     }
 
-    // Đọc text trước để tránh lỗi nếu AppSheet trả về body rỗng
-    const responseText = await response.text();
     let result = null;
     if (responseText) {
       try {
@@ -224,16 +230,19 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     if (tableName === "GhiChu") {
       formattedPayload = {
         "ID": payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : payload.ngay,
+        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
         "Nội dung": payload.noiDung
       };
-    } else if (tableName === "GiaoDich") {
+    } else if (tableName === "GiaoDich" || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH) {
+      // Đảm bảo số tiền luôn là số nguyên
+      const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
+
       formattedPayload = {
         "ID": payload.id || payload.keyId,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : payload.ngay,
+        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
-        "Số tiền": Number(String(payload.soTien || 0).replace(/\D/g, "")),
+        "Số tiền": cleanAmount,
         "Hạng mục": payload.doiTuongThuChi,
         "Hình ảnh": payload.hinhAnh,
         "Người cập nhật": payload.nguoiCapNhat,
@@ -241,8 +250,12 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       };
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     const response = await fetch(getApiUrl(appId, tableName), {
       method: "POST",
+      signal: controller.signal,
       headers: {
         "ApplicationAccessKey": APPSHEET_ACCESS_KEY,
         "Content-Type": "application/json",
@@ -256,14 +269,13 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         Rows: [formattedPayload], // Gửi payload đã chuẩn hóa
       }),
     });
+    clearTimeout(timeoutId);
 
+    const responseText = await response.text();
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText);
+      throw new Error(responseText || `Lỗi HTTP ${response.status}`);
     }
 
-    // Đọc text trước để tránh lỗi nếu AppSheet trả về body rỗng
-    const responseText = await response.text();
     let result = null;
     if (responseText) {
       try {
