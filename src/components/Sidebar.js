@@ -6,7 +6,6 @@ import {
   FiBarChart2,
   FiDollarSign,
   FiList,
-  FiGrid,
   FiMessageCircle,
   FiMoon,
   FiSun,
