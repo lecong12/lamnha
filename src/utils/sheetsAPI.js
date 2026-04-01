@@ -150,14 +150,14 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       formattedPayload = {
         "_RowNumber": payload._RowNumber || payload.id,
         "ID": payload.id,
-        "Ngày": payload.ngay,
+        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : payload.ngay,
         "Nội dung": payload.noiDung
       };
     } else if (tableName === "GiaoDich") {
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber || payload.id,
         "ID": payload.keyId || payload.id,
-        "Ngày": payload.ngay,
+        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : payload.ngay,
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
         "Số tiền": payload.soTien,
@@ -224,13 +224,13 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     if (tableName === "GhiChu") {
       formattedPayload = {
         "ID": payload.id,
-        "Ngày": payload.ngay,
+        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : payload.ngay,
         "Nội dung": payload.noiDung
       };
     } else if (tableName === "GiaoDich") {
       formattedPayload = {
         "ID": payload.id || payload.keyId,
-        "Ngày": payload.ngay,
+        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : payload.ngay,
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
         "Số tiền": payload.soTien,
