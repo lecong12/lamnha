@@ -223,30 +223,31 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 1. Validation: Kiểm tra Hạng mục
+    // 1. Làm sạch dữ liệu số tiền
+    const rawSoTien = formData.soTien ? formData.soTien.toString().replace(/\D/g, "") : "0";
+    const parsedSoTien = parseInt(rawSoTien) || 0;
+
+    // 2. Validation
     if (!formData.doiTuongThuChi) {
-      alert("Vui lòng chọn Hạng mục chi tiêu!");
+      if (showToast) showToast("Vui lòng chọn Hạng mục!", "warning");
+      else alert("Vui lòng chọn Hạng mục!");
       return;
     }
 
-    // Xử lý số tiền an toàn hơn
-    const rawSoTien = formData.soTien ? formData.soTien.toString().replace(/[^0-9]/g, "") : "0";
-    const parsedSoTien = parseFloat(rawSoTien);
-
-    // 2. Validation: Kiểm tra Số tiền
     if (parsedSoTien <= 0) {
-      alert("Vui lòng nhập Số tiền hợp lệ (lớn hơn 0)!");
+      if (showToast) showToast("Vui lòng nhập số tiền hợp lệ!", "warning");
+      else alert("Vui lòng nhập số tiền!");
       return;
     }
 
+    // 3. Đóng gói dữ liệu gửi về App.js
     const finalData = {
-      ...item,
-      ...formData,
-      ngay: new Date(formData.ngay),
-      soTien: isNaN(parsedSoTien) ? 0 : parsedSoTien,
-      ghiChu: formData.ghiChu || ""
+      ...item, // Giữ lại ID và các thuộc tính ẩn khác
+      ...formData, // Ghi đè các thuộc tính từ form
+      soTien: parsedSoTien,
+      ngay: new Date(formData.ngay), // Chuyển về Date object để API xử lý chuẩn
+      ghiChu: formData.ghiChu?.trim() || ""
     };
-
     onSave(finalData);
   };
 
