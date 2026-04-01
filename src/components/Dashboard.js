@@ -156,20 +156,6 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
                   />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="chart-legend">
-                {pieData.map((entry, index) => (
-                  <div key={entry.name} className="legend-item">
-                    <span
-                      className="legend-color"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    ></span>
-                    <span className="legend-label">{entry.name}</span>
-                    <span className="legend-value">
-                      {formatShortCurrency(entry.value)}
-                    </span>
-                  </div>
-                ))}
-              </div>
             </div>
           ) : (
             <div className="no-data">Chưa có dữ liệu chi tiêu</div>
