@@ -95,16 +95,12 @@ function App() {
   const handleSaveEdit = async (updatedItem) => {
     try {
       const isEdit = !!updatedItem.id;
-      const apiPayload = {
-        "id": isEdit ? (updatedItem.keyId || updatedItem.id) : Date.now(),
-        "Ngày": updatedItem.ngay instanceof Date ? updatedItem.ngay.toISOString().split("T")[0] : updatedItem.ngay,
-        "Hạng mục": updatedItem.doiTuongThuChi,
-        "Nội dung": updatedItem.noiDung,
-        "Số tiền": String(updatedItem.soTien || "0"),
-        "Người cập nhật": updatedItem.nguoiCapNhat || "",
-        "Chứng từ": updatedItem.hinhAnh || "",
+      const payload = {
+        ...updatedItem,
+        // Tạo ID định dạng chuỗi cho bản ghi mới để đảm bảo tính duy nhất
+        id: isEdit ? (updatedItem.keyId || updatedItem.id) : `GD_${Date.now()}`
       };
-      const result = isEdit ? await updateRowInSheet("GiaoDich", apiPayload, APP_ID) : await addRowToSheet("GiaoDich", apiPayload, APP_ID);
+      const result = isEdit ? await updateRowInSheet("GiaoDich", payload, APP_ID) : await addRowToSheet("GiaoDich", payload, APP_ID);
       if (result.success) {
         showToast("Lưu thành công!", "success");
         setEditingItem(null);
