@@ -7,7 +7,8 @@ import {
   FiInfo,
   FiEdit2,
   FiTrash2,
-  FiImage,
+  FiImage
+} from "react-icons/fi";
 import "./DataTable.css";
 
 const formatCurrency = (value) => {
