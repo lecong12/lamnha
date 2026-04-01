@@ -61,7 +61,7 @@ function App() {
   }, [isDarkMode]);
 
   const { 
-    data, setData, nganSach, tienDo, loading, fetchAllData, handleUpdateStage, handleUpdateBudget
+    data, nganSach, tienDo, loading, fetchAllData, handleUpdateStage, handleUpdateBudget
   } = useAppData(isLoggedIn);
 
   const showToast = (message, type = "success") => setToast({ message, type });
