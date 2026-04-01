@@ -52,12 +52,9 @@ function QuickNotes({ showToast }) {
 
     // 1. Cấu trúc dữ liệu gửi lên API (Gửi đa dạng tên cột để đảm bảo trúng đích)
     const apiPayload = {
-      "id": noteId, 
-      "ID": noteId,
-      "ngay": dateStr,
-      "noiDung": newNote.trim(),
-      "Ngày": dateStr,
-      "Nội dung": newNote.trim()
+      id: noteId,
+      ngay: dateStr,
+      noiDung: newNote.trim()
     };
 
     try {

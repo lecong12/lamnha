@@ -97,6 +97,7 @@ function App() {
       const isEdit = !!updatedItem.id;
       const payload = {
         ...updatedItem,
+        loaiThuChi: updatedItem.loaiThuChi || "Chi",
         // Tạo ID định dạng chuỗi cho bản ghi mới để đảm bảo tính duy nhất
         id: isEdit ? (updatedItem.keyId || updatedItem.id) : `GD_${Date.now()}`
       };

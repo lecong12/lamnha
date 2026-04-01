@@ -143,19 +143,21 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     
     if (tableName === "GhiChu") {
       formattedPayload = {
-        "_RowNumber": payload._RowNumber || payload.id,
-        "ID": payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        "Nội dung": payload.noiDung
+        "_RowNumber": payload._RowNumber || payload.rowNumber,
+        "ID": payload.id || payload.ID,
+        "id": payload.id || payload.ID,
+        "Ngày": payload.ngay ? (payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay).split('T')[0]) : undefined,
+        "Nội dung": payload.noiDung || payload.noiDung
       };
     } else if (tableName === "GiaoDich" || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH) {
       // Đảm bảo số tiền luôn là số nguyên, không được là NaN
-      const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
+      const cleanAmount = payload.soTien !== undefined ? parseInt(String(payload.soTien).replace(/\D/g, "")) || 0 : undefined;
 
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber || payload.id,
         "ID": payload.keyId || payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        "id": payload.keyId || payload.id,
+        "Ngày": payload.ngay ? (payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay).split('T')[0]) : undefined,
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
         "Số tiền": cleanAmount,
@@ -165,6 +167,9 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         "Ghi chú": payload.ghiChu
       };
     }
+
+    // Xóa các trường undefined để tránh gửi dữ liệu rác lên AppSheet
+    Object.keys(formattedPayload).forEach(key => formattedPayload[key] === undefined && delete formattedPayload[key]);
 
     // Thêm Timeout để tránh lỗi khi upload ảnh nặng
     const controller = new AbortController();
@@ -224,17 +229,19 @@ export const addRowToSheet = async (tableName, payload, appId) => {
 
     if (tableName === "GhiChu") {
       formattedPayload = {
-        "ID": payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        "Nội dung": payload.noiDung
+        "ID": payload.id || payload.ID,
+        "id": payload.id || payload.ID,
+        "Ngày": payload.ngay ? (payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay).split('T')[0]) : new Date().toISOString().split('T')[0],
+        "Nội dung": payload.noiDung || ""
       };
     } else if (tableName === "GiaoDich" || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH) {
       // Đảm bảo số tiền luôn là số nguyên
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
 
       formattedPayload = {
-        "ID": payload.id || payload.keyId,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        "ID": payload.id || payload.keyId || payload.ID,
+        "id": payload.id || payload.keyId || payload.ID,
+        "Ngày": payload.ngay ? (payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay).split('T')[0]) : new Date().toISOString().split('T')[0],
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
         "Số tiền": cleanAmount,
