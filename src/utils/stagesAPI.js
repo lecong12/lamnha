@@ -60,7 +60,18 @@ export const fetchStages = async (appId) => {
       throw new Error(`Lỗi kết nối AppSheet (Mã lỗi: ${response.status}) khi tải tiến độ.`);
     }
 
-    const rawData = await response.json();
+    const responseText = await response.text();
+    let rawData = [];
+    
+    if (responseText && responseText.trim()) {
+      try {
+        rawData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Lỗi parse JSON Tiến độ:", parseError);
+        return { success: false, message: "Dữ liệu AppSheet trả về không hợp lệ.", data: [] };
+      }
+    }
+
     if (!rawData || rawData.length === 0) {
       return { success: true, data: [] };
     }

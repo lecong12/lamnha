@@ -1,10 +1,5 @@
 // AppSheet API Configuration
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
-const formatRowId = (id) => {
-  // Giữ nguyên ID gốc để tránh lỗi không khớp Key trong AppSheet (Ví dụ: NOTE_123 không được biến thành 123)
-  return id;
-};
-
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
 const normalizeKey = (key) => {
   const k = key.toLowerCase().trim();
@@ -86,7 +81,7 @@ export const fetchTableData = async (tableName, appId) => {
     // Đọc text trước để tránh lỗi "Unexpected end of JSON input" nếu body rỗng
     const responseText = await response.text();
     let rawData = [];
-    if (responseText) {
+    if (responseText && responseText.trim()) {
       try {
         rawData = JSON.parse(responseText);
       } catch (e) {
@@ -199,7 +194,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     }
 
     let result = null;
-    if (responseText) {
+    if (responseText && responseText.trim()) {
       try {
         result = JSON.parse(responseText);
       } catch (e) {
@@ -277,7 +272,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     }
 
     let result = null;
-    if (responseText) {
+    if (responseText && responseText.trim()) {
       try {
         result = JSON.parse(responseText);
       } catch (e) {

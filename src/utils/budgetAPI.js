@@ -21,12 +21,23 @@ export const fetchBudget = async (appId) => {
       throw new Error(`Lỗi kết nối AppSheet (Mã lỗi: ${response.status}) khi tải ngân sách.`);
     }
 
-    const rawData = await response.json();
+    const responseText = await response.text();
+    let rawData = [];
+    
+    if (responseText && responseText.trim()) {
+      try {
+        rawData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Lỗi parse JSON Ngân sách:", parseError);
+        return { success: false, message: "Dữ liệu Ngân sách rỗng hoặc sai định dạng.", data: [] };
+      }
+    }
+
     const transformedData = rawData.map(row => ({
       hangMuc: row['Hạng mục'],
-      duKien: parseFloat(row['Dự kiến (VNĐ)'].toString().replace(/[.,]/g, "")) || 0,
-      thucTe: parseFloat(row['Thực tế chi'].toString().replace(/[.,]/g, "")) || 0,
-      conLai: parseFloat(row['Còn lại'].toString().replace(/[.,]/g, "")) || 0,
+      duKien: parseFloat(String(row['Dự kiến (VNĐ)'] || "0").replace(/[.,]/g, "")) || 0,
+      thucTe: parseFloat(String(row['Thực tế chi'] || "0").replace(/[.,]/g, "")) || 0,
+      conLai: parseFloat(String(row['Còn lại'] || "0").replace(/[.,]/g, "")) || 0,
       tinhTrang: row['Tình trạng'],
     }));
 
