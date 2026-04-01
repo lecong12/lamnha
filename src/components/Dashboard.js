@@ -22,9 +22,14 @@ const safeNumber = (val) => {
   return isNaN(num) ? 0 : num;
 };
 
-function Dashboard({ stats, data, extraData }) {
+function Dashboard({ stats, data, extraData, isDarkMode }) {
   // Lấy dữ liệu đã được fetch và xử lý từ component cha (App.js)
   const stages = extraData.tienDo || [];
+
+  // Định nghĩa màu sắc theo chế độ sáng/tối
+  const textColor = isDarkMode ? "#f3f4f6" : "#1f2937";
+  const axisColor = isDarkMode ? "#9ca3af" : "#6b7280";
+  const tooltipBg = isDarkMode ? "#1f2937" : "#ffffff";
 
   // Tính toán tiến độ hoàn thành
   const completedStagesCount = stages.filter(s => s.status === 'Hoàn thành').length;
@@ -123,6 +128,7 @@ function Dashboard({ stats, data, extraData }) {
                     innerRadius={60}
                     outerRadius={90}
                     paddingAngle={3}
+                    stroke="none"
                     dataKey="value"
                     label={({ name, percent }) => {
                       // Cắt bỏ phần trong ngoặc và xóa số thứ tự đầu dòng (VD: "1. " -> "")
@@ -141,11 +147,11 @@ function Dashboard({ stats, data, extraData }) {
                   <Tooltip
                     formatter={(value) => formatCurrency(value)}
                     contentStyle={{
-                      background: "white",
+                      background: tooltipBg,
                       border: "1px solid #e5e7eb",
                       borderRadius: "8px",
-                      color: "#1f2937",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      color: textColor,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
                     }}
                   />
                 </PieChart>
@@ -179,22 +185,22 @@ function Dashboard({ stats, data, extraData }) {
                 <XAxis
                   type="number"
                   tickFormatter={formatShortCurrency}
-                  tick={{ fill: "#6b7280", fontSize: 12 }}
+                  tick={{ fill: axisColor, fontSize: 12 }}
                 />
                 <YAxis
                   type="category"
                   dataKey="name"
                   width={100}
-                  tick={{ fill: "#1f2937", fontSize: 11 }}
+                  tick={{ fill: textColor, fontSize: 11 }}
                 />
                 <Tooltip
                   formatter={(value) => formatCurrency(value)}
                   contentStyle={{
-                    background: "white",
+                    background: tooltipBg,
                     border: "1px solid #e5e7eb",
                     borderRadius: "8px",
-                    color: "#1f2937",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    color: textColor,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
                   }}
                 />
                 <Bar
