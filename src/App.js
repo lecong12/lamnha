@@ -95,11 +95,13 @@ function App() {
   const handleSaveEdit = async (updatedItem) => {
     try {
       const isEdit = !!updatedItem.id;
+      showToast("Đang gửi dữ liệu...", "info");
       const payload = {
         ...updatedItem,
         loaiThuChi: updatedItem.loaiThuChi || "Chi",
-        // Tạo ID định dạng chuỗi cho bản ghi mới để đảm bảo tính duy nhất
-        id: isEdit ? (updatedItem.keyId || updatedItem.id) : `GD_${Date.now()}`
+        // Đảm bảo ID luôn có giá trị
+        id: isEdit ? (updatedItem.keyId || updatedItem.id) : `GD_${Date.now()}`,
+        keyId: isEdit ? (updatedItem.keyId || updatedItem.id) : `GD_${Date.now()}`
       };
       const result = isEdit ? await updateRowInSheet("GiaoDich", payload, APP_ID) : await addRowToSheet("GiaoDich", payload, APP_ID);
       if (result.success) {
