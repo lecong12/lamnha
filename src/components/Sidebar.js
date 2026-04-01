@@ -28,9 +28,8 @@ const Sidebar = ({ isOpen, toggle, activeTab, onTabChange, onLogout, isDarkMode,
     { id: 'gantt_chart', icon: <FiBarChart2 size={20} />, label: 'Biểu đồ Tiến độ' },
     { id: 'drawings', icon: <FiMap size={20} />, label: 'Bản vẽ Thiết kế' },
     { id: 'contracts', icon: <FiBriefcase size={20} />, label: 'Hợp đồng Xây dựng' },
-    { id: 'notes', icon: <FiFileText size={20} />, label: 'Ghi chú nhanh' },
     { id: 'zalo', icon: <FiMessageCircle size={20} />, label: 'Chat Nhóm Zalo' },
-    { id: 'all', icon: <FiGrid size={20} />, label: 'Tất cả' },
+    { id: 'notes', icon: <FiFileText size={20} />, label: 'Ghi chú nhanh' },
   ];
 
   return (
