@@ -88,12 +88,17 @@ td {
 
 /* Sửa lỗi chữ mờ trong component Tiến độ ở Dark Mode */
 .dark-theme .stage-name {
-  color: #ffffff !important;
+  color: #ffffff !important; /* Trắng sáng tuyệt đối */
   font-weight: 500;
 }
 
 .dark-theme .chart-title {
   color: #ffffff !important;
+}
+
+/* Đảm bảo nhãn trong các stat card cũng sáng rõ */
+.dark-theme .stat-label {
+  color: #cbd5e1 !important;
 }
 
 /* Loading Spinner */

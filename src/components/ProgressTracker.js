@@ -73,8 +73,8 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
       const fileData = text ? JSON.parse(text) : {};
 
       if (fileData.secure_url) {
-        // Gửi đúng tên cột "Ảnh nghiệm thu" lên AppSheet
-        const result = await onUpdateStage(stageId, { "Ảnh nghiệm thu": fileData.secure_url });
+        // Cập nhật thuộc tính anhNghiemThu (Hàm updateStageInSheet sẽ tự map lại tên cột thực tế)
+        const result = await onUpdateStage(stageId, { anhNghiemThu: fileData.secure_url });
         if (result && result.success) {
           notify("Lưu thành công!", "success");
           handleCancelUpload(stageId);
