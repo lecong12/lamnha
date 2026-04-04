@@ -91,7 +91,10 @@ export const fetchStages = async (appId) => {
                key.includes('hình') || key.includes('hinh') ||
                key.includes('chứng từ') || key.includes('chung tu') ||
                key.includes('minh chứng') || key.includes('minh chung');
-      }) || "Ảnh nghiệm thu";
+      });
+      
+      // Fallback imgKey nếu không tìm thấy
+      const finalImgKey = imgKey || rowKeys.find(k => k.includes('Ảnh')) || "Ảnh nghiệm thu";
 
       // 3. Tìm cột Tên (Name) để hiển thị tiêu đề
       const nameKey = rowKeys.find(k => {
@@ -130,13 +133,13 @@ export const fetchStages = async (appId) => {
         appSheetId: row._RowNumber, 
         keyId: row[idKey], // Giá trị Key thực sự để gửi API (Cột id)
         keyColumn: idKey, // Lưu lại tên cột Key tìm được để dùng lúc Update
-        imgColumn: imgKey, // Lưu lại tên cột Ảnh tìm được để dùng lúc Update
+        imgColumn: finalImgKey, // Lưu lại tên cột Ảnh tìm được để dùng lúc Update
         statusColumn: statusKey, // Lưu lại tên cột Trạng thái để dùng lúc Update
         name: row[nameKey] || row.name || row["Tên công việc"] || row["Hạng mục"] || `Giai đoạn ${index + 1}`, // Fallback nếu không tìm thấy tên
         status: row[statusKey] || row.status || "Chưa bắt đầu",
         ngayBatDau: parseDate(row[startKey] || row.ngayBatDau), // Tự động parse ngày
         ngayKetThuc: parseDate(row[endKey] || row.ngayKetThuc),
-        anhNghiemThu: row[imgKey] || "", // Map đúng cột ảnh
+        anhNghiemThu: row[finalImgKey] || "", // Map đúng cột ảnh
         // Add other fields from AppSheet if needed, e.g., 'status'
       };
     }).sort((a, b) => a.appSheetId - b.appSheetId); // Sửa lỗi sắp xếp: Dùng thứ tự dòng trong Sheet (_RowNumber)
