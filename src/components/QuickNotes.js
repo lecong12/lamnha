@@ -56,11 +56,17 @@ function QuickNotes({ showToast }) {
     setAdding(true);
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
-    const noteId = `NOTE_${Date.now()}`;
+    
+    // Tính toán ID mới: Lấy số lớn nhất từ các ID hiện tại và cộng thêm 1
+    const numericIds = notes.map(n => {
+      const val = String(n.id).replace(/\D/g, "");
+      return parseInt(val) || 0;
+    });
+    const nextId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
 
     // 1. Cấu trúc dữ liệu gửi lên API (Gửi đa dạng tên cột để đảm bảo trúng đích)
     const apiPayload = {
-      id: noteId, ngay: dateStr, noiDung: newNote.trim() };
+      id: nextId, ngay: dateStr, noiDung: newNote.trim() };
 
     try {
         const res = await addRowToSheet("GhiChu", apiPayload, APP_ID);

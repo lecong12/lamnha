@@ -85,7 +85,13 @@ export const fetchStages = async (appId) => {
                     rowKeys.find(k => k.trim().toLowerCase() === 'tt') || 
                     rowKeys.find(k => k.trim().toLowerCase() === 'stt') || 'id';
                     
-      const imgKey = rowKeys.find(k => k.trim().toLowerCase() === 'ảnh nghiệm thu' || k.trim().toLowerCase() === 'anh nghiem thu') || "Ảnh nghiệm thu";
+      const imgKey = rowKeys.find(k => {
+        const key = k.trim().toLowerCase();
+        return key.includes('ảnh') || key.includes('anh') || 
+               key.includes('hình') || key.includes('hinh') ||
+               key.includes('chứng từ') || key.includes('chung tu') ||
+               key.includes('minh chứng') || key.includes('minh chung');
+      }) || "Ảnh nghiệm thu";
 
       // 3. Tìm cột Tên (Name) để hiển thị tiêu đề
       const nameKey = rowKeys.find(k => {
@@ -109,6 +115,12 @@ export const fetchStages = async (appId) => {
         return key === 'ngayketthuc' || key.includes('ket thuc') || key.includes('kết thúc') || key.includes('end') || key.includes('hoan thanh');
       });
 
+      // 5. Tìm cột Trạng thái
+      const statusKey = rowKeys.find(k => {
+        const key = k.trim().toLowerCase();
+        return key === 'status' || key.includes('trạng thái') || key.includes('trang thai') || key.includes('tình trạng') || key.includes('tinh trang');
+      }) || 'status';
+
       // 2. Tạo ID duy nhất cho Frontend (QUAN TRỌNG: Sửa lỗi hiển thị ảnh ở tất cả các ô)
       // Ưu tiên dùng giá trị từ cột Key tìm được
       const uniqueId = row[idKey] || row._RowNumber || `stage_idx_${index}`;
@@ -119,8 +131,9 @@ export const fetchStages = async (appId) => {
         keyId: row[idKey], // Giá trị Key thực sự để gửi API (Cột id)
         keyColumn: idKey, // Lưu lại tên cột Key tìm được để dùng lúc Update
         imgColumn: imgKey, // Lưu lại tên cột Ảnh tìm được để dùng lúc Update
+        statusColumn: statusKey, // Lưu lại tên cột Trạng thái để dùng lúc Update
         name: row[nameKey] || row.name || row["Tên công việc"] || row["Hạng mục"] || `Giai đoạn ${index + 1}`, // Fallback nếu không tìm thấy tên
-        status: row.status || row["Trạng thái"] || "Chưa bắt đầu",
+        status: row[statusKey] || row.status || "Chưa bắt đầu",
         ngayBatDau: parseDate(row[startKey] || row.ngayBatDau), // Tự động parse ngày
         ngayKetThuc: parseDate(row[endKey] || row.ngayKetThuc),
         anhNghiemThu: row[imgKey] || "", // Map đúng cột ảnh
@@ -149,11 +162,13 @@ export const updateStageInSheet = async (stage, appId) => {
     const keyColumnName = stage.keyColumn || 'id';
     // Sử dụng tên cột Ảnh đã tìm thấy lúc Fetch, mặc định là 'Ảnh nghiệm thu' nếu không có
     const imgColumnName = stage.imgColumn || 'Ảnh nghiệm thu';
+    // Sử dụng tên cột Trạng thái đã tìm thấy lúc Fetch
+    const statusColumnName = stage.statusColumn || 'status';
 
     const editData = [{
       "_RowNumber": stage.appSheetId, // Gửi kèm RowNumber để hỗ trợ tìm kiếm
       [keyColumnName]: String(stage.keyId), // Dùng đúng tên cột Key tìm được (id, ID, TT...)
-      "status": stage.status,
+      [statusColumnName]: stage.status,
       [imgColumnName]: stage.anhNghiemThu || "", // Dùng đúng tên cột Ảnh tìm được
     }];
 

@@ -96,12 +96,22 @@ function App() {
     try {
       const isEdit = !!updatedItem.id;
       showToast("Đang gửi dữ liệu...", "info");
+
+      // Tính toán ID mới nếu là thêm mới: Max ID hiện tại + 1
+      let finalId = updatedItem.id;
+      if (!isEdit) {
+        const numericIds = data.map(item => {
+          const val = String(item.keyId || item.id || "0").replace(/\D/g, "");
+          return parseInt(val) || 0;
+        });
+        finalId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
+      }
+
       const payload = {
         ...updatedItem,
         loaiThuChi: updatedItem.loaiThuChi || "Chi",
-        // Đảm bảo ID luôn có giá trị
-        id: isEdit ? (updatedItem.keyId || updatedItem.id) : `GD_${Date.now()}`,
-        keyId: isEdit ? (updatedItem.keyId || updatedItem.id) : `GD_${Date.now()}`
+        id: finalId,
+        keyId: finalId
       };
       const result = isEdit ? await updateRowInSheet("GiaoDich", payload, APP_ID) : await addRowToSheet("GiaoDich", payload, APP_ID);
       if (result.success) {

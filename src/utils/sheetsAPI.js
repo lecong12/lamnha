@@ -154,8 +154,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber || payload.id,
-        "ID": String(payload.keyId || payload.id || ""),
-        "id": String(payload.keyId || payload.id || ""),
+        "ID": payload.keyId || payload.id,
+        "id": payload.keyId || payload.id,
         "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
@@ -240,8 +240,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
 
       formattedPayload = {
-        "ID": String(payload.id || payload.keyId || ""),
-        "id": String(payload.id || payload.keyId || ""),
+        "ID": payload.id || payload.keyId,
+        "id": payload.id || payload.keyId,
         "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
