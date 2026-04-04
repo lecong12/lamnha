@@ -22,6 +22,7 @@ import "./App.css";
 import "./DarkMode.css";
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
+const TABLE_GIAODICH = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
 
@@ -113,7 +114,7 @@ function App() {
         id: finalId,
         keyId: finalId
       };
-      const result = isEdit ? await updateRowInSheet("GiaoDich", payload, APP_ID) : await addRowToSheet("GiaoDich", payload, APP_ID);
+      const result = isEdit ? await updateRowInSheet(TABLE_GIAODICH, payload, APP_ID) : await addRowToSheet(TABLE_GIAODICH, payload, APP_ID);
       if (result.success) {
         showToast("Lưu thành công!", "success");
         setEditingItem(null);
@@ -216,7 +217,7 @@ function App() {
       {itemToDelete && <ConfirmModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)} onConfirm={async () => {
           const item = data.find(i => i.id === itemToDelete);
           if (item) {
-            const result = await deleteRowFromSheet("GiaoDich", item.keyId || item.id, APP_ID);
+            const result = await deleteRowFromSheet(TABLE_GIAODICH, item.keyId || item.id, APP_ID);
             if (result.success) { showToast("Đã xóa!", "success"); await fetchAllData(); }
           }
           setItemToDelete(null);

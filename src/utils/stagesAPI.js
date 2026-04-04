@@ -142,7 +142,23 @@ export const fetchStages = async (appId) => {
         anhNghiemThu: row[finalImgKey] || "", // Map đúng cột ảnh
         // Add other fields from AppSheet if needed, e.g., 'status'
       };
-    }).sort((a, b) => a.appSheetId - b.appSheetId); // Sửa lỗi sắp xếp: Dùng thứ tự dòng trong Sheet (_RowNumber)
+    }).sort((a, b) => {
+      // 1. Sắp xếp theo ngày bắt đầu (Tăng dần - Chronological)
+      if (a.ngayBatDau && b.ngayBatDau) {
+        if (a.ngayBatDau.getTime() !== b.ngayBatDau.getTime()) {
+          return a.ngayBatDau - b.ngayBatDau;
+        }
+      } else if (a.ngayBatDau) return -1; // Các đầu việc có ngày hiển thị trước
+      else if (b.ngayBatDau) return 1;
+
+      // 2. Nếu trùng ngày bắt đầu, sắp xếp theo ngày kết thúc
+      if (a.ngayKetThuc && b.ngayKetThuc && a.ngayKetThuc.getTime() !== b.ngayKetThuc.getTime()) {
+        return a.ngayKetThuc - b.ngayKetThuc;
+      }
+
+      // 3. Cuối cùng mới dùng thứ tự dòng trong Sheet (Đầu việc) làm tiêu chí phụ
+      return a.appSheetId - b.appSheetId;
+    });
 
     return { success: true, data: transformedData };
   } catch (error) {
