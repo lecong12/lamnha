@@ -35,8 +35,7 @@ function App() {
 
   const [editingItem, setEditingItem] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null); 
-  const [toast, setToast] = useState(null);
-  const [uploadingId, setUploadingId] = useState(null);
+  const [toast, setToast] = useState(null); // Keep toast state
 
   useEffect(() => {
     const handleResize = () => {
@@ -62,7 +61,7 @@ function App() {
   }, [isDarkMode]);
 
   const { 
-    data, nganSach, tienDo, loading, fetchAllData, handleUpdateStage, handleUpdateBudget
+    data, nganSach, tienDo, contracts, drawings, loading, fetchAllData, handleUpdateStage, handleUpdateBudget
   } = useAppData(isLoggedIn);
 
   const showToast = (message, type = "success") => setToast({ message, type });
@@ -95,7 +94,7 @@ function App() {
 
   const handleSaveEdit = async (updatedItem) => {
     try {
-      const isEdit = !!updatedItem.id;
+      const isEdit = updatedItem.appSheetId || (updatedItem.id && String(updatedItem.id).length > 5);
       showToast("Đang gửi dữ liệu...", "info");
 
       // Đảm bảo số tiền là số nguyên sạch trước khi gửi vào payload
@@ -133,28 +132,6 @@ function App() {
         throw new Error(result.message || "Lỗi AppSheet");
       }
     } catch (error) { showToast(error.message, "error"); }
-  };
-
-  const handleUniversalUpload = async (id, tableName, columnName, file) => {
-    if (!file) return;
-    try {
-      setUploadingId(id);
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
-        method: "POST", body: formData
-      });
-      const fileData = await res.json();
-      if (fileData.secure_url) {
-        const updatePayload = {
-          _RowNumber: id.startsWith('stage_idx_') ? undefined : id, // If it's a generated ID, don't send _RowNumber
-          ID: id, // Assuming ID is the key column
-          [columnName]: fileData.secure_url };
-        const result = await updateRowInSheet(tableName, updatePayload, APP_ID);
-        if (result.success) { showToast("Thành công!", "success"); await fetchAllData(); }
-      }
-    } catch (error) { showToast(error.message, "error"); } finally { setUploadingId(null); }
   };
 
   const handleTabChange = (tabId) => {
@@ -204,8 +181,8 @@ function App() {
       case 'budget': return <BudgetView budget={nganSach} onUpdateBudget={handleUpdateBudget} showToast={showToast} />;
       case 'progress_tracker': return <ProgressTracker stages={tienDo} onUpdateStage={handleUpdateStage} showToast={showToast} isDarkMode={isDarkMode} />;
       case 'gantt_chart': return <GanttChartView stages={tienDo} onUpdateStage={handleUpdateStage} isDarkMode={isDarkMode} />;
-      case 'drawings': return <DesignDrawings showToast={showToast} onUploadPDF={(id, f) => handleUniversalUpload(id, "BanVe", "url", f)} uploadingId={uploadingId} />;
-      case 'contracts': return <ConstructionContracts showToast={showToast} onUploadPDF={(id, f) => handleUniversalUpload(id, "HopDong", "url", f)} uploadingId={uploadingId} />;
+      case 'drawings': return <DesignDrawings showToast={showToast} drawings={drawings} loading={loading} fetchAllData={fetchAllData} />;
+      case 'contracts': return <ConstructionContracts showToast={showToast} contracts={contracts} loading={loading} fetchAllData={fetchAllData} />;
       case 'notes': return <QuickNotes showToast={showToast} />;
       default: return <Dashboard stats={stats} data={filteredData} extraData={extraData} isDarkMode={isDarkMode} />;
     }

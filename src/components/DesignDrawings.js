@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload, FiTrash2, FiEye, FiDownload, FiLoader, FiMap, FiX, FiFileText } from 'react-icons/fi';
-import { fetchTableData, addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
+import { addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
 import './DesignDrawings.css';
 
 // Lấy cấu hình từ biến môi trường
@@ -14,32 +14,11 @@ const DRAWING_CATEGORIES = [
   { id: 'noithat', label: 'Bản vẽ Nội thất' }
 ];
 
-function DesignDrawings({ showToast }) {
+function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
   const [activeCategory, setActiveCategory] = useState('kientruc');
-  const [drawings, setDrawings] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [viewingPdf, setViewingPdf] = useState(null);
-  const [loading, setLoading] = useState(true);
   const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
-
-  useEffect(() => {
-    const loadDrawings = async () => {
-      setLoading(true);
-      try {
-        const res = await fetchTableData("BanVe", APP_ID);
-        if (res.success) {
-          setDrawings(res.data || []);
-        }
-      } catch (error) {
-        console.error("Lỗi tải bản vẽ:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadDrawings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -94,8 +73,8 @@ function DesignDrawings({ showToast }) {
         };
         
         const sheetRes = await addRowToSheet("BanVe", rowData, APP_ID);       
-        if (sheetRes.success) {
-          setDrawings(prev => [rowData, ...prev]);       
+        if (sheetRes.success) { // Sau khi thêm thành công, gọi fetchAllData để cập nhật dữ liệu từ App.js
+          await fetchAllData();
           showToast("Upload và lưu bản vẽ thành công!", "success");
         } else {
           showToast(`Lỗi lưu vào Sheet: ${sheetRes.message}`, "error");
@@ -114,8 +93,8 @@ function DesignDrawings({ showToast }) {
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa bản vẽ này?")) {
       const res = await deleteRowFromSheet("BanVe", id, APP_ID);
-      if (res.success) {
-        setDrawings(drawings.filter(d => d.id !== id && d._RowNumber !== id));
+      if (res.success) { // Sau khi xóa thành công, gọi fetchAllData để cập nhật dữ liệu từ App.js
+        await fetchAllData();
       }
     }
   };

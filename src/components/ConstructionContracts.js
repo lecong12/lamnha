@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload, FiTrash2, FiFileText, FiDownload, FiLoader, FiBriefcase, FiEye, FiX } from 'react-icons/fi';
-import { fetchTableData, addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
+upimport { addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
 import './ConstructionContracts.css';
 
 // Lấy cấu hình từ môi trường
@@ -13,33 +13,11 @@ const CATEGORIES = [
   { id: 'noithat', label: 'Hợp đồng Thi công nội thất' }
 ];
 
-function ConstructionContracts({ showToast }) {
+function ConstructionContracts({ showToast, contracts, loading, fetchAllData }) {
   const [activeCategory, setActiveCategory] = useState('tho');
-  const [contracts, setContracts] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [viewingPdf, setViewingPdf] = useState(null);
-  const [loading, setLoading] = useState(true);
   const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
-
-  useEffect(() => {// Tải dữ liệu từ AppSheet
-    // Tải dữ liệu từ AppSheet
-    const loadContracts = async () => {
-      setLoading(true);
-      try {
-        const res = await fetchTableData("HopDong", APP_ID);
-        if (res.success) {
-          setContracts(res.data || []);
-        }
-      } catch (error) {
-        console.error("Lỗi tải hợp đồng:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadContracts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -93,8 +71,8 @@ function ConstructionContracts({ showToast }) {
         const sheetRes = await addRowToSheet("HopDong", rowData, APP_ID);
         
         if (sheetRes.success) {
-          // Cập nhật giao diện ngay
-          setContracts(prev => [rowData, ...prev]);         
+          // Sau khi thêm thành công, gọi fetchAllData để cập nhật dữ liệu từ App.js
+          await fetchAllData();
           showToast("Upload và lưu hợp đồng thành công!", "success");
         } else {
           // Hiển thị lỗi nếu lưu vào Sheet thất bại
@@ -113,8 +91,8 @@ function ConstructionContracts({ showToast }) {
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa hợp đồng này?")) {
       const res = await deleteRowFromSheet("HopDong", id, APP_ID);
-      if (res.success) {
-        setContracts(contracts.filter(c => c.id !== id && c._RowNumber !== id));
+      if (res.success) { // Sau khi xóa thành công, gọi fetchAllData để cập nhật dữ liệu từ App.js
+        await fetchAllData();
       }
     }
   };

@@ -8,6 +8,8 @@ const ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 // Lấy tên bảng từ biến môi trường hoặc dùng giá trị mặc định
 const TABLE_GIAODICH = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 const TABLE_NGANSACH = process.env.REACT_APP_APPSHEET_TABLE_NGANSACH || "NganSach";
+const TABLE_HOPDONG = process.env.REACT_APP_APPSHEET_TABLE_HOPDONG || "HopDong";
+const TABLE_BANVE = process.env.REACT_APP_APPSHEET_TABLE_BANVE || "BanVe";
 
 const normalizeKey = (str) => {
     if (!str) return '';
@@ -43,6 +45,8 @@ export const useAppData = (isLoggedIn) => {
     const [data, setData] = useState([]);
     const [nganSach, setNganSach] = useState([]);
     const [tienDo, setTienDo] = useState([]);
+    const [contracts, setContracts] = useState([]);
+    const [drawings, setDrawings] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -52,11 +56,13 @@ export const useAppData = (isLoggedIn) => {
         setError(null);
 
         try {
-            // Tải dữ liệu song song
-            const [resGDResult, resNSResult, resTDResult] = await Promise.all([
+            // Tải tất cả dữ liệu song song
+            const [resGDResult, resNSResult, resTDResult, resHopDongResult, resBanVeResult] = await Promise.all([
                 fetchTableData(TABLE_GIAODICH, APP_ID, ACCESS_KEY),
                 fetchTableData(TABLE_NGANSACH, APP_ID, ACCESS_KEY),
-                fetchStages(APP_ID) // Dùng API riêng cho Tiến độ để lấy đúng cột
+                fetchStages(APP_ID), // Dùng API riêng cho Tiến độ để lấy đúng cột
+                fetchTableData(TABLE_HOPDONG, APP_ID, ACCESS_KEY),
+                fetchTableData(TABLE_BANVE, APP_ID, ACCESS_KEY),
             ]);
 
             const resGD = resGDResult.success ? resGDResult.data : [];
@@ -83,11 +89,11 @@ export const useAppData = (isLoggedIn) => {
             setData(cleanGD.sort((a, b) => b.ngay - a.ngay));
 
             // 2. Xử lý Ngân Sách
-            const cleanNS = resNS.map(row => {
+            const cleanNS = resNS.map((row, index) => {
                 const c = {};
                 Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
                 return {
-                    id: row._RowNumber, // Lưu RowNumber để update
+                    id: row._RowNumber || row.id || `ns_${index}`, // Lưu RowNumber để update
                     keyId: c.hangMuc || c.doiTuongThuChi, // Key là Hạng mục
                     hangMuc: c.hangMuc || c.doiTuongThuChi || "Hạng mục",
                     duKien: Number(String(c.duKien || 0).replace(/\D/g, "")),
@@ -101,6 +107,36 @@ export const useAppData = (isLoggedIn) => {
             // 3. Xử lý Tiến Độ
             // Dữ liệu từ fetchStages đã được chuẩn hóa, chỉ cần gán trực tiếp
             setTienDo(resTD);
+
+            // 4. Xử lý Hợp Đồng
+            const resHopDong = resHopDongResult.success ? resHopDongResult.data : [];
+            const cleanHopDong = resHopDong.map((row, index) => {
+                const c = {};
+                Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
+                return {
+                    id: row._RowNumber || row.id || `hd_${index}`,
+                    appSheetId: row._RowNumber,
+                    keyId: c.id || row.id,
+                    name: c.name || c.ten || "Không tên",
+                    url: c.url || c.link || c.hinhAnh || "",
+                    date: c.date || c.ngay || "",
+                    size: Number(c.size || 0),
+                    category: c.category || c.phanLoai || "Khác"
+                };
+            });
+            setContracts(cleanHopDong.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));
+
+            // 5. Xử lý Bản Vẽ
+            const resBanVe = resBanVeResult.success ? resBanVeResult.data : [];
+            const cleanBanVe = resBanVe.map((row, index) => {
+                const c = {};
+                Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
+                return {
+                    id: row._RowNumber || row.id || `bv_${index}`,
+                    ...c // Bao gồm tất cả các trường đã normalize
+                };
+            });
+            setDrawings(cleanBanVe.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));
 
         } catch (err) {
             setError("Lỗi nạp dữ liệu. Hãy kiểm tra tên bảng và App ID.");
@@ -152,5 +188,5 @@ export const useAppData = (isLoggedIn) => {
         return result;
     };
 
-    return { data, setData, nganSach, tienDo, loading, error, fetchAllData, handleUpdateStage, handleUpdateBudget };
+    return { data, nganSach, tienDo, contracts, drawings, loading, error, fetchAllData, handleUpdateStage, handleUpdateBudget };
 };

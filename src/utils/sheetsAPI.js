@@ -11,14 +11,14 @@ const normalizeKey = (str) => {
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
     
     // Sử dụng .includes() thay vì === để bắt được các biến thể như "Hạng mục chi", "Số tiền (VND)"
-    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s.includes('key')) return 'id';
+    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s.includes('key') || s.includes('id')) return 'id';
     if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
     if (s.includes('noi dung') || s.includes('description')) return 'noiDung';
     if (s.includes('so tien') || s.includes('amount')) return 'soTien';
     if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
-    if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('category')) return 'doiTuongThuChi';
+    if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('phan loai') || s.includes('category')) return 'doiTuongThuChi';
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
-    if (s.includes('nguoi cap nhat') || s.includes('nguoi thuc hien') || s.includes('user')) return 'nguoiCapNhat';
+    if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     if (s.includes('ghi chu') || s.includes('note')) return 'ghiChu';
     
     return s.replace(/\s+/g, '');
@@ -170,17 +170,18 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     // Lấy tên cột thực tế đã mapping lúc fetch
     const mapping = columnMapping[tableName] || {};
     const getCol = (norm, def) => mapping[norm] || def;
+    const targetTable = String(tableName).trim().toLowerCase();
 
     let formattedPayload = {};
     
-    if (tableName === "GhiChu") {
+    if (targetTable === "ghichu") {
       formattedPayload = {
         "_RowNumber": payload._RowNumber || payload.id,
         [getCol('id', 'ID')]: payload.id,
         [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
         [getCol('noiDung', 'Nội dung')]: payload.noiDung
       };
-    } else if (tableName === "GiaoDich" || tableName === TABLE_GIAODICH_ENV) {
+    } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
       const finalKey = String(payload.keyId || payload.id);
       
@@ -259,28 +260,35 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
     const mapping = columnMapping[tableName] || {};
-    const getCol = (norm, def) => mapping[norm] || def;
+    const getCol = (norm, defs) => {
+      if (mapping[norm]) return mapping[norm];
+      // Nếu không có mapping, trả về mảng các tên cột khả thi để AppSheet tự khớp
+      return Array.isArray(defs) ? defs[0] : defs;
+    };
+    const targetTable = String(tableName).trim().toLowerCase();
 
     let formattedPayload = {};
 
-    if (tableName === "GhiChu") {
+    if (targetTable === "ghichu") {
       formattedPayload = {
-        [getCol('id', 'ID')]: payload.id,
-        [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        [getCol('noiDung', 'Nội dung')]: payload.noiDung
+        [getCol('id', ['ID', 'id'])]: payload.id,
+        [getCol('ngay', ['Ngày', 'ngay'])]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        [getCol('noiDung', ['Nội dung', 'noiDung'])]: payload.noiDung
       };
-    } else if (tableName === "GiaoDich" || tableName === TABLE_GIAODICH_ENV) {
+    } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
       const finalKey = String(payload.id || payload.keyId);
 
       formattedPayload = {
         [getCol('id', 'ID')]: finalKey,
+        "id": finalKey, // Gửi thêm fallback 'id' viết thường
         [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
         [getCol('loaiThuChi', 'Loại Thu Chi')]: payload.loaiThuChi,
         [getCol('noiDung', 'Nội dung')]: payload.noiDung,
         [getCol('soTien', 'Số tiền')]: cleanAmount,
         [getCol('doiTuongThuChi', 'Hạng mục')]: payload.doiTuongThuChi,
-        [getCol('hinhAnh', 'Hình ảnh')]: payload.hinhAnh,
+        [getCol('hinhAnh', 'Chứng từ')]: payload.hinhAnh,
+        "Hình ảnh": payload.hinhAnh, // Gửi thêm fallback
         [getCol('nguoiCapNhat', 'Người cập nhật')]: payload.nguoiCapNhat,
         [getCol('ghiChu', 'Ghi chú')]: payload.ghiChu
       };
