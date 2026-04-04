@@ -111,8 +111,8 @@ function App() {
       const payload = {
         ...updatedItem,
         loaiThuChi: updatedItem.loaiThuChi || "Chi",
-        id: finalId,
-        keyId: finalId
+        id: String(finalId),
+        keyId: String(finalId)
       };
       const result = isEdit ? await updateRowInSheet(TABLE_GIAODICH, payload, APP_ID) : await addRowToSheet(TABLE_GIAODICH, payload, APP_ID);
       if (result.success) {
