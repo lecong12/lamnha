@@ -2,12 +2,32 @@
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
-const normalizeKey = (key) => {
-  const k = key.toLowerCase().trim();
-  if (k === 'ngày' || k === 'ngay' || k === 'date') return 'ngay';
-  if (k === 'nội dung' || k === 'noi dung' || k === 'description') return 'noiDung';
-  if (k === 'id' || k === 'tt' || k === 'stt') return 'id';
-  return key;
+const normalizeKey = (str) => {
+    if (!str) return '';
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu'];
+    if (knownKeys.includes(str)) return str;
+
+    const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
+    
+    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd') return 'id';
+    if (s === 'ngay' || s === 'date' || s === 'thoi gian') return 'ngay';
+    if (s === 'noi dung' || s === 'description') return 'noiDung';
+    if (s === 'so tien' || s === 'amount') return 'soTien';
+    if (s === 'loai thu chi' || s === 'type') return 'loaiThuChi';
+    if (s === 'hang muc' || s === 'doi tuong thu chi' || s === 'category') return 'doiTuongThuChi';
+    if (s === 'hinh anh' || s === 'minh chung' || s === 'chung tu' || s === 'anh') return 'hinhAnh';
+    if (s === 'nguoi cap nhat' || s === 'user') return 'nguoiCapNhat';
+    if (s === 'ghi chu' || s === 'note') return 'ghiChu';
+    
+    return s.replace(/\s+/g, '');
+};
+
+// Biến lưu trữ mapping tên cột thực tế từ AppSheet
+const columnMapping = {
+  [TABLE_GIAODICH_ENV]: {},
+  "GhiChu": {},
+  "BanVe": {},
+  "HopDong": {}
 };
 
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
@@ -91,13 +111,19 @@ export const fetchTableData = async (tableName, appId) => {
     }
 
     // Chuẩn hóa dữ liệu trả về để các thành phần như QuickNotes có thể đọc được ngay, noiDung
+    const currentMapping = {};
     const data = (Array.isArray(rawData) ? rawData : []).map(row => {
       const normalizedRow = {};
       Object.keys(row).forEach(key => {
-        normalizedRow[normalizeKey(key)] = row[key];
+        const normKey = normalizeKey(key);
+        normalizedRow[normKey] = row[key];
+        currentMapping[normKey] = key; // Lưu lại: normalized -> original name
       });
       return normalizedRow;
     });
+    
+    // Cập nhật mapping cột cho bảng này
+    columnMapping[tableName] = currentMapping;
 
     // AppSheet trả về mảng object hoặc object rỗng nếu lỗi/không có dữ liệu
     return { success: true, data };
@@ -139,43 +165,43 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         throw new Error("Thiếu 'id' để cập nhật dòng.");
     }
 
-    // Khôi phục logic mapping ổn định: Chuyển từ camelCase sang tên cột thực tế của Sheet
-    let formattedPayload = { ...payload };
+    // Lấy tên cột thực tế đã mapping lúc fetch
+    const mapping = columnMapping[tableName] || {};
+    const getCol = (norm, def) => mapping[norm] || def;
+
+    let formattedPayload = {};
     
     if (tableName === "GhiChu") {
       formattedPayload = {
         "_RowNumber": payload._RowNumber || payload.id,
-        "ID": payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        "Nội dung": payload.noiDung
+        [getCol('id', 'ID')]: payload.id,
+        [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        [getCol('noiDung', 'Nội dung')]: payload.noiDung
       };
     } else if (tableName === "GiaoDich" || tableName === TABLE_GIAODICH_ENV) {
-      // Đảm bảo số tiền luôn là số nguyên, không được là NaN
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
-
       const finalKey = String(payload.keyId || payload.id);
+      
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber || payload.id,
-        "ID": finalKey,
-        "id": finalKey,
-        "TT": finalKey,
-        "STT": finalKey,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        "Loại Thu Chi": payload.loaiThuChi,
-        "Nội dung": payload.noiDung,
-        "Số tiền": cleanAmount,
-        "Hạng mục": payload.doiTuongThuChi,
-        "Chứng từ": payload.hinhAnh,
-        "Hình ảnh": payload.hinhAnh,
-        "Người cập nhật": payload.nguoiCapNhat,
-        "Ghi chú": payload.ghiChu
+        [getCol('id', 'ID')]: finalKey,
+        [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        [getCol('loaiThuChi', 'Loại Thu Chi')]: payload.loaiThuChi,
+        [getCol('noiDung', 'Nội dung')]: payload.noiDung,
+        [getCol('soTien', 'Số tiền')]: cleanAmount,
+        [getCol('doiTuongThuChi', 'Hạng mục')]: payload.doiTuongThuChi,
+        [getCol('hinhAnh', 'Hình ảnh')]: payload.hinhAnh,
+        [getCol('nguoiCapNhat', 'Người cập nhật')]: payload.nguoiCapNhat,
+        [getCol('ghiChu', 'Ghi chú')]: payload.ghiChu
       };
-
-      // Xóa các trường undefined/null để tránh lỗi ghi đè dữ liệu rỗng
-      Object.keys(formattedPayload).forEach(key => 
-        (formattedPayload[key] === undefined || formattedPayload[key] === null) && delete formattedPayload[key]
-      );
+    } else {
+      formattedPayload = { ...payload };
     }
+
+    // Xóa các trường rác
+    Object.keys(formattedPayload).forEach(key => 
+      (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') && delete formattedPayload[key]
+    );
 
     // Thêm Timeout để tránh lỗi khi upload ảnh nặng
     const controller = new AbortController();
@@ -230,41 +256,39 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
  */
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
-    // Mapping cho bảng GhiChu để đảm bảo dữ liệu vào đúng cột tiếng Việt
-    let formattedPayload = { ...payload };
+    const mapping = columnMapping[tableName] || {};
+    const getCol = (norm, def) => mapping[norm] || def;
+
+    let formattedPayload = {};
 
     if (tableName === "GhiChu") {
       formattedPayload = {
-        "ID": payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        "Nội dung": payload.noiDung
+        [getCol('id', 'ID')]: payload.id,
+        [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        [getCol('noiDung', 'Nội dung')]: payload.noiDung
       };
     } else if (tableName === "GiaoDich" || tableName === TABLE_GIAODICH_ENV) {
-      // Đảm bảo số tiền luôn là số nguyên
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
-
       const finalKey = String(payload.id || payload.keyId);
-      formattedPayload = {
-        "ID": finalKey,
-        "id": finalKey,
-        "TT": finalKey,
-        "STT": finalKey,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        "Loại Thu Chi": payload.loaiThuChi,
-        "Nội dung": payload.noiDung,
-        "Số tiền": cleanAmount,
-        "Hạng mục": payload.doiTuongThuChi,
-        "Chứng từ": payload.hinhAnh,
-        "Hình ảnh": payload.hinhAnh,
-        "Người cập nhật": payload.nguoiCapNhat,
-        "Ghi chú": payload.ghiChu
-      };
 
-      // Làm sạch dữ liệu trước khi gửi
-      Object.keys(formattedPayload).forEach(key => 
-        (formattedPayload[key] === undefined || formattedPayload[key] === null) && delete formattedPayload[key]
-      );
+      formattedPayload = {
+        [getCol('id', 'ID')]: finalKey,
+        [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        [getCol('loaiThuChi', 'Loại Thu Chi')]: payload.loaiThuChi,
+        [getCol('noiDung', 'Nội dung')]: payload.noiDung,
+        [getCol('soTien', 'Số tiền')]: cleanAmount,
+        [getCol('doiTuongThuChi', 'Hạng mục')]: payload.doiTuongThuChi,
+        [getCol('hinhAnh', 'Hình ảnh')]: payload.hinhAnh,
+        [getCol('nguoiCapNhat', 'Người cập nhật')]: payload.nguoiCapNhat,
+        [getCol('ghiChu', 'Ghi chú')]: payload.ghiChu
+      };
+    } else {
+      formattedPayload = { ...payload };
     }
+
+    Object.keys(formattedPayload).forEach(key => 
+      (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') && delete formattedPayload[key]
+    );
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
