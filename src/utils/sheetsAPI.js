@@ -342,17 +342,13 @@ export const addRowToSheet = async (tableName, payload, appId) => {
  */
 export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
   try {
-    // Đảm bảo gửi đúng cột khóa (Key Column) cho từng bảng
-    let deleteRow = {};
-    if (tableName === "GhiChu") {
-      deleteRow = { "ID": payloadId };
-    } else if (tableName === "GiaoDich") {
-      deleteRow = { "ID": payloadId };
-    } else {
-      // Mặc định cho các bảng khác, gửi cả ID và id để tăng khả năng tương thích
-      deleteRow = { "ID": payloadId, "id": payloadId };
-      if (!isNaN(payloadId)) deleteRow["_RowNumber"] = payloadId;
-    }
+    // Lấy tên cột khóa thực tế từ mapping đã lưu lúc Fetch
+    const mapping = columnMapping[tableName] || {};
+    const keyCol = mapping['id'] || "ID"; // Tự động lấy tên cột Key (ID/id/TT/STT...)
+
+    const deleteRow = { [keyCol]: String(payloadId) };
+
+    console.log(`Đang thực hiện xóa tại bảng ${tableName}, Cột: ${keyCol}, Giá trị: ${payloadId}`);
 
     const response = await fetch(getApiUrl(appId, tableName), {
       method: "POST",
