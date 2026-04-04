@@ -98,6 +98,13 @@ function App() {
       const isEdit = !!updatedItem.id;
       showToast("Đang gửi dữ liệu...", "info");
 
+      // Đảm bảo số tiền là số nguyên sạch trước khi gửi vào payload
+      const rawAmount = String(updatedItem.soTien || "0").replace(/\D/g, "");
+      const cleanAmount = parseInt(rawAmount) || 0;
+
+      // Chuẩn hóa ngày về string YYYY-MM-DD
+      const cleanDate = updatedItem.ngay instanceof Date ? updatedItem.ngay : new Date(updatedItem.ngay);
+
       // Tính toán ID mới nếu là thêm mới: Max ID hiện tại + 1
       let finalId = updatedItem.id;
       if (!isEdit) {
@@ -111,6 +118,8 @@ function App() {
       const payload = {
         ...updatedItem,
         loaiThuChi: updatedItem.loaiThuChi || "Chi",
+        soTien: cleanAmount,
+        ngay: cleanDate,
 
         id: isEdit ? updatedItem.id : String(finalId),
         keyId: isEdit ? (updatedItem.keyId || updatedItem.id) : String(finalId)

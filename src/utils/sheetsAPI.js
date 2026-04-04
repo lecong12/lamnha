@@ -4,20 +4,22 @@ const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "Gia
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
 const normalizeKey = (str) => {
     if (!str) return '';
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu'];
+    // Nếu key đã là camelCase chuẩn thì giữ nguyên
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber'];
     if (knownKeys.includes(str)) return str;
 
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
     
-    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd') return 'id';
-    if (s === 'ngay' || s === 'date' || s === 'thoi gian') return 'ngay';
-    if (s === 'noi dung' || s === 'description') return 'noiDung';
-    if (s === 'so tien' || s === 'amount') return 'soTien';
-    if (s === 'loai thu chi' || s === 'type') return 'loaiThuChi';
-    if (s === 'hang muc' || s === 'doi tuong thu chi' || s === 'category') return 'doiTuongThuChi';
-    if (s === 'hinh anh' || s === 'minh chung' || s === 'chung tu' || s === 'anh') return 'hinhAnh';
-    if (s === 'nguoi cap nhat' || s === 'user') return 'nguoiCapNhat';
-    if (s === 'ghi chu' || s === 'note') return 'ghiChu';
+    // Sử dụng .includes() thay vì === để bắt được các biến thể như "Hạng mục chi", "Số tiền (VND)"
+    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s.includes('key')) return 'id';
+    if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
+    if (s.includes('noi dung') || s.includes('description')) return 'noiDung';
+    if (s.includes('so tien') || s.includes('amount')) return 'soTien';
+    if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
+    if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('category')) return 'doiTuongThuChi';
+    if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
+    if (s.includes('nguoi cap nhat') || s.includes('nguoi thuc hien') || s.includes('user')) return 'nguoiCapNhat';
+    if (s.includes('ghi chu') || s.includes('note')) return 'ghiChu';
     
     return s.replace(/\s+/g, '');
 };
