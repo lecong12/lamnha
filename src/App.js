@@ -33,7 +33,7 @@ function App() {
 
   const [editingItem, setEditingItem] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null); 
-  const [toast, setToast] = useState(null); // Keep toast state
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -64,7 +64,6 @@ function App() {
 
   const showToast = (message, type = "success") => setToast({ message, type });
 
-  // HÀM MỚI: Xử lý dữ liệu từ Gemini đổ về để mở Modal chỉnh sửa ngay lập tức
   const handleGeminiResult = (result, mode) => {
     if (mode === 'BILL') {
       setEditingItem({
@@ -72,67 +71,88 @@ function App() {
         soTien: result.soTien || 0,
         loaiThuChi: "Chi",
         noiDung: result.noiDung || "",
-        doiTuongThuChi: result.ten || "", // Tên cửa hàng từ AI
+        doiTuongThuChi: result.ten || "",
         nguoiCapNhat: "Gemini AI Scanner",
         hinhAnh: result.image_url || ""
       });
     } else {
-      // Nếu là quét Card hoặc Bảng hiệu
       const info = [result.ten, result.sdt].filter(Boolean).join(" - ");
-      showToast(`Đã trích xuất: ${info || "Không tìm thấy thông tin rõ ràng"}`, info ? "success" : "warning");
+      showToast(`Đã trích xuất: ${info || "Không tìm thấy thông tin"}`, info ? "success" : "warning");
     }
   };
 
   const handleAddNew = () => {
     setEditingItem({
-      ngay: new Date(), soTien: 0, loaiThuChi: "Chi", noiDung: "",
-      doiTuongThuChi: "", nguoiCapNhat: "", hinhAnh: ""
+      ngay: new Date().toISOString().split("T")[0], 
+      soTien: 0, 
+      loaiThuChi: "Chi", 
+      noiDung: "",
+      doiTuongThuChi: "", 
+      nguoiCapNhat: "Ba", 
+      hinhAnh: ""
     });
   };
 
+  // --- PHẦN SỬA LỖI TRỌNG TÂM: XỬ LÝ LƯU DỮ LIỆU ---
   const handleSaveEdit = async (updatedItem) => {
     try {
-      // Nhận diện Edit nếu item đã có RowNumber từ AppSheet
-      const isEdit = !!updatedItem.appSheetId;
-      showToast("Đang gửi dữ liệu...", "info");
+      // 1. Kiểm tra chế độ Sửa hay Thêm
+      const isEdit = !!(updatedItem.id || updatedItem._id || updatedItem.appSheetId);
+      showToast(isEdit ? "Đang cập nhật..." : "Đang thêm mới...", "info");
 
-      // Đảm bảo số tiền là số nguyên sạch trước khi gửi vào payload
-      const rawAmount = String(updatedItem.soTien || "0").replace(/\D/g, "");
-      const cleanAmount = parseInt(rawAmount) || 0;
+      // 2. Chuẩn hóa ID (Key duy nhất)
+      // Nếu thêm mới, dùng Timestamp để tránh trùng lặp Key trong Google Sheet
+      const finalKey = isEdit 
+        ? (updatedItem.id || updatedItem._id || updatedItem.appSheetId) 
+        : `ID${Date.now()}`;
 
-      // Chuẩn hóa ngày về string YYYY-MM-DD
-      const cleanDate = updatedItem.ngay instanceof Date ? updatedItem.ngay : new Date(updatedItem.ngay);
+      // 3. Chuẩn hóa Số tiền (Đảm bảo là kiểu Number thuần túy)
+      const cleanAmount = parseInt(String(updatedItem.soTien || "0").replace(/\D/g, "")) || 0;
 
-      // Tính toán ID mới nếu là thêm mới: Max ID hiện tại + 1
-      let finalId = updatedItem.id;
-      if (!isEdit) {
-        const numericIds = data.map(item => {
-          const val = String(item.keyId || item.id || "0").replace(/\D/g, "");
-          return parseInt(val) || 0;
-        });
-        finalId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
+      // 4. Chuẩn hóa Ngày (Luôn gửi chuỗi YYYY-MM-DD để AppSheet nhận diện đúng)
+      let cleanDateStr = "";
+      if (updatedItem.ngay instanceof Date) {
+        cleanDateStr = updatedItem.ngay.toISOString().split('T')[0];
+      } else {
+        cleanDateStr = String(updatedItem.ngay).split('T')[0];
       }
 
+      // 5. Tạo Payload sạch, khớp chính xác các cột của Sheet
       const payload = {
         ...updatedItem,
-        loaiThuChi: updatedItem.loaiThuChi || "Chi",
+        id: String(finalKey),
+        keyId: String(finalKey), // Đảm bảo cột Key luôn có dữ liệu
+        ngay: cleanDateStr,
         soTien: cleanAmount,
-        ngay: cleanDate,
-
-        id: isEdit ? (updatedItem.id || updatedItem.appSheetId) : String(finalId),
-        keyId: isEdit ? (updatedItem.keyId || updatedItem.id) : String(finalId),
-        appSheetId: updatedItem.appSheetId
+        loaiThuChi: "Chi", // Mặc định là chi phí xây dựng
+        noiDung: updatedItem.noiDung?.trim() || "",
+        doiTuongThuChi: updatedItem.doiTuongThuChi || "",
+        nguoiCapNhat: updatedItem.nguoiCapNhat || "Ba",
+        hinhAnh: updatedItem.hinhAnh || "",
+        ghiChu: updatedItem.ghiChu || ""
       };
-      const result = isEdit ? await updateRowInSheet(TABLE_GIAODICH, payload, APP_ID) : await addRowToSheet(TABLE_GIAODICH, payload, APP_ID);
-      if (result.success) {
-        showToast("Lưu thành công!", "success");
+
+      console.log("Dữ liệu gửi đi:", payload);
+
+      // 6. Thực thi gọi API utils/sheetsAPI
+      const result = isEdit 
+        ? await updateRowInSheet(TABLE_GIAODICH, payload, APP_ID) 
+        : await addRowToSheet(TABLE_GIAODICH, payload, APP_ID);
+
+      if (result && result.success) {
+        showToast("Lưu dữ liệu thành công!", "success");
         setEditingItem(null);
+        // Quan trọng: Load lại dữ liệu để bảng cập nhật dòng mới
         await fetchAllData();
       } else {
-        throw new Error(result.message || "Lỗi AppSheet");
+        throw new Error(result?.message || "AppSheet từ chối ghi dữ liệu. Hãy kiểm tra kết nối Sheet.");
       }
-    } catch (error) { showToast(error.message, "error"); }
+    } catch (error) {
+      console.error("Lỗi khi lưu:", error);
+      showToast(`Lỗi: ${error.message}`, "error");
+    }
   };
+  // --- KẾT THÚC PHẦN SỬA ---
 
   const handleTabChange = (tabId) => {
     if (tabId === 'zalo') { window.open("https://zalo.me/g/kphczy388", "_blank"); return; }
@@ -193,22 +213,70 @@ function App() {
   return (
     <div className={`app ${isDarkMode ? 'dark-theme' : ''}`}>
       {isMobile && isSidebarOpen && <div className="sidebar-overlay open" onClick={() => setIsSidebarOpen(false)}></div>}
-      <Sidebar isOpen={isSidebarOpen} toggle={() => setIsSidebarOpen(!isSidebarOpen)} activeTab={activeTab} onTabChange={handleTabChange} onLogout={handleLogout} isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} isMobile={isMobile} />
-      <div className="app-main-wrapper" style={{ marginLeft: isMobile ? '0' : (isSidebarOpen ? '280px' : '64px'), transition: 'margin-left 0.3s ease', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Header onRefresh={fetchAllData} loading={loading} onAdd={handleAddNew} onLogout={handleLogout} onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} isDarkMode={isDarkMode} />
-        <main className="main-content" style={{ flex: 1 }}>{loading ? <div className="loading-spinner"></div> : renderContent()}</main>
+      
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        toggle={() => setIsSidebarOpen(!isSidebarOpen)} 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange} 
+        onLogout={handleLogout} 
+        isDarkMode={isDarkMode} 
+        toggleDarkMode={() => setIsDarkMode(!isDarkMode)} 
+        isMobile={isMobile} 
+      />
+
+      <div className="app-main-wrapper" style={{ 
+        marginLeft: isMobile ? '0' : (isSidebarOpen ? '280px' : '64px'), 
+        transition: 'margin-left 0.3s ease', 
+        minHeight: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column' 
+      }}>
+        <Header 
+          onRefresh={fetchAllData} 
+          loading={loading} 
+          onAdd={handleAddNew} 
+          onLogout={handleLogout} 
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
+          isDarkMode={isDarkMode} 
+        />
+        
+        <main className="main-content" style={{ flex: 1 }}>
+          {loading ? <div className="loading-spinner"></div> : renderContent()}
+        </main>
+
         {isMobile && !isSidebarOpen && <MobileFooter activeTab={activeTab} onTabChange={handleTabChange} />}
       </div>
-      {editingItem && <EditModal item={editingItem} onClose={() => setEditingItem(null)} onSave={handleSaveEdit} showToast={showToast} />}
+
+      {editingItem && (
+        <EditModal 
+          item={editingItem} 
+          onClose={() => setEditingItem(null)} 
+          onSave={handleSaveEdit} 
+          showToast={showToast} 
+        />
+      )}
+
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-      {itemToDelete && <ConfirmModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)} onConfirm={async () => {
-          const item = data.find(i => i.id === itemToDelete);
-          if (item) {
-            const result = await deleteRowFromSheet(TABLE_GIAODICH, item.keyId || item.id, APP_ID);
-            if (result.success) { showToast("Đã xóa!", "success"); await fetchAllData(); }
-          }
-          setItemToDelete(null);
-      }} title="Xác nhận xóa" />}
+
+      {itemToDelete && (
+        <ConfirmModal 
+          isOpen={!!itemToDelete} 
+          onClose={() => setItemToDelete(null)} 
+          onConfirm={async () => {
+            const item = data.find(i => i.id === itemToDelete || i.keyId === itemToDelete || i.appSheetId === itemToDelete);
+            if (item) {
+              const result = await deleteRowFromSheet(TABLE_GIAODICH, item.keyId || item.id || item.appSheetId, APP_ID);
+              if (result.success) { 
+                showToast("Đã xóa giao dịch!", "success"); 
+                await fetchAllData(); 
+              }
+            }
+            setItemToDelete(null);
+          }} 
+          title="Xác nhận xóa giao dịch này?" 
+        />
+      )}
     </div>
   );
 }
