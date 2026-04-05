@@ -59,7 +59,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
     soTien: "",
     hinhAnh: "", // Thêm trường hình ảnh
     ghiChu: "", // Bổ sung trường ghi chú
-    loaiThuChi: "Chi", // Mặc định là Chi
+    loaiThuChi: "Chi", // Mặc định tất cả các khoản là Chi
   });
   const [uploading, setUploading] = useState(false);
   const [ocrScanning, setOcrScanning] = useState(false);
@@ -74,12 +74,11 @@ function EditModal({ item, onClose, onSave, showToast }) {
         ngay: dateVal.toISOString().split('T')[0],
         noiDung: item.noiDung || "",
         doiTuongThuChi: item.doiTuongThuChi || "",
-        nguoiCapNhat: item.nguoiCapNhat || "Ba",
+        nguoiCapNhat: item.nguoiCapNhat || "Ba", // Mặc định là Ba nếu chưa có
         // Format số tiền khi load dữ liệu (VD: 1000000 => 1.000.000)
         soTien: item.soTien ? new Intl.NumberFormat('vi-VN').format(item.soTien) : "",
         hinhAnh: item.hinhAnh || "",
         ghiChu: item.ghiChu || "",
-        loaiThuChi: "Chi",
       });
       setPreview(item.hinhAnh || "");
       setIsPdfPreview(item.hinhAnh ? item.hinhAnh.toLowerCase().endsWith('.pdf') : false);
@@ -224,25 +223,32 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Chuyển đổi số tiền từ chuỗi định dạng (1.000.000) về số (1000000)
-    const numericAmount = parseInt(String(formData.soTien).replace(/\D/g, "")) || 0;
-
-    if (!formData.doiTuongThuChi || numericAmount <= 0) {
-      showToast("Vui lòng nhập đầy đủ Hạng mục và Số tiền!", "warning");
+    
+    // 1. Validation: Kiểm tra Hạng mục
+    if (!formData.doiTuongThuChi) {
+      alert("Vui lòng chọn Hạng mục chi tiêu!");
       return;
     }
 
-    // Đóng gói dữ liệu: Giữ nguyên item cũ để không mất appSheetId (phục vụ Update)
+    // Xử lý số tiền an toàn hơn
+    const rawSoTien = formData.soTien ? formData.soTien.toString().replace(/[^0-9]/g, "") : "0";
+    const parsedSoTien = parseFloat(rawSoTien);
+
+    // 2. Validation: Kiểm tra Số tiền
+    if (parsedSoTien <= 0) {
+      alert("Vui lòng nhập Số tiền hợp lệ (lớn hơn 0)!");
+      return;
+    }
+
     const finalData = {
-      ...(item || {}),
+      ...item,
       ...formData,
-      soTien: numericAmount,
-      // Đảm bảo loaiThuChi luôn là Chi
-      loaiThuChi: "Chi",
-      ngay: formData.ngay, 
-      ghiChu: formData.ghiChu?.trim() || ""
+      ngay: new Date(formData.ngay),
+      soTien: isNaN(parsedSoTien) ? 0 : parsedSoTien,
+      loaiThuChi: "Chi", // Đảm bảo luôn là "Chi" khi gửi dữ liệu
+      ghiChu: formData.ghiChu || ""
     };
+
     onSave(finalData);
   };
 
@@ -312,6 +318,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
         <form onSubmit={handleSubmit} className="edit-form">
           <div className="form-grid">
+            {/* Hàng 1: Ngày và Số tiền */}
             <div className="form-group">
               <label>Ngày giao dịch</label>
               <input
