@@ -75,14 +75,8 @@ export const useAppData = (isLoggedIn) => {
                 const c = {};
                 Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
                 return {
-                    id: row._RowNumber || `gd_${index}`,
-                    appSheetId: row._RowNumber,
-                    keyId: c.id || row.id || row.ID, // Đảm bảo lấy được key ID
-                    ngay: c.ngay ? new Date(c.ngay) : new Date(),
-                    soTien: Number(String(c.soTien || 0).replace(/\D/g, "")),
-                    loaiThuChi: c.loaiThuChi || "Chi",
+                    id: row._RowNumber || c.soT
                     noiDung: c.noiDung || "",
-                    doiTuongThuChi: c.doiTuongThuChi || "Khác",
                     hinhAnh: c.hinhAnh || "",
                     nguoiCapNhat: c.nguoiCapNhat || "",
                 };

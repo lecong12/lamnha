@@ -92,7 +92,8 @@ function App() {
 
   const handleSaveEdit = async (updatedItem) => {
     try {
-      const isEdit = updatedItem.appSheetId || (updatedItem.id && String(updatedItem.id).length > 5);
+      // Nhận diện Edit nếu item đã có RowNumber từ AppSheet
+      const isEdit = !!updatedItem.appSheetId;
       showToast("Đang gửi dữ liệu...", "info");
 
       // Đảm bảo số tiền là số nguyên sạch trước khi gửi vào payload
@@ -118,8 +119,9 @@ function App() {
         soTien: cleanAmount,
         ngay: cleanDate,
 
-        id: isEdit ? updatedItem.id : String(finalId),
-        keyId: isEdit ? (updatedItem.keyId || updatedItem.id) : String(finalId)
+        id: isEdit ? (updatedItem.id || updatedItem.appSheetId) : String(finalId),
+        keyId: isEdit ? (updatedItem.keyId || updatedItem.id) : String(finalId),
+        appSheetId: updatedItem.appSheetId
       };
       const result = isEdit ? await updateRowInSheet(TABLE_GIAODICH, payload, APP_ID) : await addRowToSheet(TABLE_GIAODICH, payload, APP_ID);
       if (result.success) {

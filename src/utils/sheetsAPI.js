@@ -4,23 +4,25 @@ const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "Gia
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
 const normalizeKey = (str) => {
     if (!str) return '';
-    // Nếu key đã là camelCase chuẩn thì giữ nguyên
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber'];
+    // Nếu key đã thuộc danh sách chuẩn thì giữ nguyên
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber', 'category', 'url', 'size'];
     if (knownKeys.includes(str)) return str;
 
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
     
-    // Sử dụng .includes() thay vì === để bắt được các biến thể như "Hạng mục chi", "Số tiền (VND)"
-    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s.includes('key') || s.includes('id')) return 'id';
+    // Nhận diện linh hoạt dựa trên từ khóa phổ biến
+    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s.includes('key') || s.startsWith('id')) return 'id';
     if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
     if (s.includes('noi dung') || s.includes('description')) return 'noiDung';
-    if (s.includes('so tien') || s.includes('amount')) return 'soTien';
+    if (s.includes('so tien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
     if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
-    if (s.includes('hang muc') || s.includes('doi tuong')) return 'doiTuongThuChi';
+    if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
     if (s.includes('phan loai') || s.includes('category')) return 'category';
-    if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
+    if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh') || s.includes('url')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
-    if (s.includes('ghi chu') || s.includes('note')) return 'ghiChu';
+    if (s.includes('ghi chu') || s.includes('note') || s.includes('luu y')) return 'ghiChu';
+    if (s.includes('ten') || s.includes('name')) return 'name';
+    if (s.includes('dung luong') || s.includes('size')) return 'size';
     
     return s.replace(/\s+/g, '');
 };
@@ -189,12 +191,19 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber || payload.id,
         [getCol('id', 'ID')]: finalKey,
+        "ID": finalKey,
+        "id": finalKey,
+        "TT": finalKey,
+        "STT": finalKey,
         [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
         [getCol('loaiThuChi', 'Loại Thu Chi')]: payload.loaiThuChi,
         [getCol('noiDung', 'Nội dung')]: payload.noiDung,
         [getCol('soTien', 'Số tiền')]: cleanAmount,
         [getCol('doiTuongThuChi', 'Hạng mục')]: payload.doiTuongThuChi,
+        [getCol('category', 'Phân loại')]: payload.category,
         [getCol('hinhAnh', 'Hình ảnh')]: payload.hinhAnh,
+        "Chứng từ": payload.hinhAnh,
+        "Hình ảnh": payload.hinhAnh,
         [getCol('nguoiCapNhat', 'Người cập nhật')]: payload.nguoiCapNhat,
         [getCol('ghiChu', 'Ghi chú')]: payload.ghiChu
       };
