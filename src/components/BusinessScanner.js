@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { FiCamera, FiLoader, FiSave, FiX, FiCheck, FiUser, FiPhone, FiMapPin, FiEye } from 'react-icons/fi';
+import { extractInfoWithAI } from "../utils/aiService";
 
 function BusinessScanner() {
-  const CLOUD_NAME = "doqmshx5y";
-  const UPLOAD_PRESET = "ml_default";
+  const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
+  const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '');
   const LOG_ID = "nhat_ky_du_lieu";
-  // ANH DÁN LẠI KEY CHUẨN CỦA ANH VÀO ĐÂY
-  const GEMINI_KEY = "AIzaSyCPeb3SKqrbQ432ESGlzvQTq5lJMLUOGIo"; 
 
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -28,34 +27,25 @@ function BusinessScanner() {
 
   useEffect(() => { loadData(); }, []);
 
-  const fileToAiPart = async (file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve({
-        inlineData: { data: reader.result.split(',')[1], mimeType: file.type }
-      });
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleScan = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setLoading(true);
-    setMsg("Gemini đang phân tích...");
+    setMsg("AI đang phân tích ảnh...");
 
     try {
-      const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const imagePart = await fileToAiPart(file);
-      
-      const prompt = "Trích xuất thông tin card/bảng hiệu. Trả về JSON: {\"name\": \"...\", \"phone\": \"...\", \"address\": \"...\"}. Chỉ trả về JSON.";
-      
-      const result = await model.generateContent([prompt, imagePart]);
-      const response = await result.response;
-      const aiText = response.text().replace(/```json|```/g, "").trim();
-      const aiData = JSON.parse(aiText);
+      // 1. Chuyển file ảnh sang Base64 để gửi lên API
+      const reader = new FileReader();
+      const base64Promise = new Promise((resolve) => {
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+      const base64Image = await base64Promise;
 
+      // 2. Gọi AI Service đã được cấu hình ở backend (an toàn hơn)
+      const aiData = await extractInfoWithAI(base64Image, 'card');
+
+      // 3. Upload ảnh lên Cloudinary để lưu trữ minh chứng
       const fd = new FormData();
       fd.append("file", file);
       fd.append("upload_preset", UPLOAD_PRESET);
@@ -63,14 +53,14 @@ function BusinessScanner() {
       const cloud = await resCloud.json();
 
       setExtractedData({
-        name: aiData.name || "Khách hàng mới",
-        phone: aiData.phone || "",
-        address: aiData.address || "",
+        name: aiData.ten || "Khách hàng mới",
+        phone: aiData.sdt || "",
+        address: aiData.diaChi || "",
         url: cloud.secure_url
       });
       setShowForm(true);
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      alert("Không thể phân tích ảnh: " + err.message);
     }
     setLoading(false);
   };
@@ -99,32 +89,32 @@ function BusinessScanner() {
 
   return (
     <div style={{ padding: '15px', maxWidth: '500px', margin: 'auto' }}>
-      <h3 style={{ textAlign: 'center', color: '#007bff' }}>MÁY QUÉT HỒ SƠ AI</h3>
+      <h3 style={{ textAlign: 'center', color: 'var(--accent-color)', marginBottom: '20px' }}>MÁY QUÉT HỒ SƠ AI</h3>
 
       {!showForm ? (
-        <div style={{ background: '#f8f9fa', padding: '30px', borderRadius: '15px', textAlign: 'center', border: '2px dashed #007bff' }}>
+        <div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '15px', textAlign: 'center', border: '2px dashed var(--border-color)' }}>
           {loading ? <b>{msg}</b> : (
-            <label style={{ background: '#007bff', color: '#fff', padding: '15px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>
-               📸 QUÉT CARD / BẢNG HIỆU
+            <label style={{ background: 'var(--accent-color)', color: '#fff', padding: '15px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+               <FiCamera size={20} /> QUÉT CARD / BẢNG HIỆU
                <input type="file" accept="image/*" onChange={handleScan} style={{ display: 'none' }} />
             </label>
           )}
         </div>
       ) : (
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '15px', border: '1px solid #ddd' }}>
-          <h4 style={{ color: '#28a745' }}>AI ĐÃ ĐIỀN XONG:</h4>
-          <input style={{ width: '100%', padding: '10px', marginBottom: '10px' }} value={extractedData.name} onChange={e => setExtractedData({...extractedData, name: e.target.value})} placeholder="Tên" />
-          <input style={{ width: '100%', padding: '10px', marginBottom: '10px' }} value={extractedData.phone} onChange={e => setExtractedData({...extractedData, phone: e.target.value})} placeholder="SĐT" />
-          <textarea style={{ width: '100%', padding: '10px', marginBottom: '15px' }} value={extractedData.address} onChange={e => setExtractedData({...extractedData, address: e.target.value})} placeholder="Địa chỉ" />
-          <button onClick={saveFinal} style={{ width: '100%', padding: '12px', background: '#28a745', color: '#fff', border: 'none', borderRadius: '8px' }}>XÁC NHẬN LƯU</button>
+        <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '15px', border: '1px solid var(--border-color)' }}>
+          <h4 style={{ color: '#16a34a', marginTop: 0 }}>AI ĐÃ TRÍCH XUẤT XONG:</h4>
+          <div style={{ marginBottom: '10px' }}><small>Tên đơn vị:</small><input style={{ width: '100%', padding: '10px' }} value={extractedData.name} onChange={e => setExtractedData({...extractedData, name: e.target.value})} /></div>
+          <div style={{ marginBottom: '10px' }}><small>Số điện thoại:</small><input style={{ width: '100%', padding: '10px' }} value={extractedData.phone} onChange={e => setExtractedData({...extractedData, phone: e.target.value})} /></div>
+          <div style={{ marginBottom: '15px' }}><small>Địa chỉ:</small><textarea style={{ width: '100%', padding: '10px' }} value={extractedData.address} onChange={e => setExtractedData({...extractedData, address: e.target.value})} /></div>
+          <button onClick={saveFinal} style={{ width: '100%', padding: '12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>XÁC NHẬN LƯU NHẬT KÝ</button>
         </div>
       )}
 
       <div style={{ marginTop: '20px' }}>
         {history.map((item, i) => (
-          <div key={i} style={{ padding: '10px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div><b>{item.n}</b><br/><small>{item.p}</small></div>
-            <button onClick={() => setViewUrl(item.u)} style={{ background: '#17a2b8', color: '#fff', border: 'none', borderRadius: '5px', padding: '5px 10px' }}>XEM</button>
+          <div key={i} style={{ padding: '12px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-card)', borderRadius: '8px', marginBottom: '8px' }}>
+            <div><b style={{ color: 'var(--text-main)' }}>{item.n}</b><br/><small style={{ color: 'var(--text-muted)' }}>{item.p} - {item.t}</small></div>
+            <button onClick={() => setViewUrl(item.u)} style={{ background: 'var(--accent-color)', color: '#fff', border: 'none', borderRadius: '5px', padding: '8px 12px', cursor: 'pointer' }}><FiEye /></button>
           </div>
         ))}
       </div>
