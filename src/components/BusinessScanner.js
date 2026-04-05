@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { FiCamera, FiLoader, FiSave, FiX, FiCheck, FiUser, FiPhone, FiMapPin, FiEye } from 'react-icons/fi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FiCamera, FiEye } from 'react-icons/fi';
 import { extractInfoWithAI } from "../utils/aiService";
 
-function BusinessScanner() {
-  const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
-  const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '');
-  const LOG_ID = "nhat_ky_du_lieu";
+// Chuyển các hằng số cấu hình ra ngoài component để tránh việc khởi tạo lại mỗi lần render
+const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
+const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '');
+const LOG_ID = "nhat_ky_du_lieu";
 
+function BusinessScanner() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
@@ -14,7 +15,8 @@ function BusinessScanner() {
   const [showForm, setShowForm] = useState(false);
   const [viewUrl, setViewUrl] = useState(null);
 
-  const loadData = async () => {
+  // Dùng useCallback để hàm loadData không bị thay đổi định danh giữa các lần render
+  const loadData = useCallback(async () => {
     try {
       const r = await fetch(`https://res.cloudinary.com/${CLOUD_NAME}/raw/upload/${LOG_ID}.txt?v=${Date.now()}`);
       if (r.ok) {
@@ -23,9 +25,11 @@ function BusinessScanner() {
         setHistory(data.reverse());
       }
     } catch (e) { console.log("Chưa có dữ liệu."); }
-  };
+  }, []);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    loadData(); 
+  }, [loadData]);
 
   const handleScan = async (e) => {
     const file = e.target.files[0];
