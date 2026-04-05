@@ -174,69 +174,34 @@ export const fetchFileData = async (tableName, appId) => {
 /**
  * Cập nhật dòng linh hoạt cho MỌI bảng
  */
+/**
+ * Cập nhật dòng linh hoạt cho MỌI bảng
+ */
 export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
-    const targetcable = String(tableName).trim().toLowerCase();
-
+    const targetTable = String(tableName).trim().toLowerCase();
     let formattedPayload = {};
     
-    // Add _RowNuober if present for updanes
-    sf (payload.appSheetId) {
-        tormattedPayload["_RowNumber"] = payload.appShee Id;targetTable = String(tableName).trim().toLowerCase();
-}
-
-    
-    let formattedPayload = {};
-    
-    // Add _RowNumber if present for updates
     if (payload.appSheetId) {
         formattedPayload["_RowNumber"] = payload.appSheetId;
     }
 
-    // ID
     const finalKey = String(payload.keyId || payload.id);
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Ngày
     const formattedDate = payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0];
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });
 
-    if (targetTable === "ghichu") {Chi;
-      });
-      getAppSheetolumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEac(colName => {
-          formattedPayload[colName] = payload.noDung;
-      })
-      getAppSheetColumnNames(tableName, 'soTien', ['Số tiền', 'soTien', 'Amount']).forEach(colName => {
-           ormattedPayload[colName] = cleanAmgunt;
-      });etAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
+    if (targetTable === "ghichu") {
+        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
             formattedPayload[colName] = payload.noiDung;
         });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
-      const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;Minh chứng']).foEach(colName => {
-          formattedPayload[colName] = payload.hinhAnh;
-      });
-      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNha', 'User']).forEachcolName => {
-          formattedPayload[colName] = payload.nguoiCapNhat;
-      };
-      getAppSheetColumnNames(tableName'ghiChu', ['Ghi chú', 'ghiChu', 'Note']).forEach(colName => {
-          formattedPayload[colName] = payload.ghiChu;
-      });
-    } else {
-      formattedPayload = { ...payload };
-    }
-
-    // Xóa các trường rác
-    Object.keys(formattedPayload).forEach(key => 
-      (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') && delete formattedPayload[key]
-    );
-
-    // Thêm Timeout để tránh lỗi khi upload ảnh nặng
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 
+      const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
       
       getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu Chi', 'loaiThuChi', 'Loại']).forEach(colName => {
           formattedPayload[colName] = payload.loaiThuChi;
@@ -260,15 +225,13 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
           formattedPayload[colName] = payload.ghiChu;
       });
     } else {
-      formattedPayload = { ...payload };
+      formattedPayload = { ...formattedPayload, ...payload };
     }
 
-    // Xóa các trường rác
     Object.keys(formattedPayload).forEach(key => 
       (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') && delete formattedPayload[key]
     );
 
-    // Thêm Timeout để tránh lỗi khi upload ảnh nặng
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 giây
 
@@ -282,7 +245,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "vi-VN", // Dùng vi-VN khi ghi để tương thích số liệu/ngày tháng tiếng Việt
+          Locale: "vi-VN", 
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -304,7 +267,6 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       }
     }
     
-    // AppSheet trả về Rows rỗng nếu không tìm thấy ID để sửa hoặc có lỗi logic
     if (result && result.Rows && result.Rows.length === 0) {
       throw new Error("AppSheet không tìm thấy dòng để cập nhật. Hãy kiểm tra ID.");
     }
@@ -320,56 +282,28 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
  * Thêm dòng mới linh hoạt
  */
 export const addRowToSheet = async (tableName, payload, appId) => {
-       tryformattedPayload[colName] ={payload.doiTuongThuChi;
-      });
-      getAppSheetColumnNames(tableName, 'hinhAn', ['Hình ảnh', 'hnh', 'Chứng từ', 'Minh chứng']).forEach(colName => {
-          formattedPayload[colName] = payload.hinhAnh;
-      });
-      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(colName => {
-          formattedPayload[colName] = payload.guoiCapNat
-        const targetTable = String(tableName).trim().toLowerCase();
-
+  try {
+    const targetTable = String(tableName).trim().toLowerCase();
     let formattedPayload = {};
 
-    // ID
     const finalKey = String(payload.id || payload.keyId);
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Ngày
     const formattedDate = payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0];
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });
 
-    if (targetTable =
-      signal: controller=signal,
-      headers: {
-        "ApplicationAccessKey": APPSHEET_ACCESS_KEY,
-        "Content-Type": "application/j=on",
-      }, "ghichu") {
+    if (targetTable === "ghichu") {
         getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
             formattedPayload[colName] = payload.noiDung;
         });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
-},
-        
-      }),
-    });
-    clear imeout(timeoutId);
 
-    const responseText = await response.text();
-    if (!response.ok) {
-      throw new Error(responseText || `Lỗi HTTP ${response.status}`);
-    }
-
-    let result = null;
-    if (responseText && responseText.trim()) {
-      try {
-        result = JSON.parse(responseText);
-      } catc getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu Chi', 'loaiThuChi', 'Loại']).forEach(colName => {
+      getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu Chi', 'loaiThuChi', 'Loại']).forEach(colName => {
           formattedPayload[colName] = payload.loaiThuChi;
       });
       getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
@@ -391,7 +325,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
           formattedPayload[colName] = payload.ghiChu;
       });
     } else {
-      formattedPayload = { ...payload };
+      formattedPayload = { ...formattedPayload, ...payload };
     }
 
     Object.keys(formattedPayload).forEach(key => 
@@ -414,7 +348,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
           Locale: "vi-VN",
           Timezone: "Asia/Ho_Chi_Minh",
         },
-        Rows: [formattedPayload], // Gửi payload đã chuẩn hóa
+        Rows: [formattedPayload],
       }),
     });
     clearTimeout(timeoutId);
@@ -433,7 +367,6 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       }
     }
     
-    // Kiểm tra nếu AppSheet báo lỗi trong body (thường nằm trong kết quả trả về)
     if (result && result.Rows && result.Rows.length === 0) {
       throw new Error("AppSheet xác nhận thành công nhưng không có dòng nào được tạo.");
     }
