@@ -14,30 +14,26 @@ const TABLE_BANVE = process.env.REACT_APP_APPSHEET_TABLE_BANVE || "BanVe";
 const normalizeKey = (str) => {
     if (!str) return '';
     // Nếu key đã đúng chuẩn camelCase từ sheetsAPI rồi thì giữ nguyên
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name'];
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber', 'category', 'url', 'size'];
     if (knownKeys.includes(str)) return str;
 
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
     
-    if (s.includes("row number")) return "rowNumber";
-    if (s.includes("rownumber")) return "rowNumber"; // Bắt trường hợp _RowNumber từ AppSheet
-    if (s.includes("ngay bat dau")) return "ngayBatDau";
-    if (s.includes("ngay ket thuc")) return "ngayKetThuc";
-    if (s.includes("anh nghiem thu")) return "anhNghiemThu";
-    if (s.includes("ten cong viec") || s.includes("giai doan")) return "name";
-    if (s.includes("trang thai")) return "status";
-    if (s.includes("hang muc")) return "doiTuongThuChi"; // Map đúng về biến doiTuongThuChi
-    if (s.includes("du kien")) return "duKien";
-    if (s.includes("thuc te")) return "thucTe";
-    if (s.includes("con lai")) return "conLai";
-    if (s.includes("phan loai") || s.includes("category")) return "category";
-    if (s.includes("tinh trang")) return "tinhTrang";
-    if (s.includes("loai thu chi")) return "loaiThuChi";
-    if (s.includes("doi tuong thu chi")) return "doiTuongThuChi";
-    if (s.includes("so tien")) return "soTien";
-    if (s.includes("noi dung")) return "noiDung";
-    if (s.includes("hinh anh") || s.includes("minh chung") || s.includes("chung tu")) return "hinhAnh";
-    if (s.includes("nguoi cap nhat") || s.includes("nguoi thuc hien")) return "nguoiCapNhat";
+    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s.includes('key') || s.startsWith('id')) return 'id';
+    if (s.includes('ngay bat dau')) return 'ngayBatDau';
+    if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
+    if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
+    if (s.includes('noi dung') || s.includes('description')) return 'noiDung';
+    if (s.includes('so tien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
+    if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
+    if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
+    if (s.includes('phan loai') || s.includes('category')) return 'category';
+    if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh') || s.includes('url')) return 'hinhAnh';
+    if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
+    if (s.includes('ghi chu') || s.includes('note') || s.includes('luu y')) return 'ghiChu';
+    if (s.includes('ten') || s.includes('name') || s.includes('giai doan')) return 'name';
+    if (s.includes('trang thai') || s.includes('status')) return 'status';
+    if (s.includes('dung luong') || s.includes('size')) return 'size';
     // Fallback for single words like 'id', 'ngay'
     return s.replace(/\s+/g, '');
 };
@@ -75,10 +71,17 @@ export const useAppData = (isLoggedIn) => {
                 const c = {};
                 Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
                 return {
-                    id: row._RowNumber || c.soT
+                    id: row._RowNumber || c.id || `gd_${index}`,
+                    appSheetId: row._RowNumber,
+                    keyId: c.id || row.id || row.ID || row._RowNumber,
+                    ngay: c.ngay ? new Date(c.ngay) : new Date(),
+                    loaiThuChi: c.loaiThuChi || "Chi",
                     noiDung: c.noiDung || "",
+                    doiTuongThuChi: c.doiTuongThuChi || "",
+                    soTien: Number(String(c.soTien || 0).replace(/\D/g, "")),
                     hinhAnh: c.hinhAnh || "",
                     nguoiCapNhat: c.nguoiCapNhat || "",
+                    ghiChu: c.ghiChu || ""
                 };
             });
             setData(cleanGD.sort((a, b) => b.ngay - a.ngay));
