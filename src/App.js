@@ -93,66 +93,59 @@ function App() {
     });
   };
 
-  // --- PHẦN SỬA LỖI TRỌNG TÂM: XỬ LÝ LƯU DỮ LIỆU ---
+  // --- PHẦN SỬA LỖI TRỌNG TÂM: ĐÃ KHỚP TÊN CỘT GOOGLE SHEET ---
   const handleSaveEdit = async (updatedItem) => {
     try {
       // 1. Kiểm tra chế độ Sửa hay Thêm
-      const isEdit = !!(updatedItem.id || updatedItem._id || updatedItem.appSheetId);
+      const isEdit = !!(updatedItem.id || updatedItem.keyId || updatedItem.appSheetId);
       showToast(isEdit ? "Đang cập nhật..." : "Đang thêm mới...", "info");
 
-      // 2. Chuẩn hóa ID (Key duy nhất)
-      // Nếu thêm mới, dùng Timestamp để tránh trùng lặp Key trong Google Sheet
-      const finalKey = isEdit 
-        ? (updatedItem.id || updatedItem._id || updatedItem.appSheetId) 
-        : `ID${Date.now()}`;
+      // 2. Chuẩn hóa ID
+      const finalId = isEdit 
+        ? (updatedItem.id || updatedItem.keyId || updatedItem.appSheetId) 
+        : String(Date.now());
 
-      // 3. Chuẩn hóa Số tiền (Đảm bảo là kiểu Number thuần túy)
+      // 3. Chuẩn hóa Số tiền (Xử lý dấu chấm từ Modal nếu có)
       const cleanAmount = parseInt(String(updatedItem.soTien || "0").replace(/\D/g, "")) || 0;
 
-      // 4. Chuẩn hóa Ngày (Luôn gửi chuỗi YYYY-MM-DD để AppSheet nhận diện đúng)
+      // 4. Chuẩn hóa Ngày (YYYY-MM-DD)
       let cleanDateStr = "";
-      if (updatedItem.ngay instanceof Date) {
-        cleanDateStr = updatedItem.ngay.toISOString().split('T')[0];
-      } else {
+      try {
+        const d = new Date(updatedItem.ngay);
+        cleanDateStr = d.toISOString().split('T')[0];
+      } catch (e) {
         cleanDateStr = String(updatedItem.ngay).split('T')[0];
       }
 
-      // 5. Tạo Payload sạch, khớp chính xác các cột của Sheet
+      // 5. PAYLOAD: Phải khớp 100% với tên tiêu đề cột trên Google Sheet
       const payload = {
-        ...updatedItem,
-        id: String(finalKey),
-        keyId: String(finalKey), // Đảm bảo cột Key luôn có dữ liệu
-        ngay: cleanDateStr,
-        soTien: cleanAmount,
-        loaiThuChi: "Chi", // Mặc định là chi phí xây dựng
-        noiDung: updatedItem.noiDung?.trim() || "",
-        doiTuongThuChi: updatedItem.doiTuongThuChi || "",
-        nguoiCapNhat: updatedItem.nguoiCapNhat || "Ba",
-        hinhAnh: updatedItem.hinhAnh || "",
-        ghiChu: updatedItem.ghiChu || ""
+        "id": String(finalId),
+        "Ngày": cleanDateStr,
+        "Hạng mục": updatedItem.doiTuongThuChi || "Khác",
+        "Nội dung": updatedItem.noiDung?.trim() || "",
+        "Số tiền": cleanAmount,
+        "Người cập nhật": updatedItem.nguoiCapNhat || "Ba",
+        "Chứng từ": updatedItem.hinhAnh || ""
       };
 
-      console.log("Dữ liệu gửi đi:", payload);
+      console.log("Payload gửi đi AppSheet:", payload);
 
-      // 6. Thực thi gọi API utils/sheetsAPI
       const result = isEdit 
         ? await updateRowInSheet(TABLE_GIAODICH, payload, APP_ID) 
         : await addRowToSheet(TABLE_GIAODICH, payload, APP_ID);
 
       if (result && result.success) {
-        showToast("Lưu dữ liệu thành công!", "success");
+        showToast(isEdit ? "Cập nhật thành công!" : "Thêm mới thành công!", "success");
         setEditingItem(null);
-        // Quan trọng: Load lại dữ liệu để bảng cập nhật dòng mới
-        await fetchAllData();
+        await fetchAllData(); 
       } else {
-        throw new Error(result?.message || "AppSheet từ chối ghi dữ liệu. Hãy kiểm tra kết nối Sheet.");
+        throw new Error(result?.message || "AppSheet từ chối ghi dữ liệu.");
       }
     } catch (error) {
       console.error("Lỗi khi lưu:", error);
       showToast(`Lỗi: ${error.message}`, "error");
     }
   };
-  // --- KẾT THÚC PHẦN SỬA ---
 
   const handleTabChange = (tabId) => {
     if (tabId === 'zalo') { window.open("https://zalo.me/g/kphczy388", "_blank"); return; }
@@ -168,25 +161,34 @@ function App() {
   const [filters, setFilters] = useState({ loaiThuChi: "", nguoiCapNhat: "", doiTuongThuChi: "", startDate: "", endDate: "", searchText: "" });
 
   const filterOptions = useMemo(() => ({
-    doiTuongThuChi: [...new Set(data.map(i => i.doiTuongThuChi).filter(Boolean))],
-    nguoiCapNhat: [...new Set(data.map(i => i.nguoiCapNhat).filter(Boolean))],
+    doiTuongThuChi: [...new Set(data.map(i => i.doiTuongThuChi || i["Hạng mục"]).filter(Boolean))],
+    nguoiCapNhat: [...new Set(data.map(i => i.nguoiCapNhat || i["Người cập nhật"]).filter(Boolean))],
   }), [data]);
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      if (filters.loaiThuChi && item.loaiThuChi !== filters.loaiThuChi) return false;
-      if (filters.nguoiCapNhat && item.nguoiCapNhat !== filters.nguoiCapNhat) return false;
-      if (filters.doiTuongThuChi && item.doiTuongThuChi !== filters.doiTuongThuChi) return false;
+      // Hỗ trợ cả tên biến cũ và tên cột mới từ Sheet
+      const hangMuc = item.doiTuongThuChi || item["Hạng mục"];
+      const nguoiCap = item.nguoiCapNhat || item["Người cập nhật"];
+      const noiDung = item.noiDung || item["Nội dung"];
+
+      if (filters.nguoiCapNhat && nguoiCap !== filters.nguoiCapNhat) return false;
+      if (filters.doiTuongThuChi && hangMuc !== filters.doiTuongThuChi) return false;
       if (filters.searchText) {
         const t = filters.searchText.toLowerCase();
-        return (item.noiDung || "").toLowerCase().includes(t) || (item.doiTuongThuChi || "").toLowerCase().includes(t);
+        return (noiDung || "").toLowerCase().includes(t) || (hangMuc || "").toLowerCase().includes(t);
       }
       return true;
     });
   }, [data, filters]);
 
   const renderContent = () => {
-    const stats = { tongThu: 0, tongChi: filteredData.reduce((s, i) => s + i.soTien, 0), soGiaoDich: filteredData.length };
+    // Thống kê tổng chi từ cột "Số tiền" hoặc "soTien"
+    const stats = { 
+      tongThu: 0, 
+      tongChi: filteredData.reduce((s, i) => s + (Number(i.soTien || i["Số tiền"]) || 0), 0), 
+      soGiaoDich: filteredData.length 
+    };
     const extraData = { top5: [], chartData: [], nganSach, tienDo };
 
     switch (activeTab) {
@@ -266,7 +268,8 @@ function App() {
           onConfirm={async () => {
             const item = data.find(i => i.id === itemToDelete || i.keyId === itemToDelete || i.appSheetId === itemToDelete);
             if (item) {
-              const result = await deleteRowFromSheet(TABLE_GIAODICH, item.keyId || item.id || item.appSheetId, APP_ID);
+              const key = item.keyId || item.id || item.appSheetId;
+              const result = await deleteRowFromSheet(TABLE_GIAODICH, key, APP_ID);
               if (result.success) { 
                 showToast("Đã xóa giao dịch!", "success"); 
                 await fetchAllData(); 

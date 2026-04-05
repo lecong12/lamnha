@@ -52,32 +52,34 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const [preview, setPreview] = useState("");
   const [isPdfPreview, setIsPdfPreview] = useState(false);
 
-  // Khởi tạo dữ liệu khi mở Modal
   useEffect(() => {
+    // Hỗ trợ cả tên biến cũ và tên cột Tiếng Việt từ AppSheet
     if (item && (item.id || item._id || item.appSheetId)) {
-      // Trường hợp CHỈNH SỬA
       let dateStr = "";
+      const rawDate = item.ngay || item["Ngày"];
       try {
-        const d = new Date(item.ngay);
-        dateStr = d.toISOString().split('T')[0]; // Chuẩn hóa YYYY-MM-DD
+        const d = new Date(rawDate);
+        dateStr = d.toISOString().split('T')[0];
       } catch (e) {
         dateStr = new Date().toISOString().split('T')[0];
       }
 
+      const rawAmount = item.soTien || item["Số tiền"];
+
       setFormData({
         ngay: dateStr,
-        noiDung: item.noiDung || "",
-        doiTuongThuChi: item.doiTuongThuChi || "",
-        nguoiCapNhat: item.nguoiCapNhat || "Ba",
-        soTien: item.soTien ? new Intl.NumberFormat('vi-VN').format(item.soTien) : "",
-        hinhAnh: item.hinhAnh || "",
+        noiDung: item.noiDung || item["Nội dung"] || "",
+        doiTuongThuChi: item.doiTuongThuChi || item["Hạng mục"] || "",
+        nguoiCapNhat: item.nguoiCapNhat || item["Người cập nhật"] || "Ba",
+        soTien: rawAmount ? new Intl.NumberFormat('vi-VN').format(rawAmount) : "",
+        hinhAnh: item.hinhAnh || item["Chứng từ"] || "",
         ghiChu: item.ghiChu || "",
         loaiThuChi: item.loaiThuChi || "Chi",
       });
-      setPreview(item.hinhAnh || "");
-      setIsPdfPreview(item.hinhAnh?.toLowerCase().endsWith('.pdf') || false);
+      const imgUrl = item.hinhAnh || item["Chứng từ"] || "";
+      setPreview(imgUrl);
+      setIsPdfPreview(imgUrl?.toLowerCase().endsWith('.pdf') || false);
     } else {
-      // Trường hợp THÊM MỚI
       setFormData({
         ngay: new Date().toISOString().split('T')[0],
         noiDung: "",
@@ -170,7 +172,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // XỬ LÝ DỨT ĐIỂM: Ép kiểu dữ liệu trước khi gửi
     const cleanSoTien = formData.soTien.toString().replace(/\./g, "");
     const parsedSoTien = parseInt(cleanSoTien) || 0;
 
@@ -179,19 +180,16 @@ function EditModal({ item, onClose, onSave, showToast }) {
       return;
     }
 
-    // Đóng gói dữ liệu cuối cùng
+    // ĐỐI CHIẾU VỚI CỘT TRÊN SHEET (Dữ liệu gửi lên cha App.js)
     const finalData = {
-      // Giữ nguyên ID nếu là chỉnh sửa (hỗ trợ cả MongoDB _id và AppSheet ID)
       id: item?.id || item?._id || item?.appSheetId || null,
       ...formData,
       soTien: parsedSoTien,
-      // Gửi chuỗi ngày YYYY-MM-DD để tránh lệch múi giờ
       ngay: formData.ngay, 
-      loaiThuChi: "Chi"
     };
 
-    console.log("Submit Data:", finalData);
-    onSave(finalData); // Gọi hàm lưu của Component cha
+    console.log("Submit Form Data:", finalData);
+    onSave(finalData); 
   };
 
   const activeSuggestions = SUGGESTION_MAP[formData.doiTuongThuChi] || [];
