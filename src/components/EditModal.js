@@ -82,6 +82,21 @@ function EditModal({ item, onClose, onSave, showToast }) {
       });
       setPreview(item.hinhAnh || "");
       setIsPdfPreview(item.hinhAnh ? item.hinhAnh.toLowerCase().endsWith('.pdf') : false);
+    } else {
+      // Trường hợp THÊM MỚI: Khởi tạo ngày mặc định là hôm nay
+      const today = new Date().toISOString().split('T')[0];
+      setFormData({
+        ngay: today,
+        noiDung: "",
+        doiTuongThuChi: "",
+        nguoiCapNhat: "Ba",
+        soTien: "",
+        hinhAnh: "",
+        ghiChu: "",
+        loaiThuChi: "Chi",
+      });
+      setPreview("");
+      setIsPdfPreview(false);
     }
   }, [item]);
 
@@ -226,9 +241,13 @@ function EditModal({ item, onClose, onSave, showToast }) {
     
     // 1. Validation: Kiểm tra Hạng mục
     if (!formData.doiTuongThuChi) {
-      alert("Vui lòng chọn Hạng mục chi tiêu!");
+      if (showToast) showToast("Vui lòng chọn Hạng mục chi tiêu!", "warning");
+      else alert("Vui lòng chọn Hạng mục!");
       return;
     }
+
+    // Đảm bảo ngày không bị trống
+    const dateToSave = formData.ngay ? new Date(formData.ngay) : new Date();
 
     // Xử lý số tiền an toàn hơn
     const rawSoTien = formData.soTien ? formData.soTien.toString().replace(/[^0-9]/g, "") : "0";
@@ -236,14 +255,15 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
     // 2. Validation: Kiểm tra Số tiền
     if (parsedSoTien <= 0) {
-      alert("Vui lòng nhập Số tiền hợp lệ (lớn hơn 0)!");
+      if (showToast) showToast("Vui lòng nhập số tiền hợp lệ!", "warning");
+      else alert("Vui lòng nhập số tiền!");
       return;
     }
 
     const finalData = {
-      ...item,
+      ...(item || {}), // Đảm bảo không bị lỗi nếu item là null
       ...formData,
-      ngay: new Date(formData.ngay),
+      ngay: dateToSave,
       soTien: isNaN(parsedSoTien) ? 0 : parsedSoTien,
       loaiThuChi: "Chi", // Đảm bảo luôn là "Chi" khi gửi dữ liệu
       ghiChu: formData.ghiChu || ""
