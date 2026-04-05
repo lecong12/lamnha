@@ -96,39 +96,20 @@ function App() {
   // --- PHẦN SỬA LỖI TRỌNG TÂM: ĐÃ KHỚP TÊN CỘT GOOGLE SHEET ---
   const handleSaveEdit = async (updatedItem) => {
     try {
-      // 1. Kiểm tra chế độ Sửa hay Thêm
-      const isEdit = !!(updatedItem.id || updatedItem.keyId || updatedItem.appSheetId);
+      // 1. Nhận diện Sửa/Thêm dựa trên appSheetId hoặc ID hiện có
+      const isEdit = !!updatedItem.appSheetId || (!!updatedItem.id && !String(updatedItem.id).startsWith('temp_'));
       showToast(isEdit ? "Đang cập nhật..." : "Đang thêm mới...", "info");
 
-      // 2. Chuẩn hóa ID
-      const finalId = isEdit 
-        ? (updatedItem.id || updatedItem.keyId || updatedItem.appSheetId) 
-        : String(Date.now());
-
-      // 3. Chuẩn hóa Số tiền (Xử lý dấu chấm từ Modal nếu có)
-      const cleanAmount = parseInt(String(updatedItem.soTien || "0").replace(/\D/g, "")) || 0;
-
-      // 4. Chuẩn hóa Ngày (YYYY-MM-DD)
-      let cleanDateStr = "";
-      try {
-        const d = new Date(updatedItem.ngay);
-        cleanDateStr = d.toISOString().split('T')[0];
-      } catch (e) {
-        cleanDateStr = String(updatedItem.ngay).split('T')[0];
-      }
-
-      // 5. PAYLOAD: Phải khớp 100% với tên tiêu đề cột trên Google Sheet
+      // 2. Chuẩn bị Payload: Giữ nguyên các key chuẩn (soTien, ngay, appSheetId) 
+      // để sheetsAPI.js tự động map sang tên cột trên Google Sheet
       const payload = {
-        "id": String(finalId),
-        "Ngày": cleanDateStr,
-        "Hạng mục": updatedItem.doiTuongThuChi || "Khác",
-        "Nội dung": updatedItem.noiDung?.trim() || "",
-        "Số tiền": cleanAmount,
-        "Người cập nhật": updatedItem.nguoiCapNhat || "Ba",
-        "Chứng từ": updatedItem.hinhAnh || ""
+        ...updatedItem,
+        id: isEdit ? updatedItem.id : `GD_${Date.now()}`,
+        soTien: parseInt(String(updatedItem.soTien).replace(/\D/g, "")) || 0,
+        ngay: updatedItem.ngay,
+        noiDung: updatedItem.noiDung?.trim() || "",
+        loaiThuChi: "Chi"
       };
-
-      console.log("Payload gửi đi AppSheet:", payload);
 
       const result = isEdit 
         ? await updateRowInSheet(TABLE_GIAODICH, payload, APP_ID) 

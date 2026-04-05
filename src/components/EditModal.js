@@ -180,12 +180,12 @@ function EditModal({ item, onClose, onSave, showToast }) {
       return;
     }
 
-    // ĐỐI CHIẾU VỚI CỘT TRÊN SHEET (Dữ liệu gửi lên cha App.js)
     const finalData = {
-      id: item?.id || item?._id || item?.appSheetId || null,
+      ...item, // Giữ lại metadata quan trọng như appSheetId
       ...formData,
       soTien: parsedSoTien,
-      ngay: formData.ngay, 
+      ngay: formData.ngay,
+      loaiThuChi: "Chi"
     };
 
     console.log("Submit Form Data:", finalData);

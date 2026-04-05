@@ -208,7 +208,9 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
             formattedPayload[colName] = payload.noiDung;
         });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
-      const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
+      // Ưu tiên lấy soTien, nếu không thấy thì thử lấy từ "Số tiền" (phòng hờ)
+      const rawAmount = payload.soTien !== undefined ? payload.soTien : (payload["Số tiền"] || 0);
+      const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
       
       getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu Chi', 'loaiThuChi', 'Loại']).forEach(colName => {
           formattedPayload[colName] = payload.loaiThuChi;
@@ -315,7 +317,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
             formattedPayload[colName] = payload.noiDung;
         });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
-      const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
+      const rawAmount = payload.soTien !== undefined ? payload.soTien : (payload["Số tiền"] || 0);
+      const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
 
       getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu Chi', 'loaiThuChi', 'Loại']).forEach(colName => {
           formattedPayload[colName] = payload.loaiThuChi;
