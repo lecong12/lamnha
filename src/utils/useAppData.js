@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchStages, updateStageInSheet } from "./stagesAPI";
-import { fetchTableData, updateRowInSheet, fetchFileData } from "./sheetsAPI";
+import { fetchTableData, updateRowInSheet, addRowToSheet, fetchFileData } from "./sheetsAPI";
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
 const ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
@@ -192,5 +192,32 @@ export const useAppData = (isLoggedIn) => {
         return result;
     };
 
-    return { data, nganSach, tienDo, contracts, drawings, loading, error, fetchAllData, handleUpdateStage, handleUpdateBudget };
+    /**
+     * Xử lý lưu giao dịch (Tự động nhận diện Thêm mới hoặc Cập nhật)
+     */
+    const handleSaveTransaction = async (transactionData) => {
+        setLoading(true);
+        try {
+            let result;
+            // Nếu có appSheetId hoặc id hiện tại thì là Update, ngược lại là Add
+            const isExisting = transactionData.appSheetId || (transactionData.id && !String(transactionData.id).startsWith('temp_'));
+
+            if (isExisting) {
+                result = await updateRowInSheet(TABLE_GIAODICH, transactionData, APP_ID);
+            } else {
+                // Gán ID tạm nếu cần hoặc để AppSheet tự tạo
+                const newPayload = { ...transactionData, id: transactionData.id || `GD_${Date.now()}` };
+                result = await addRowToSheet(TABLE_GIAODICH, newPayload, APP_ID);
+            }
+
+            if (result.success) {
+                await fetchAllData(); // Tải lại dữ liệu sau khi lưu
+            }
+            return result;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { data, nganSach, tienDo, contracts, drawings, loading, error, fetchAllData, handleUpdateStage, handleUpdateBudget, handleSaveTransaction };
 };

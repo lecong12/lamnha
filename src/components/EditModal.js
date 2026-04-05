@@ -59,6 +59,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
     soTien: "",
     hinhAnh: "", // Thêm trường hình ảnh
     ghiChu: "", // Bổ sung trường ghi chú
+    loaiThuChi: "Chi", // Mặc định là Chi
   });
   const [uploading, setUploading] = useState(false);
   const [ocrScanning, setOcrScanning] = useState(false);
@@ -78,6 +79,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
         soTien: item.soTien ? new Intl.NumberFormat('vi-VN').format(item.soTien) : "",
         hinhAnh: item.hinhAnh || "",
         ghiChu: item.ghiChu || "",
+        loaiThuChi: "Chi", // Luôn mặc định là Chi khi chỉnh sửa hoặc thêm mới
       });
       setPreview(item.hinhAnh || "");
       setIsPdfPreview(item.hinhAnh ? item.hinhAnh.toLowerCase().endsWith('.pdf') : false);
@@ -317,7 +319,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
         <form onSubmit={handleSubmit} className="edit-form">
           <div className="form-grid">
-            {/* Hàng 1: Ngày và Số tiền */}
             <div className="form-group">
               <label>Ngày giao dịch</label>
               <input
