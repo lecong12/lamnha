@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchStages, updateStageInSheet } from "./stagesAPI";
-import { fetchTableData, updateRowInSheet } from "./sheetsAPI";
+import { fetchTableData, updateRowInSheet, fetchFileData } from "./sheetsAPI";
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
 const ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
@@ -30,6 +30,7 @@ const normalizeKey = (str) => {
     if (s.includes("du kien")) return "duKien";
     if (s.includes("thuc te")) return "thucTe";
     if (s.includes("con lai")) return "conLai";
+    if (s.includes("phan loai") || s.includes("category")) return "category";
     if (s.includes("tinh trang")) return "tinhTrang";
     if (s.includes("loai thu chi")) return "loaiThuChi";
     if (s.includes("doi tuong thu chi")) return "doiTuongThuChi";
@@ -58,11 +59,11 @@ export const useAppData = (isLoggedIn) => {
         try {
             // Tải tất cả dữ liệu song song
             const [resGDResult, resNSResult, resTDResult, resHopDongResult, resBanVeResult] = await Promise.all([
-                fetchTableData(TABLE_GIAODICH, APP_ID, ACCESS_KEY),
-                fetchTableData(TABLE_NGANSACH, APP_ID, ACCESS_KEY),
+                fetchTableData(TABLE_GIAODICH, APP_ID),
+                fetchTableData(TABLE_NGANSACH, APP_ID),
                 fetchStages(APP_ID), // Dùng API riêng cho Tiến độ để lấy đúng cột
-                fetchTableData(TABLE_HOPDONG, APP_ID, ACCESS_KEY),
-                fetchTableData(TABLE_BANVE, APP_ID, ACCESS_KEY),
+                fetchFileData(TABLE_HOPDONG, APP_ID), // Dùng fetchFileData để làm sạch link
+                fetchFileData(TABLE_BANVE, APP_ID),
             ]);
 
             const resGD = resGDResult.success ? resGDResult.data : [];
@@ -118,10 +119,10 @@ export const useAppData = (isLoggedIn) => {
                     appSheetId: row._RowNumber,
                     keyId: c.id || row.id,
                     name: c.name || c.ten || "Không tên",
-                    url: c.url || c.link || c.hinhAnh || "",
-                    date: c.date || c.ngay || "",
+                    url: c.url || "",
+                    date: c.date || c.ngay || "", // Map đồng nhất ngày
                     size: Number(c.size || 0),
-                    category: c.category || c.phanLoai || "Khác"
+                    category: c.category || c.doiTuongThuChi || "Khác"
                 };
             });
             setContracts(cleanHopDong.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));
@@ -133,7 +134,13 @@ export const useAppData = (isLoggedIn) => {
                 Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
                 return {
                     id: row._RowNumber || row.id || `bv_${index}`,
-                    ...c // Bao gồm tất cả các trường đã normalize
+                    appSheetId: row._RowNumber,
+                    keyId: c.id || row.id,
+                    name: c.name || "Không tên",
+                    url: c.url || "",
+                    date: c.date || c.ngay || "",
+                    size: Number(c.size || 0),
+                    category: c.category || c.doiTuongThuChi || "Khác"
                 };
             });
             setDrawings(cleanBanVe.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));

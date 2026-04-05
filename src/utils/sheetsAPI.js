@@ -16,7 +16,8 @@ const normalizeKey = (str) => {
     if (s.includes('noi dung') || s.includes('description')) return 'noiDung';
     if (s.includes('so tien') || s.includes('amount')) return 'soTien';
     if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
-    if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('phan loai') || s.includes('category')) return 'doiTuongThuChi';
+    if (s.includes('hang muc') || s.includes('doi tuong')) return 'doiTuongThuChi';
+    if (s.includes('phan loai') || s.includes('category')) return 'category';
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     if (s.includes('ghi chu') || s.includes('note')) return 'ghiChu';
