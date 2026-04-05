@@ -199,14 +199,13 @@ export const useAppData = (isLoggedIn) => {
         setLoading(true);
         try {
             let result;
-            // Logic nhận diện ổn định: Nếu có appSheetId (_RowNumber) hoặc ID thật từ DB thì là Edit
-            const isExisting = transactionData.appSheetId || 
-                              (transactionData.id && !String(transactionData.id).includes('temp') && !String(transactionData.id).includes('GD_'));
+            // CHỐT: Nếu có appSheetId (_RowNumber) thì chắc chắn là bản ghi cũ -> Edit
+            const isExisting = !!transactionData.appSheetId;
 
             if (isExisting) {
                 result = await updateRowInSheet(TABLE_GIAODICH, transactionData, APP_ID);
             } else {
-                // Thêm mới: Đảm bảo loaiThuChi luôn là Chi
+                // Thêm mới: Tạo ID tạm và ép kiểu Chi
                 const newPayload = { ...transactionData, id: `GD_${Date.now()}`, loaiThuChi: "Chi" };
                 result = await addRowToSheet(TABLE_GIAODICH, newPayload, APP_ID);
             }

@@ -71,7 +71,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
       // Nếu là item mới (chưa có ngày), dùng ngày hiện tại
       const dateVal = item.ngay ? new Date(item.ngay) : new Date();
       setFormData({
-        ngay: new Date(dateVal.getTime() - (dateVal.getTimezoneOffset() * 60000)).toISOString().split('T')[0],
+        ngay: dateVal.toLocaleDateString('en-CA'), // Hiển thị YYYY-MM-DD chuẩn địa phương
         noiDung: item.noiDung || "",
         doiTuongThuChi: item.doiTuongThuChi || "",
         nguoiCapNhat: item.nguoiCapNhat || "Ba", // Mặc định là Ba nếu chưa có
@@ -240,32 +240,21 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 1. Validation: Kiểm tra Hạng mục và Nội dung
-    if (!formData.doiTuongThuChi || !formData.noiDung.trim()) {
-      if (showToast) showToast("Vui lòng nhập đầy đủ Hạng mục và Nội dung!", "warning");
+    // 1. Validation: Kiểm tra Hạng mục, Nội dung và Số tiền
+    const rawSoTien = formData.soTien ? formData.soTien.toString().replace(/[^0-9]/g, "") : "0";
+    const parsedSoTien = parseInt(rawSoTien) || 0;
+
+    if (!formData.doiTuongThuChi || !formData.noiDung.trim() || parsedSoTien <= 0) {
+      if (showToast) showToast("Vui lòng nhập đầy đủ Hạng mục, Nội dung và Số tiền > 0!", "warning");
       else alert("Vui lòng nhập đầy đủ thông tin!");
       return;
     }
 
-    // Xử lý ngày: Chuyển chuỗi YYYY-MM-DD thành Date object (local)
-    const dateToSave = new Date(formData.ngay);
-
-    // Xử lý số tiền an toàn hơn
-    const rawSoTien = formData.soTien ? formData.soTien.toString().replace(/[^0-9]/g, "") : "0";
-    const parsedSoTien = parseFloat(rawSoTien);
-
-    // 2. Validation: Kiểm tra Số tiền
-    if (parsedSoTien <= 0) {
-      if (showToast) showToast("Vui lòng nhập số tiền lớn hơn 0!", "warning");
-      else alert("Vui lòng nhập số tiền!");
-      return;
-    }
-
     const finalData = {
-      ...(item && (item.id || item.appSheetId) ? item : {}), 
+      ...(item || {}), // Giữ lại metadata bao gồm appSheetId
       ...formData,
-      ngay: dateToSave,
-      soTien: isNaN(parsedSoTien) ? 0 : parsedSoTien,
+      ngay: new Date(formData.ngay), // Gửi Date object để API tự format lại
+      soTien: parsedSoTien,
       loaiThuChi: "Chi", // Đảm bảo luôn là "Chi" khi gửi dữ liệu
       ghiChu: formData.ghiChu || ""
     };
