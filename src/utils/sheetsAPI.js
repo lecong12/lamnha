@@ -35,6 +35,17 @@ const columnMapping = {
   "HopDong": {}
 };
 
+// Helper để lấy tên cột AppSheet thực tế hoặc danh sách fallback
+const getAppSheetColumnNames = (tableName, normalizedKey, defaultNames) => {
+    const mapping = columnMapping[tableName] || {};
+    if (mapping[normalizedKey]) {
+        return [mapping[normalizedKey]]; // If mapped, return the exact mapped name in an array
+    }
+    // If not mapped, return all provided default names as fallbacks
+    return Array.isArray(defaultNames) ? defaultNames : [defaultNames];
+};
+
+
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
 const getCleanLink = (rawLink) => {
   if (!rawLink) return "";
@@ -165,48 +176,89 @@ export const fetchFileData = async (tableName, appId) => {
  */
 export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
-    // AppSheet cần ID để biết dòng nào cần sửa
-    if (!payload.id) {
-        throw new Error("Thiếu 'id' để cập nhật dòng.");
-    }
-
-    // Lấy tên cột thực tế đã mapping lúc fetch
-    const mapping = columnMapping[tableName] || {};
-    const getCol = (norm, def) => mapping[norm] || def;
-    const targetTable = String(tableName).trim().toLowerCase();
+    const targetcable = String(tableName).trim().toLowerCase();
 
     let formattedPayload = {};
     
-    if (targetTable === "ghichu") {
-      formattedPayload = {
-        "_RowNumber": payload._RowNumber || payload.id,
-        [getCol('id', 'ID')]: payload.id,
-        [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        [getCol('noiDung', 'Nội dung')]: payload.noiDung
-      };
+    // Add _RowNuober if present for updanes
+    sf (payload.appSheetId) {
+        tormattedPayload["_RowNumber"] = payload.appShee Id;targetTable = String(tableName).trim().toLowerCase();
+}
+
+    
+    let formattedPayload = {};
+    
+    // Add _RowNumber if present for updates
+    if (payload.appSheetId) {
+        formattedPayload["_RowNumber"] = payload.appSheetId;
+    }
+
+    // ID
+    const finalKey = String(payload.keyId || payload.id);
+    getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
+        formattedPayload[colName] = finalKey;
+    });
+
+    // Ngày
+    const formattedDate = payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0];
+    getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
+        formattedPayload[colName] = formattedDate;
+    });
+
+    if (targetTable === "ghichu") {Chi;
+      });
+      getAppSheetolumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEac(colName => {
+          formattedPayload[colName] = payload.noDung;
+      })
+      getAppSheetColumnNames(tableName, 'soTien', ['Số tiền', 'soTien', 'Amount']).forEach(colName => {
+           ormattedPayload[colName] = cleanAmgunt;
+      });etAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
+            formattedPayload[colName] = payload.noiDung;
+        });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
-      const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
-      const finalKey = String(payload.keyId || payload.id);
-      
-      formattedPayload = {
-        "_RowNumber": payload.appSheetId || payload._RowNumber || payload.id,
-        [getCol('id', 'ID')]: finalKey,
-        "ID": finalKey,
-        "id": finalKey,
-        "TT": finalKey,
-        "STT": finalKey,
-        [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        [getCol('loaiThuChi', 'Loại Thu Chi')]: payload.loaiThuChi,
-        [getCol('noiDung', 'Nội dung')]: payload.noiDung,
-        [getCol('soTien', 'Số tiền')]: cleanAmount,
-        [getCol('doiTuongThuChi', 'Hạng mục')]: payload.doiTuongThuChi,
-        [getCol('category', 'Phân loại')]: payload.category,
-        [getCol('hinhAnh', 'Hình ảnh')]: payload.hinhAnh,
-        "Chứng từ": payload.hinhAnh,
-        "Hình ảnh": payload.hinhAnh,
-        [getCol('nguoiCapNhat', 'Người cập nhật')]: payload.nguoiCapNhat,
-        [getCol('ghiChu', 'Ghi chú')]: payload.ghiChu
+      const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;Minh chứng']).foEach(colName => {
+          formattedPayload[colName] = payload.hinhAnh;
+      });
+      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNha', 'User']).forEachcolName => {
+          formattedPayload[colName] = payload.nguoiCapNhat;
       };
+      getAppSheetColumnNames(tableName'ghiChu', ['Ghi chú', 'ghiChu', 'Note']).forEach(colName => {
+          formattedPayload[colName] = payload.ghiChu;
+      });
+    } else {
+      formattedPayload = { ...payload };
+    }
+
+    // Xóa các trường rác
+    Object.keys(formattedPayload).forEach(key => 
+      (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') && delete formattedPayload[key]
+    );
+
+    // Thêm Timeout để tránh lỗi khi upload ảnh nặng
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 
+      
+      getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu Chi', 'loaiThuChi', 'Loại']).forEach(colName => {
+          formattedPayload[colName] = payload.loaiThuChi;
+      });
+      getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
+          formattedPayload[colName] = payload.noiDung;
+      });
+      getAppSheetColumnNames(tableName, 'soTien', ['Số tiền', 'soTien', 'Amount']).forEach(colName => {
+          formattedPayload[colName] = cleanAmount;
+      });
+      getAppSheetColumnNames(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi', 'Category', 'Phân loại']).forEach(colName => {
+          formattedPayload[colName] = payload.doiTuongThuChi;
+      });
+      getAppSheetColumnNames(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh', 'Chứng từ', 'Minh chứng']).forEach(colName => {
+          formattedPayload[colName] = payload.hinhAnh;
+      });
+      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(colName => {
+          formattedPayload[colName] = payload.nguoiCapNhat;
+      });
+      getAppSheetColumnNames(tableName, 'ghiChu', ['Ghi chú', 'ghiChu', 'Note']).forEach(colName => {
+          formattedPayload[colName] = payload.ghiChu;
+      });
     } else {
       formattedPayload = { ...payload };
     }
@@ -268,40 +320,76 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
  * Thêm dòng mới linh hoạt
  */
 export const addRowToSheet = async (tableName, payload, appId) => {
-  try {
-    const mapping = columnMapping[tableName] || {};
-    const getCol = (norm, defs) => {
-      if (mapping[norm]) return mapping[norm];
-      // Nếu không có mapping, trả về mảng các tên cột khả thi để AppSheet tự khớp
-      return Array.isArray(defs) ? defs[0] : defs;
-    };
-    const targetTable = String(tableName).trim().toLowerCase();
+       tryformattedPayload[colName] ={payload.doiTuongThuChi;
+      });
+      getAppSheetColumnNames(tableName, 'hinhAn', ['Hình ảnh', 'hnh', 'Chứng từ', 'Minh chứng']).forEach(colName => {
+          formattedPayload[colName] = payload.hinhAnh;
+      });
+      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(colName => {
+          formattedPayload[colName] = payload.guoiCapNat
+        const targetTable = String(tableName).trim().toLowerCase();
 
     let formattedPayload = {};
 
-    if (targetTable === "ghichu") {
-      formattedPayload = {
-        [getCol('id', ['ID', 'id'])]: payload.id,
-        [getCol('ngay', ['Ngày', 'ngay'])]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        [getCol('noiDung', ['Nội dung', 'noiDung'])]: payload.noiDung
-      };
+    // ID
+    const finalKey = String(payload.id || payload.keyId);
+    getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
+        formattedPayload[colName] = finalKey;
+    });
+
+    // Ngày
+    const formattedDate = payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0];
+    getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
+        formattedPayload[colName] = formattedDate;
+    });
+
+    if (targetTable =
+      signal: controller=signal,
+      headers: {
+        "ApplicationAccessKey": APPSHEET_ACCESS_KEY,
+        "Content-Type": "application/j=on",
+      }, "ghichu") {
+        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
+            formattedPayload[colName] = payload.noiDung;
+        });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
-      const finalKey = String(payload.id || payload.keyId);
+},
+        
+      }),
+    });
+    clear imeout(timeoutId);
 
-      formattedPayload = {
-        [getCol('id', 'ID')]: finalKey,
-        "id": finalKey, // Gửi thêm fallback 'id' viết thường
-        [getCol('ngay', 'Ngày')]: payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
-        [getCol('loaiThuChi', 'Loại Thu Chi')]: payload.loaiThuChi,
-        [getCol('noiDung', 'Nội dung')]: payload.noiDung,
-        [getCol('soTien', 'Số tiền')]: cleanAmount,
-        [getCol('doiTuongThuChi', 'Hạng mục')]: payload.doiTuongThuChi,
-        [getCol('hinhAnh', 'Chứng từ')]: payload.hinhAnh,
-        "Hình ảnh": payload.hinhAnh, // Gửi thêm fallback
-        [getCol('nguoiCapNhat', 'Người cập nhật')]: payload.nguoiCapNhat,
-        [getCol('ghiChu', 'Ghi chú')]: payload.ghiChu
-      };
+    const responseText = await response.text();
+    if (!response.ok) {
+      throw new Error(responseText || `Lỗi HTTP ${response.status}`);
+    }
+
+    let result = null;
+    if (responseText && responseText.trim()) {
+      try {
+        result = JSON.parse(responseText);
+      } catc getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu Chi', 'loaiThuChi', 'Loại']).forEach(colName => {
+          formattedPayload[colName] = payload.loaiThuChi;
+      });
+      getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
+          formattedPayload[colName] = payload.noiDung;
+      });
+      getAppSheetColumnNames(tableName, 'soTien', ['Số tiền', 'soTien', 'Amount']).forEach(colName => {
+          formattedPayload[colName] = cleanAmount;
+      });
+      getAppSheetColumnNames(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi', 'Category', 'Phân loại']).forEach(colName => {
+          formattedPayload[colName] = payload.doiTuongThuChi;
+      });
+      getAppSheetColumnNames(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh', 'Chứng từ', 'Minh chứng']).forEach(colName => {
+          formattedPayload[colName] = payload.hinhAnh;
+      });
+      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(colName => {
+          formattedPayload[colName] = payload.nguoiCapNhat;
+      });
+      getAppSheetColumnNames(tableName, 'ghiChu', ['Ghi chú', 'ghiChu', 'Note']).forEach(colName => {
+          formattedPayload[colName] = payload.ghiChu;
+      });
     } else {
       formattedPayload = { ...payload };
     }
@@ -364,7 +452,7 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
   try {
     // Lấy tên cột khóa thực tế từ mapping đã lưu lúc Fetch
     const mapping = columnMapping[tableName] || {};
-    const keyCol = mapping['id'] || "ID"; // Tự động lấy tên cột Key (ID/id/TT/STT...)
+    const keyCol = mapping['id'] || getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT'])[0]; // Lấy tên cột Key (ID/id/TT/STT...)
 
     const deleteRow = { [keyCol]: String(payloadId) };
 
