@@ -74,12 +74,12 @@ function EditModal({ item, onClose, onSave, showToast }) {
         ngay: dateVal.toISOString().split('T')[0],
         noiDung: item.noiDung || "",
         doiTuongThuChi: item.doiTuongThuChi || "",
-        nguoiCapNhat: item.nguoiCapNhat || "Ba", // Mặc định là Ba nếu chưa có
+        nguoiCapNhat: item.nguoiCapNhat || "Ba",
         // Format số tiền khi load dữ liệu (VD: 1000000 => 1.000.000)
         soTien: item.soTien ? new Intl.NumberFormat('vi-VN').format(item.soTien) : "",
         hinhAnh: item.hinhAnh || "",
         ghiChu: item.ghiChu || "",
-        loaiThuChi: "Chi", // Luôn mặc định là Chi khi chỉnh sửa hoặc thêm mới
+        loaiThuChi: "Chi",
       });
       setPreview(item.hinhAnh || "");
       setIsPdfPreview(item.hinhAnh ? item.hinhAnh.toLowerCase().endsWith('.pdf') : false);
@@ -224,30 +224,23 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // 1. Làm sạch dữ liệu số tiền
-    const rawSoTien = formData.soTien ? formData.soTien.toString().replace(/\D/g, "") : "0";
-    const parsedSoTien = parseInt(rawSoTien) || 0;
 
-    // 2. Validation
-    if (!formData.doiTuongThuChi) {
-      if (showToast) showToast("Vui lòng chọn Hạng mục!", "warning");
-      else alert("Vui lòng chọn Hạng mục!");
+    // Chuyển đổi số tiền từ chuỗi định dạng (1.000.000) về số (1000000)
+    const numericAmount = parseInt(String(formData.soTien).replace(/\D/g, "")) || 0;
+
+    if (!formData.doiTuongThuChi || numericAmount <= 0) {
+      showToast("Vui lòng nhập đầy đủ Hạng mục và Số tiền!", "warning");
       return;
     }
 
-    if (parsedSoTien <= 0) {
-      if (showToast) showToast("Vui lòng nhập số tiền hợp lệ!", "warning");
-      else alert("Vui lòng nhập số tiền!");
-      return;
-    }
-
-    // 3. Đóng gói dữ liệu gửi về App.js
+    // Đóng gói dữ liệu: Giữ nguyên item cũ để không mất appSheetId (phục vụ Update)
     const finalData = {
-      ...item, // Giữ lại ID và các thuộc tính ẩn khác
-      ...formData, // Ghi đè các thuộc tính từ form
-      soTien: parsedSoTien,
-      ngay: new Date(formData.ngay), // Chuyển về Date object để API xử lý chuẩn
+      ...(item || {}),
+      ...formData,
+      soTien: numericAmount,
+      // Đảm bảo loaiThuChi luôn là Chi
+      loaiThuChi: "Chi",
+      ngay: formData.ngay, 
       ghiChu: formData.ghiChu?.trim() || ""
     };
     onSave(finalData);
