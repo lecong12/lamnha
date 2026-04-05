@@ -67,11 +67,11 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const [isPdfPreview, setIsPdfPreview] = useState(false); // Lưu trạng thái loại file
 
   useEffect(() => {
-    if (item) {
+    if (item && (item.id || item.appSheetId)) {
       // Nếu là item mới (chưa có ngày), dùng ngày hiện tại
       const dateVal = item.ngay ? new Date(item.ngay) : new Date();
       setFormData({
-        ngay: dateVal.toISOString().split('T')[0],
+        ngay: new Date(dateVal.getTime() - (dateVal.getTimezoneOffset() * 60000)).toISOString().split('T')[0],
         noiDung: item.noiDung || "",
         doiTuongThuChi: item.doiTuongThuChi || "",
         nguoiCapNhat: item.nguoiCapNhat || "Ba", // Mặc định là Ba nếu chưa có
@@ -79,12 +79,13 @@ function EditModal({ item, onClose, onSave, showToast }) {
         soTien: item.soTien ? new Intl.NumberFormat('vi-VN').format(item.soTien) : "",
         hinhAnh: item.hinhAnh || "",
         ghiChu: item.ghiChu || "",
+        loaiThuChi: item.loaiThuChi || "Chi",
       });
       setPreview(item.hinhAnh || "");
       setIsPdfPreview(item.hinhAnh ? item.hinhAnh.toLowerCase().endsWith('.pdf') : false);
     } else {
       // Trường hợp THÊM MỚI: Khởi tạo ngày mặc định là hôm nay
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA'); // Lấy YYYY-MM-DD theo giờ địa phương
       setFormData({
         ngay: today,
         noiDung: "",
@@ -239,15 +240,15 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 1. Validation: Kiểm tra Hạng mục
-    if (!formData.doiTuongThuChi) {
-      if (showToast) showToast("Vui lòng chọn Hạng mục chi tiêu!", "warning");
-      else alert("Vui lòng chọn Hạng mục!");
+    // 1. Validation: Kiểm tra Hạng mục và Nội dung
+    if (!formData.doiTuongThuChi || !formData.noiDung.trim()) {
+      if (showToast) showToast("Vui lòng nhập đầy đủ Hạng mục và Nội dung!", "warning");
+      else alert("Vui lòng nhập đầy đủ thông tin!");
       return;
     }
 
-    // Đảm bảo ngày không bị trống
-    const dateToSave = formData.ngay ? new Date(formData.ngay) : new Date();
+    // Xử lý ngày: Chuyển chuỗi YYYY-MM-DD thành Date object (local)
+    const dateToSave = new Date(formData.ngay);
 
     // Xử lý số tiền an toàn hơn
     const rawSoTien = formData.soTien ? formData.soTien.toString().replace(/[^0-9]/g, "") : "0";
@@ -255,13 +256,13 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
     // 2. Validation: Kiểm tra Số tiền
     if (parsedSoTien <= 0) {
-      if (showToast) showToast("Vui lòng nhập số tiền hợp lệ!", "warning");
+      if (showToast) showToast("Vui lòng nhập số tiền lớn hơn 0!", "warning");
       else alert("Vui lòng nhập số tiền!");
       return;
     }
 
     const finalData = {
-      ...(item || {}), // Đảm bảo không bị lỗi nếu item là null
+      ...(item && (item.id || item.appSheetId) ? item : {}), 
       ...formData,
       ngay: dateToSave,
       soTien: isNaN(parsedSoTien) ? 0 : parsedSoTien,

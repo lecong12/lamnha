@@ -291,7 +291,14 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    const formattedDate = payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0];
+    // Hàm helper format ngày YYYY-MM-DD không bị lệch múi giờ
+    const formatDate = (date) => {
+      const d = date instanceof Date ? date : new Date(date);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleDateString('en-CA'); // Trả về định dạng YYYY-MM-DD chuẩn địa phương
+    };
+
+    const formattedDate = formatDate(payload.ngay);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });

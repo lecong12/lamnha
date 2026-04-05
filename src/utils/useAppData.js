@@ -199,14 +199,15 @@ export const useAppData = (isLoggedIn) => {
         setLoading(true);
         try {
             let result;
-            // Nếu có appSheetId hoặc id hiện tại thì là Update, ngược lại là Add
-            const isExisting = transactionData.appSheetId || (transactionData.id && !String(transactionData.id).startsWith('temp_'));
+            // Logic nhận diện ổn định: Nếu có appSheetId (_RowNumber) hoặc ID thật từ DB thì là Edit
+            const isExisting = transactionData.appSheetId || 
+                              (transactionData.id && !String(transactionData.id).includes('temp') && !String(transactionData.id).includes('GD_'));
 
             if (isExisting) {
                 result = await updateRowInSheet(TABLE_GIAODICH, transactionData, APP_ID);
             } else {
-                // Gán ID tạm nếu cần hoặc để AppSheet tự tạo
-                const newPayload = { ...transactionData, id: transactionData.id || `GD_${Date.now()}` };
+                // Thêm mới: Đảm bảo loaiThuChi luôn là Chi
+                const newPayload = { ...transactionData, id: `GD_${Date.now()}`, loaiThuChi: "Chi" };
                 result = await addRowToSheet(TABLE_GIAODICH, newPayload, APP_ID);
             }
 
