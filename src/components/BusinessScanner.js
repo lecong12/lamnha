@@ -1,11 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FiCamera, FiEye } from 'react-icons/fi';
-import { extractInfoWithAI } from "../utils/aiService";
+import { FiCamera, FiEye, FiLoader, FiCheck, FiX } from 'react-icons/fi';
+import Tesseract from 'tesseract.js';
 
 // Chuyển các hằng số cấu hình ra ngoài component để tránh việc khởi tạo lại mỗi lần render
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
 const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '');
 const LOG_ID = "nhat_ky_du_lieu";
+
+// Hàm bổ trợ trích xuất thông tin bằng Regex từ text thuần (Dành cho Tesseract)
+const parseOcrText = (text) => {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+  
+  // Tìm số điện thoại Việt Nam
+  const phoneRegex = /(0[3|5|7|8|9][0-9]{8}|02[0-9]{8,9})/g;
+  const phones = text.match(phoneRegex);
+  
+  return {
+    name: lines[0] || "Khách hàng mới",
+    phone: phones ? phones[0] : "",
+    address: lines.find(l => l.toLowerCase().includes("địa chỉ") || l.toLowerCase().includes("đ/c") || l.toLowerCase().includes("số")) || ""
+  };
+};
 
 function BusinessScanner() {
   const [history, setHistory] = useState([]);
@@ -35,36 +50,36 @@ function BusinessScanner() {
     const file = e.target.files[0];
     if (!file) return;
     setLoading(true);
-    setMsg("AI đang phân tích ảnh...");
+    setMsg("Đang khởi tạo máy quét...");
 
     try {
-      // 1. Chuyển file ảnh sang Base64 để gửi lên API
-      const reader = new FileReader();
-      const base64Promise = new Promise((resolve) => {
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(file);
+      // 1. Nhận diện văn bản trực tiếp bằng Tesseract (Client-side)
+      const { data: { text } } = await Tesseract.recognize(file, 'vie+eng', {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            setMsg(`Đang quét: ${Math.round(m.progress * 100)}%`);
+          }
+        }
       });
-      const base64Image = await base64Promise;
 
-      // 2. Gọi AI Service đã được cấu hình ở backend (an toàn hơn)
-      const aiData = await extractInfoWithAI(base64Image, 'card');
+      const parsedData = parseOcrText(text);
 
-      // 3. Upload ảnh lên Cloudinary để lưu trữ minh chứng
+      // 2. Upload ảnh lên Cloudinary để lưu trữ làm minh chứng
       const fd = new FormData();
       fd.append("file", file);
       fd.append("upload_preset", UPLOAD_PRESET);
       const resCloud = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: fd });
       const cloud = await resCloud.json();
 
-      setExtractedData({
-        name: aiData.ten || "Khách hàng mới",
-        phone: aiData.sdt || "",
-        address: aiData.diaChi || "",
-        url: cloud.secure_url
+      setExtractedData({ 
+        name: parsedData.name, 
+        phone: parsedData.phone, 
+        address: parsedData.address, 
+        url: cloud.secure_url 
       });
       setShowForm(true);
     } catch (err) {
-      alert("Không thể phân tích ảnh: " + err.message);
+      alert("Lỗi máy quét: " + err.message);
     }
     setLoading(false);
   };
@@ -93,11 +108,16 @@ function BusinessScanner() {
 
   return (
     <div style={{ padding: '15px', maxWidth: '500px', margin: 'auto' }}>
-      <h3 style={{ textAlign: 'center', color: 'var(--accent-color)', marginBottom: '20px' }}>MÁY QUÉT HỒ SƠ AI</h3>
+      <h3 style={{ textAlign: 'center', color: 'var(--accent-color)', marginBottom: '20px' }}>MÁY QUÉT CARD TESSERACT</h3>
 
       {!showForm ? (
         <div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '15px', textAlign: 'center', border: '2px dashed var(--border-color)' }}>
-          {loading ? <b>{msg}</b> : (
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+              <FiLoader className="spin" size={30} />
+              <b>{msg}</b>
+            </div>
+          ) : (
             <label style={{ background: 'var(--accent-color)', color: '#fff', padding: '15px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
                <FiCamera size={20} /> QUÉT CARD / BẢNG HIỆU
                <input type="file" accept="image/*" onChange={handleScan} style={{ display: 'none' }} />
@@ -106,11 +126,16 @@ function BusinessScanner() {
         </div>
       ) : (
         <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '15px', border: '1px solid var(--border-color)' }}>
-          <h4 style={{ color: '#16a34a', marginTop: 0 }}>AI ĐÃ TRÍCH XUẤT XONG:</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h4 style={{ color: '#16a34a', margin: 0 }}>KẾT QUẢ QUÉT:</h4>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer' }}><FiX size={20}/></button>
+          </div>
           <div style={{ marginBottom: '10px' }}><small>Tên đơn vị:</small><input style={{ width: '100%', padding: '10px' }} value={extractedData.name} onChange={e => setExtractedData({...extractedData, name: e.target.value})} /></div>
           <div style={{ marginBottom: '10px' }}><small>Số điện thoại:</small><input style={{ width: '100%', padding: '10px' }} value={extractedData.phone} onChange={e => setExtractedData({...extractedData, phone: e.target.value})} /></div>
           <div style={{ marginBottom: '15px' }}><small>Địa chỉ:</small><textarea style={{ width: '100%', padding: '10px' }} value={extractedData.address} onChange={e => setExtractedData({...extractedData, address: e.target.value})} /></div>
-          <button onClick={saveFinal} style={{ width: '100%', padding: '12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>XÁC NHẬN LƯU NHẬT KÝ</button>
+          <button onClick={saveFinal} style={{ width: '100%', padding: '12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <FiCheck /> XÁC NHẬN LƯU
+          </button>
         </div>
       )}
 
