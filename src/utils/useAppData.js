@@ -114,7 +114,7 @@ export const useAppData = (isLoggedIn) => {
                     id: row._RowNumber || row.id || `hd_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row.ID || row._RowNumber,
-                    name: row.name || row.ten || row.noiDung || "Hợp đồng không tên",
+                    name: row.name || row.ten || row.noiDung || row["Tên hợp đồng"] || "Hợp đồng không tên",
                     url: row.url || "",
                     // QUAN TRỌNG: Chuyển Date về String để tránh trắng màn hình React
                     date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
@@ -131,7 +131,7 @@ export const useAppData = (isLoggedIn) => {
                     id: row._RowNumber || row.id || `bv_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row.ID || row._RowNumber,
-                    name: row.name || row.ten || row.noiDung || "Bản vẽ không tên",
+                    name: row.name || row.ten || row.noiDung || row["Tên bản vẽ"] || "Bản vẽ không tên",
                     url: row.url || "",
                     date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
                     size: Number(row.size || 0),

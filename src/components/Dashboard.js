@@ -34,9 +34,11 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   const axisColor = isDarkMode ? "#9ca3af" : "#6b7280";
   const tooltipBg = isDarkMode ? "#1f2937" : "#ffffff";
 
-  // 1. Tính toán tiến độ và hạng mục hiện tại
-  const currentStage = stages.find(s => s.status === 'Đang thi công') || 
-                       [...stages].reverse().find(s => s.status === 'Hoàn thành') || 
+  // 1. Tính toán hạng mục hiện tại (Ưu tiên hạng mục cuối cùng đang thi công)
+  const cleanStages = [...stages];
+  const currentStage = cleanStages.reverse().find(s => s.status?.toLowerCase().trim() === 'đang thi công') || 
+                       stages.find(s => s.status?.toLowerCase().trim() === 'đang thi công') ||
+                       [...stages].reverse().find(s => s.status?.toLowerCase().trim() === 'hoàn thành') || 
                        stages[0];
 
   // 2. Tính toán ngày thi công (từ ngày bắt đầu mục đầu tiên)
@@ -55,7 +57,7 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
     .flatMap(s => s.anhNghiemThu.map(url => ({ url, stageName: s.name })))
     .slice(0, 6);
 
-  const completedStagesCount = stages.filter(s => s.status === 'Hoàn thành').length;
+  const completedStagesCount = stages.filter(s => s.status?.toLowerCase().trim() === 'hoàn thành').length;
   const completionPercentage = stages.length > 0 ? Math.round((completedStagesCount / stages.length) * 100) : 0;
 
   // Group data by doiTuongThuChi for pie chart
