@@ -193,7 +193,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload["_RowNumber"] = payload.appSheetId;
     }
 
-    const finalKey = payload.keyId || payload.id;
+    const finalKey = payload.keyId !== undefined ? payload.keyId : payload.id;
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
@@ -299,12 +299,12 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const targetTable = String(tableName).trim().toLowerCase();
     let formattedPayload = {};
 
-    const finalKey = payload.id || payload.keyId;
+    const finalKey = payload.id !== undefined ? payload.id : payload.keyId;
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Hàm helper format ngày YYYY-MM-DD không bị lệch múi giờ
+    // Đảm bảo ngày tháng gửi lên khớp với Locale vi-VN (DD/MM/YYYY)
     const formatDate = (date) => {
       const d = date instanceof Date ? date : new Date(date);
       if (isNaN(d.getTime())) return "";
@@ -345,6 +345,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     } else {
       formattedPayload = { ...formattedPayload, ...payload };
     }
+
+    console.log(`[sheetsAPI] Payload gửi lên ${tableName}:`, formattedPayload);
 
     Object.keys(formattedPayload).forEach(key => 
       (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') && delete formattedPayload[key]

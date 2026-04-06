@@ -96,27 +96,34 @@ function App() {
   // --- PHẦN SỬA LỖI TRỌNG TÂM: ĐÃ KHỚP TÊN CỘT GOOGLE SHEET ---
   const handleSaveEdit = async (updatedItem) => {
     try {
-      // 1. Nhận diện Sửa/Thêm dựa trên appSheetId (Chỉ bản ghi đã tồn tại mới có RowNumber)
+      // 1. Nhận diện Sửa/Thêm dựa trên appSheetId (Dấu hiệu chắc chắn của dòng đã có trong Sheet)
       const isEdit = !!updatedItem.appSheetId;
       showToast(isEdit ? "Đang cập nhật..." : "Đang thêm mới...", "info");
 
-      let finalId;
+      let finalId = updatedItem.keyId || updatedItem.id;
+      
+      // 2. Tính toán ID mới theo công thức MAX(id) + 1 nếu là thêm mới
       if (isEdit) {
         finalId = updatedItem.keyId || updatedItem.id;
       } else {
-        // 2. Công thức MAX(id) + 1 cho thêm mới
-        const numericIds = data
+        // Lấy tất cả ID từ mảng gốc (không dùng filteredData để tránh trùng ID khi đang lọc)
+        const numericIds = (data || [])
           .map(item => {
-            const val = item.keyId || item.id;
-            return typeof val === 'number' ? val : parseInt(String(val).replace(/\D/g, ''));
+            // Bóc tách số từ ID (hỗ trợ cả "GD_156" hoặc "156")
+            const val = String(item.keyId || item.id || "");
+            const match = val.match(/\d+/);
+            return match ? parseInt(match[0], 10) : null;
           })
-          .filter(n => !isNaN(n));
+          .filter(n => n !== null && !isNaN(n));
+
         finalId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
       }
 
+      console.log(`[CRUD] ${isEdit ? 'UPDATE' : 'ADD'} - Final ID:`, finalId);
+
       const payload = {
         ...updatedItem,
-        id: finalId, // Sử dụng ID số vừa tính toán
+        id: finalId, 
         soTien: parseInt(String(updatedItem.soTien).replace(/\D/g, "")) || 0,
         ngay: updatedItem.ngay,
         noiDung: updatedItem.noiDung?.trim() || "",
