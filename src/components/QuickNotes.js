@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiTrash2, FiExternalLink, FiFileText, FiLoader } from 'react-icons/fi';
 import { fetchTableData, addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
+import { parseDate } from '../utils/stagesAPI';
 import './QuickNotes.css';
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
@@ -112,8 +113,12 @@ function QuickNotes({ showToast }) {
   // Helper hiển thị ngày
   const displayDate = (dateVal) => {
     if (!dateVal) return "";
-    const d = new Date(dateVal);
-    return isNaN(d.getTime()) ? dateVal : d.toLocaleDateString('vi-VN');
+    const d = parseDate(dateVal);
+    if (!d) return dateVal;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
   };
 
   return (

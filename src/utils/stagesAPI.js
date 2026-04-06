@@ -58,7 +58,7 @@ export const fetchStages = async (appId) => {
       },
       body: JSON.stringify({ 
         Action: "Find", 
-        Properties: { Locale: "vi-VN" }, // Ép AppSheet trả về DD/MM/YYYY đồng bộ với Việt Nam
+        Properties: { Locale: "en-US" }, // Dùng ISO để parse chính xác 100%
         Rows: [] 
       }),
     });

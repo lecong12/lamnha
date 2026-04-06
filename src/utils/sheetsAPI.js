@@ -107,7 +107,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "vi-VN", // Thống nhất dùng vi-VN để đồng bộ toàn hệ thống
+          Locale: "en-US", // Dùng ISO YYYY-MM-DD để API không bị nhầm lẫn Ngày/Tháng
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -258,7 +258,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "vi-VN", 
+          Locale: "en-US", 
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -365,7 +365,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-US",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
