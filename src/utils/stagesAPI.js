@@ -13,8 +13,8 @@ export const parseDate = (value) => {
     const cleanValue = value.trim().split(' ')[0];
     if (!cleanValue) return null;
 
-    // Regex nới lỏng để bắt ngày ngay cả khi có phần giờ (00:00:00) phía sau
-    let parts = cleanValue.match(/^(\d{1,2})/\-. /\-. /);
+    // Regex bắt ngày tháng định dạng VN (DD/MM/YYYY) với các loại dấu phân cách
+    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
