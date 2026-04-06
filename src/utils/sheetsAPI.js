@@ -103,7 +103,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-US", // Dùng en-US khi đọc để ngày tháng có định dạng chuẩn YYYY-MM-DD dễ xử lý
+          Locale: "vi-VN", // Thống nhất dùng vi-VN để đồng bộ toàn hệ thống
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng

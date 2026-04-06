@@ -14,26 +14,26 @@ export const parseDate = (value) => {
     if (!cleanValue) return null;
 
     // 1. Ưu tiên tuyệt đối định dạng Việt Nam DD/MM/YYYY
-    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
+    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
       const year = parseInt(parts[3]);
-      if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-        // Dùng Date.UTC hoặc setHours để tránh lệch múi giờ
-        return new Date(year, month - 1, day, 0, 0, 0);
+      // Kiểm tra nghiêm ngặt để tránh lỗi "Month Rollover" (Tháng > 12 tự nhảy năm)
+      if (month >= 1 && month <= 12) {
+        const d = new Date(year, month - 1, day);
+        if (!isNaN(d.getTime()) && d.getFullYear() === year) return d;
       }
     }
 
-    // 2. Thử định dạng Quốc tế YYYY-MM-DD (ISO)
-    parts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
+    // 2. Thử định dạng Quốc tế YYYY-MM-DD
+    let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
     if (parts) {
-      return new Date(parseInt(parts[1]), parseInt(parts[2]) - 1, parseInt(parts[3]), 0, 0, 0);
+      const d = new Date(parseInt(isoParts[1]), parseInt(isoParts[2]) - 1, parseInt(isoParts[3]));
+      if (!isNaN(d.getTime())) return d;
     }
 
-    // Fallback cuối cùng
-    const d = new Date(cleanValue);
-    return isNaN(d.getTime()) ? null : d;
+    return null; // Không tự đoán để tránh sai lệch
   }
   return null;
 };
