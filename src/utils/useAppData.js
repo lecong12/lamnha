@@ -33,7 +33,7 @@ const normalizeKey = (str) => {
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     if (s.includes('ghi chu') || s.includes('note') || s.includes('luu y')) return 'ghiChu';
-    if (s.includes('ten') || s.includes('name') || s.includes('giai doan')) return 'name';
+    if (s.includes('ten') || s.includes('name') || s.includes('giai doan') || s.includes('hop dong') || s.includes('ban ve') || s.includes('noi dung')) return 'name';
     if (s.includes('trang thai') || s.includes('status')) return 'status';
     if (s.includes('dung luong') || s.includes('size')) return 'size';
     // Fallback for single words like 'id', 'ngay'
@@ -115,7 +115,7 @@ export const useAppData = (isLoggedIn) => {
                     id: row._RowNumber || row.id || `hd_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row.keyId || row._RowNumber,
-                    name: row.name || row.ten || row.noiDung || "Hợp đồng số " + (index + 1),
+                    name: row.name || row.ten || row.noiDung || row["Tên hợp đồng"] || "Hợp đồng " + (index + 1),
                     url: row.url || "",
                     // QUAN TRỌNG: Chuyển Date về String để tránh trắng màn hình React
                     date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
@@ -132,7 +132,7 @@ export const useAppData = (isLoggedIn) => {
                     id: row._RowNumber || row.id || `bv_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row.keyId || row._RowNumber,
-                    name: row.name || row.ten || row.noiDung || "Bản vẽ số " + (index + 1),
+                    name: row.name || row.ten || row.noiDung || row["Tên bản vẽ"] || "Bản vẽ " + (index + 1),
                     url: row.url || "",
                     date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
                     size: Number(row.size || 0),

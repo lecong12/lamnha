@@ -25,7 +25,8 @@ const normalizeKey = (str) => {
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh') || s.includes('chung tu')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     if (s.includes('ghi chu') || s.includes('note') || s.includes('luu y')) return 'ghiChu';
-    if (s.includes('ten') || s.includes('name')) return 'name';
+    // Nhận diện tên hạng mục, bản vẽ, hợp đồng
+    if (s.includes('ten') || s.includes('name') || s.includes('noi dung') || s.includes('hop dong') || s.includes('ban ve')) return 'name';
     if (s.includes('dung luong') || s.includes('size')) return 'size';
     
     return s.replace(/\s+/g, '');

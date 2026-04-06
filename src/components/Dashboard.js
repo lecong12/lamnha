@@ -49,7 +49,12 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   const totalPlanned = budget.reduce((sum, item) => sum + safeNumber(item.duKien), 0);
   const budgetAlert = stats.tongChi > totalPlanned && totalPlanned > 0;
 
-  // 4. Lấy 6 ảnh nghiệm thu mới nhất từ tất cả các giai đoạn
+  // 4. Tính toán số lượng Hồ sơ & Bản vẽ (Chỉ đếm các mục có dữ liệu thực tế)
+  const totalContracts = contracts.length;
+  const totalDrawings = drawings.length;
+  const totalFiles = totalContracts + totalDrawings;
+
+  // 5. Lấy 6 ảnh nghiệm thu mới nhất từ tất cả các giai đoạn
   const latestPhotos = stages
     .filter(s => Array.isArray(s.anhNghiemThu) && s.anhNghiemThu.length > 0)
     .sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0))
@@ -170,8 +175,8 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           </div>
           <div className="stat-info">
             <span className="stat-label">Hồ sơ & Bản vẽ</span>
-            <span className="stat-value">{contracts.length + drawings.length} tệp tin</span>
-            <small style={{ color: 'var(--text-muted)' }}>{contracts.length} Hợp đồng • {drawings.length} Bản vẽ</small>
+            <span className="stat-value">{totalFiles} tệp tin</span>
+            <small style={{ color: 'var(--text-muted)' }}>{totalContracts} Hợp đồng • {totalDrawings} Bản vẽ</small>
           </div>
         </div>
 
