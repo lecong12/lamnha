@@ -107,7 +107,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-US", // Dùng ISO YYYY-MM-DD để API không bị nhầm lẫn Ngày/Tháng
+          Locale: "vi-VN", // Thống nhất dùng vi-VN để nhận định dạng DD/MM/YYYY đồng bộ với Google Sheet
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -198,14 +198,14 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Dùng định dạng ISO YYYY-MM-DD để gửi lên API nhằm tránh lỗi đảo ngược ngày/tháng
+    // Gửi định dạng DD/MM/YYYY để khớp với Locale vi-VN và định dạng trên Sheet
     const formatDate = (date) => {
-      const d = date instanceof Date ? date : new Date(date);
-      if (isNaN(d.getTime())) return "";
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
+      const d = date instanceof Date ? date : parseDate(date);
+      if (!d || isNaN(d.getTime())) return "";
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
     };
 
     const formattedDate = formatDate(payload.ngay);
@@ -258,7 +258,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "en-US", 
+          Locale: "vi-VN", 
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -304,14 +304,14 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Dùng định dạng ISO YYYY-MM-DD để gửi lên API nhằm tránh lỗi đảo ngược ngày/tháng
+    // Gửi định dạng DD/MM/YYYY để khớp với Locale vi-VN và định dạng trên Sheet
     const formatDate = (date) => {
-      const d = date instanceof Date ? date : new Date(date);
-      if (isNaN(d.getTime())) return "";
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
+      const d = date instanceof Date ? date : parseDate(date);
+      if (!d || isNaN(d.getTime())) return "";
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
     };
 
     const formattedDate = formatDate(payload.ngay);
@@ -365,7 +365,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "en-US",
+          Locale: "vi-VN",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],

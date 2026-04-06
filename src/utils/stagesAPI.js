@@ -58,7 +58,7 @@ export const fetchStages = async (appId) => {
       },
       body: JSON.stringify({ 
         Action: "Find", 
-        Properties: { Locale: "en-US" }, // Dùng ISO để parse chính xác 100%
+        Properties: { Locale: "vi-VN" }, // Thống nhất dùng vi-VN để parse ngày DD/MM/YYYY chính xác
         Rows: [] 
       }),
     });
