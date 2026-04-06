@@ -103,8 +103,9 @@ function App() {
       // 2. Chuẩn bị Payload: Giữ nguyên các key chuẩn (soTien, ngay, appSheetId) 
       // để sheetsAPI.js tự động map sang tên cột trên Google Sheet
       const payload = {
-        ...updatedItem,
-        id: isEdit ? updatedItem.id : `GD_${Date.now()}`,
+        ...updatedItem, // Giữ lại appSheetId và keyId từ useAppData
+        // Ưu tiên keyId nếu có (dành cho Edit), nếu không tạo ID mới
+        id: updatedItem.keyId || updatedItem.id || `GD_${Date.now()}`,
         soTien: parseInt(String(updatedItem.soTien).replace(/\D/g, "")) || 0,
         ngay: updatedItem.ngay,
         noiDung: updatedItem.noiDung?.trim() || "",

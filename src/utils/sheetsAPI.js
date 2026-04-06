@@ -203,7 +203,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     const formatDate = (date) => {
       const d = date instanceof Date ? date : new Date(date);
       if (isNaN(d.getTime())) return "";
-      return d.toLocaleDateString('vi-VN'); // Trả về định dạng DD/MM/YYYY chuẩn Việt Nam
+      return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
     const formattedDate = formatDate(payload.ngay);

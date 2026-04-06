@@ -71,7 +71,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
         noiDung: item.noiDung || item["Nội dung"] || "",
         doiTuongThuChi: item.doiTuongThuChi || item["Hạng mục"] || "",
         nguoiCapNhat: item.nguoiCapNhat || item["Người cập nhật"] || "Ba",
-        soTien: rawAmount ? new Intl.NumberFormat('vi-VN').format(rawAmount) : "",
+        soTien: (rawAmount !== undefined && rawAmount !== null) ? new Intl.NumberFormat('vi-VN').format(rawAmount) : "",
         hinhAnh: item.hinhAnh || item["Chứng từ"] || "",
         ghiChu: item.ghiChu || "",
         loaiThuChi: item.loaiThuChi || "Chi",
@@ -153,10 +153,22 @@ function EditModal({ item, onClose, onSave, showToast }) {
     try {
       const data = await extractInfoWithAI(ocrSource, 'invoice');
       if (data && !data.error) {
+        // Chuyển đổi DD/MM/YYYY sang YYYY-MM-DD cho ô input date
+        let formattedDate = formData.ngay;
+        if (data.ngay && typeof data.ngay === 'string') {
+          const parts = data.ngay.split('/');
+          if (parts.length === 3) {
+            const d = parts[0].padStart(2, '0');
+            const m = parts[1].padStart(2, '0');
+            const y = parts[2];
+            formattedDate = `${y}-${m}-${d}`;
+          }
+        }
+
         const cleanAmount = data.soTien ? String(data.soTien).replace(/\D/g, "") : "";
         setFormData(prev => ({
           ...prev,
-          ngay: data.ngay || prev.ngay,
+          ngay: formattedDate,
           soTien: cleanAmount ? new Intl.NumberFormat('vi-VN').format(cleanAmount) : prev.soTien,
           noiDung: [data.ten, data.sdt, data.noiDung].filter(Boolean).join(" - ")
         }));
