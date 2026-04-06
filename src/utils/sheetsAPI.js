@@ -89,6 +89,17 @@ const getCleanLink = (rawLink) => {
   return current;
 };
 
+// Helper function for formatting date to DD/MM/YYYY for AppSheet
+const formatAppSheetDate = (date) => {
+  const d = date instanceof Date ? date : parseDate(date);
+  if (!d || isNaN(d.getTime())) return "";
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
+
+
 // Sử dụng endpoint chuẩn của AppSheet, có thể thay đổi tên bảng linh hoạt
 const getApiUrl = (appId, tableName) => 
   `https://www.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(tableName)}/Action`;
@@ -198,17 +209,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Gửi định dạng DD/MM/YYYY để khớp với Locale vi-VN và định dạng trên Sheet
-    const formatDate = (date) => {
-      const d = date instanceof Date ? date : parseDate(date);
-      if (!d || isNaN(d.getTime())) return "";
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${dd}/${mm}/${yyyy}`;
-    };
-
-    const formattedDate = formatDate(payload.ngay);
+    const formattedDate = formatAppSheetDate(payload.ngay);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });
@@ -304,17 +305,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Gửi định dạng DD/MM/YYYY để khớp với Locale vi-VN và định dạng trên Sheet
-    const formatDate = (date) => {
-      const d = date instanceof Date ? date : parseDate(date);
-      if (!d || isNaN(d.getTime())) return "";
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${dd}/${mm}/${yyyy}`;
-    };
-
-    const formattedDate = formatDate(payload.ngay);
+    const formattedDate = formatAppSheetDate(payload.ngay);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });

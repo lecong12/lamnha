@@ -9,35 +9,32 @@ export const parseDate = (value) => {
   if (value instanceof Date) return value;
   
   if (typeof value === 'string') {
-    // Làm sạch chuỗi: lấy phần ngày, loại bỏ giờ và ký tự rác
+    // Làm sạch chuỗi: lấy phần ngày, bỏ phần giờ/thời gian thừa
     const cleanValue = value.trim().split(/[ T]/)[0].replace(/\\/g, "").replace(/"/g, "");
     if (!cleanValue) return null;
 
-    // 1. Ép buộc định dạng Việt Nam DD/MM/YYYY (Chuẩn nhất cho Sheet của bạn)
-    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
+    // Ưu tiên định dạng Việt Nam DD/MM/YYYY như trong Sheet
+    let parts = cleanValue.match(/^(\d{1,2})/\-. /\-. $/);
     if (parts) {
-      const d = parseInt(parts[1], 10);
-      const m = parseInt(parts[2], 10);
-      const y = parseInt(parts[3], 10);
+      const d = parseInt(parts[1], 10); // Số đầu là Ngày
+      const m = parseInt(parts[2], 10); // Số hai là Tháng
+      const y = parseInt(parts[3], 10); // Số ba là Năm
       
-      if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-        const dt = new Date(y, m - 1, d, 0, 0, 0); // Tạo date tại 0h00 local
-        // Kiểm tra chống lỗi tự nhảy năm của JS (Month Rollover)
-        if (!isNaN(dt.getTime()) && dt.getFullYear() === y && dt.getMonth() === m - 1) return dt;
+      if (m >= 1 && m <= 12) {
+        const dt = new Date(y, m - 1, d, 0, 0, 0);
+        if (!isNaN(dt.getTime()) && dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d) {
+          return dt;
+        }
       }
     }
 
-    // 2. Fallback định dạng Quốc tế YYYY-MM-DD
-    let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
+    // Thử định dạng Quốc tế YYYY-MM-DD (ISO)
+    let isoParts = cleanValue.match(/^(\d{4})/\-. /\-. $/);
     if (isoParts) {
-      const y = parseInt(isoParts[1], 10);
-      const m = parseInt(isoParts[2], 10);
-      const d = parseInt(isoParts[3], 10);
-      const dt = new Date(y, m - 1, d, 0, 0, 0);
-      if (!isNaN(dt.getTime()) && dt.getFullYear() === y) return dt;
+      return new Date(parseInt(isoParts[1], 10), parseInt(isoParts[2], 10) - 1, parseInt(isoParts[3], 10), 0, 0, 0);
     }
 
-    return null; // Không tự đoán để tránh sai lệch hàng trăm ngày
+    return null; 
   }
   return null;
 };
@@ -58,7 +55,7 @@ export const fetchStages = async (appId) => {
       },
       body: JSON.stringify({ 
         Action: "Find", 
-        Properties: { Locale: "vi-VN" }, // Thống nhất dùng vi-VN để parse ngày DD/MM/YYYY chính xác
+        Properties: { Locale: "vi-VN" }, // Ép AppSheet trả về DD/MM/YYYY đồng bộ với Việt Nam
         Rows: [] 
       }),
     });
