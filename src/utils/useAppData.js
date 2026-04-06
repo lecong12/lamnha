@@ -28,7 +28,8 @@ const normalizeKey = (str) => {
     if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
     if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
     if (s.includes('phan loai') || s.includes('category')) return 'category';
-    if (s.includes('url') || s.includes('link') || s.includes('file')) return 'url';
+    // Đồng bộ logic với sheetsAPI
+    if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket')) return 'url';
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     if (s.includes('ghi chu') || s.includes('note') || s.includes('luu y')) return 'ghiChu';
@@ -113,8 +114,8 @@ export const useAppData = (isLoggedIn) => {
                 return {
                     id: row._RowNumber || row.id || `hd_${index}`,
                     appSheetId: row._RowNumber,
-                    keyId: row.id || row.ID || row._RowNumber,
-                    name: row.name || row.ten || row.noiDung || row["Tên hợp đồng"] || "Hợp đồng không tên",
+                    keyId: row.id || row.keyId || row._RowNumber,
+                    name: row.name || row.ten || row.noiDung || "Hợp đồng số " + (index + 1),
                     url: row.url || "",
                     // QUAN TRỌNG: Chuyển Date về String để tránh trắng màn hình React
                     date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
@@ -130,8 +131,8 @@ export const useAppData = (isLoggedIn) => {
                 return {
                     id: row._RowNumber || row.id || `bv_${index}`,
                     appSheetId: row._RowNumber,
-                    keyId: row.id || row.ID || row._RowNumber,
-                    name: row.name || row.ten || row.noiDung || row["Tên bản vẽ"] || "Bản vẽ không tên",
+                    keyId: row.id || row.keyId || row._RowNumber,
+                    name: row.name || row.ten || row.noiDung || "Bản vẽ số " + (index + 1),
                     url: row.url || "",
                     date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
                     size: Number(row.size || 0),

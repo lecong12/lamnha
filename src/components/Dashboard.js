@@ -34,12 +34,11 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   const axisColor = isDarkMode ? "#9ca3af" : "#6b7280";
   const tooltipBg = isDarkMode ? "#1f2937" : "#ffffff";
 
-  // 1. Tính toán hạng mục hiện tại (Ưu tiên hạng mục cuối cùng đang thi công)
-  const cleanStages = [...stages];
-  const currentStage = cleanStages.reverse().find(s => s.status?.toLowerCase().trim() === 'đang thi công') || 
-                       stages.find(s => s.status?.toLowerCase().trim() === 'đang thi công') ||
-                       [...stages].reverse().find(s => s.status?.toLowerCase().trim() === 'hoàn thành') || 
-                       stages[0];
+  // 1. Tính toán hạng mục hiện tại (Sử dụng slice để tránh mutate mảng gốc)
+  const currentStage = stages.slice().reverse().find(s => {
+    const status = s.status?.toLowerCase().trim() || "";
+    return status === 'đang thi công' || status === 'thi công' || status === 'đang thực hiện';
+  }) || stages.slice().reverse().find(s => s.status?.toLowerCase().trim() === 'hoàn thành') || stages[0];
 
   // 2. Tính toán ngày thi công (từ ngày bắt đầu mục đầu tiên)
   const startDates = stages.map(s => s.ngayBatDau).filter(Boolean);
