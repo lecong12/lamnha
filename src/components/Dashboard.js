@@ -153,7 +153,8 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
               textOverflow: 'ellipsis',
               display: 'block',
               width: '100%',
-              minHeight: '1.5em' 
+              minHeight: '1.5em',
+              color: isDarkMode ? "#ffffff" : "inherit"
             }}>
               {currentStage?.name?.replace(/^\d+\.\s*/, "") || "N/A"}
             </span>
@@ -171,7 +172,7 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           </div>
           <div className="stat-info">
             <span className="stat-label">Thời gian thi công</span>
-            <span className="stat-value">Ngày thứ {daysElapsed}</span>
+            <span className="stat-value" style={{ color: isDarkMode ? "#ffffff" : "inherit" }}>Ngày thứ {daysElapsed}</span>
             <small style={{ color: 'var(--text-muted)' }}>Khởi công: {firstDate?.toLocaleDateString('vi-VN') || "---"}</small>
           </div>
         </div>
@@ -183,8 +184,8 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           </div>
           <div className="stat-info">
             <span className="stat-label">Hồ sơ & Bản vẽ</span>
-            <span className="stat-value">{totalFiles || 0} tệp tin</span>
-            <small style={{ color: 'var(--text-muted)' }}>{totalContracts || 0} Hợp đồng • {totalDrawings || 0} Bản vẽ</small>
+            <span className="stat-value" style={{ color: isDarkMode ? "#ffffff" : "inherit" }}>{totalFiles || 0} tệp tin</span>
+            <small style={{ color: isDarkMode ? "#cbd5e1" : "var(--text-muted)" }}>{totalContracts || 0} Hợp đồng • {totalDrawings || 0} Bản vẽ</small>
           </div>
         </div>
 

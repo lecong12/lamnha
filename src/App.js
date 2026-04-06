@@ -170,7 +170,7 @@ function App() {
       tongChi: filteredData.reduce((s, i) => s + (Number(i.soTien || i["Số tiền"]) || 0), 0), 
       soGiaoDich: filteredData.length 
     };
-    const extraData = { top5: [], chartData: [], nganSach, tienDo };
+    const extraData = { top5: [], chartData: [], nganSach, tienDo, contracts, drawings };
 
     switch (activeTab) {
       case 'dashboard': return <Dashboard stats={stats} data={filteredData} extraData={extraData} isDarkMode={isDarkMode} />;
