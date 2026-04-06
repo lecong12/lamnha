@@ -28,6 +28,20 @@ export const parseDate = (value) => {
       }
     }
 
+    // Fallback 2: Thử định dạng Mỹ MM/DD/YYYY (nếu AppSheet trả về sai Locale)
+    let partsMMDD = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
+    if (partsMMDD) {
+      const m = parseInt(partsMMDD[1], 10); // Số đầu là Tháng
+      const d = parseInt(partsMMDD[2], 10); // Số hai là Ngày
+      const y = parseInt(partsMMDD[3], 10); // Số ba là Năm
+      if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        const dt = new Date(y, m - 1, d, 0, 0, 0);
+        if (!isNaN(dt.getTime()) && dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d) {
+          return dt;
+        }
+      }
+    }
+
     // Thử định dạng Quốc tế YYYY-MM-DD (ISO)
     let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
     if (isoParts) {
