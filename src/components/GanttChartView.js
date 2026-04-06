@@ -38,7 +38,12 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     if (validStages.length === 0) return [];
 
-    const projectStartDate = new Date(Math.min(...validStages.map(s => new Date(s.ngayBatDau).getTime())));
+    // Tìm ngày bắt đầu thực tế của toàn bộ dự án để làm mốc "Ngày 0"
+    const startTimes = validStages
+      .map(s => new Date(s.ngayBatDau).getTime())
+      .filter(t => !isNaN(t));
+    const projectStartDate = new Date(Math.min(...startTimes));
+
 
     return validStages.map(stage => {
       const dStart = new Date(stage.ngayBatDau);
