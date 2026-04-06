@@ -31,26 +31,22 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
   const [activeBar, setActiveBar] = useState(null);
 
   const ganttData = useMemo(() => {
-    // KHÔNG lọc bỏ hạng mục để tránh "thiếu mục dữ liệu"
-    // Sắp xếp theo RowNumber thực tế của Google Sheet
-    const sortedStages = [...stages].sort((a, b) => {
-      const rowA = parseInt(a.appSheetId) || 999;
-      const rowB = parseInt(b.appSheetId) || 999;
-      return rowA - rowB;
-    });
+    // BƯỚC 1: Sắp xếp theo RowNumber thực tế của Google Sheet
+    const sortedStages = [...stages].sort((a, b) => (parseInt(a.appSheetId) || 0) - (parseInt(b.appSheetId) || 0));
 
     if (sortedStages.length === 0) return [];
 
-    // Tìm ngày bắt đầu thực tế của dự án từ các hạng mục có ngày hợp lệ
+    // BƯỚC 2: Tìm ngày bắt đầu thực tế của dự án (Lọc bỏ các ngày rác/null)
     const startTimes = sortedStages
       .map(s => parseDate(s.ngayBatDau)?.getTime())
-      .filter(t => t && t > 1420070400000 && t < 1893456000000); // Giới hạn từ 2015 - 2030 để tránh ngày rác
+      .filter(t => t && t > 1000000000000); // Chỉ lấy các ngày từ sau năm 2000
     
-    // Nếu không có ngày nào hợp lệ, dùng ngày hiện tại làm mốc
+    // Nếu không có bất kỳ ngày nào hợp lệ, dùng ngày hôm nay làm mốc 0
     const minTime = startTimes.length > 0 ? Math.min(...startTimes) : Date.now();
     const dMin = new Date(minTime);
     const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate(), 0, 0, 0);
 
+    // BƯỚC 3: Map TOÀN BỘ 33 hạng mục (Không lọc bỏ)
     return sortedStages.map(stage => {
       const dS = parseDate(stage.ngayBatDau);
       const dE = parseDate(stage.ngayKetThuc);

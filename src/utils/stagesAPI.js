@@ -13,16 +13,18 @@ export const parseDate = (value) => {
     const cleanValue = value.trim().split(' ')[0];
     if (!cleanValue) return null;
 
-    // Regex bắt ngày tháng định dạng VN (DD/MM/YYYY) với các loại dấu phân cách
+    // Regex bắt ngày tháng định dạng VN (DD/MM/YYYY). Không chặn $ ở cuối để tránh lỗi chuỗi kèm giờ
     let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
       const year = parseInt(parts[3]);
+      // Kiểm tra tính hợp lệ: Tháng phải từ 1-12, Ngày 1-31
       if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-        // Luôn tạo đối tượng Date sạch tại mốc 0h00
+        // Ép buộc tạo Date theo đúng thứ tự Ngày/Tháng của Việt Nam
         const d = new Date(year, month - 1, day, 0, 0, 0);
-        if (!isNaN(d.getTime()) && d.getFullYear() === year && d.getMonth() === month - 1) return d;
+        // Kiểm tra chống "Month Rollover" (Ví dụ: ngày 31 tháng 4 tự nhảy sang 1 tháng 5)
+        if (!isNaN(d.getTime()) && d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
       }
     }
 
