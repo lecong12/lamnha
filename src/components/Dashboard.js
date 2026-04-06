@@ -109,20 +109,30 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
 
   return (
     <div className="dashboard">
-      {/* Stats Cards */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px', marginBottom: '25px' }}>
-        {/* Tài chính */}
-        <div className="stat-card" style={{ borderLeft: budgetAlert ? '4px solid #ef4444' : '4px solid #16a34a' }}>
-          <div className="stat-icon">
-            {budgetAlert ? <FiAlertCircle color="#ef4444" /> : <FiTrendingDown color="#16a34a" />}
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Tổng Chi Phí</span>
-            <span className="stat-value">{formatCurrency(stats.tongChi)}</span>
-            {totalPlanned > 0 && <small style={{ color: 'var(--text-muted)' }}>Kế hoạch: {formatCurrency(totalPlanned)}</small>}
+      {/* Nhật ký hình ảnh mới nhất - ĐƯA LÊN TRÊN ĐẦU */}
+      {latestPhotos.length > 0 && (
+        <div className="chart-card" style={{ marginBottom: '25px' }}>
+          <h3 className="chart-title"><FiCamera /> Ảnh hiện trường mới nhất</h3>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
+            gap: '12px', 
+            marginTop: '15px' 
+          }}>
+            {latestPhotos.map((photo, idx) => (
+              <div key={idx} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+                <img src={photo.url} alt="Site" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', color: 'white', padding: '4px 8px', fontSize: '10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {photo.stageName}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
+      )}
 
+      {/* Stats Cards */}
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px', marginBottom: '25px' }}>
         {/* Tiến độ công việc */}
         <div className="stat-card" style={{ borderLeft: '4px solid #3b82f6' }}>
           <div className="stat-icon">
@@ -161,6 +171,18 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
             <span className="stat-label">Hồ sơ & Bản vẽ</span>
             <span className="stat-value">{contracts.length + drawings.length} tệp tin</span>
             <small style={{ color: 'var(--text-muted)' }}>{contracts.length} Hợp đồng • {drawings.length} Bản vẽ</small>
+          </div>
+        </div>
+
+        {/* Tài chính - ĐƯA XUỐNG DƯỚI CÙNG TRONG GRID */}
+        <div className="stat-card" style={{ borderLeft: budgetAlert ? '4px solid #ef4444' : '4px solid #16a34a' }}>
+          <div className="stat-icon">
+            {budgetAlert ? <FiAlertCircle color="#ef4444" /> : <FiTrendingDown color="#16a34a" />}
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Tổng Chi Phí</span>
+            <span className="stat-value">{formatCurrency(stats.tongChi)}</span>
+            {totalPlanned > 0 && <small style={{ color: 'var(--text-muted)' }}>Kế hoạch: {formatCurrency(totalPlanned)}</small>}
           </div>
         </div>
       </div>
@@ -256,27 +278,6 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
         </div>
       </div>
 
-      {/* Nhật ký hình ảnh mới nhất */}
-      {latestPhotos.length > 0 && (
-        <div className="chart-card" style={{ marginTop: '20px' }}>
-          <h3 className="chart-title"><FiCamera /> Ảnh hiện trường mới nhất</h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
-            gap: '12px', 
-            marginTop: '15px' 
-          }}>
-            {latestPhotos.map((photo, idx) => (
-              <div key={idx} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-                <img src={photo.url} alt="Site" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', color: 'white', padding: '4px 8px', fontSize: '10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {photo.stageName}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
