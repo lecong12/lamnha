@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiSave, FiCamera, FiImage, FiLoader, FiFileText } from "react-icons/fi";
 import { extractInfoWithAI } from "../utils/aiService";
+import { parseDate } from "../utils/stagesAPI";
 import "./EditModal.css";
 
 // Danh sách hạng mục ngân sách
@@ -56,10 +57,14 @@ function EditModal({ item, onClose, onSave, showToast }) {
     if (item && (item.id || item._id || item.appSheetId)) {
       let dateStr = "";
       const rawDate = item.ngay || item["Ngày"];
-      try {
-        const d = new Date(rawDate);
-        dateStr = d.toISOString().split('T')[0];
-      } catch (e) {
+      const d = parseDate(rawDate);
+      
+      if (d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        dateStr = `${y}-${m}-${day}`; // Định dạng yyyy-mm-dd cho input date
+      } else {
         dateStr = new Date().toISOString().split('T')[0];
       }
 
