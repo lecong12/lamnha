@@ -43,7 +43,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
     nguoiCapNhat: "Ba",
     soTien: "",
     hinhAnh: "",
-    ghiChu: "",
     loaiThuChi: "Chi",
   });
   
@@ -73,7 +72,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
         nguoiCapNhat: item.nguoiCapNhat || item["Người cập nhật"] || "Ba",
         soTien: (rawAmount !== undefined && rawAmount !== null) ? new Intl.NumberFormat('vi-VN').format(rawAmount) : "",
         hinhAnh: item.hinhAnh || item["Chứng từ"] || "",
-        ghiChu: item.ghiChu || "",
         loaiThuChi: item.loaiThuChi || "Chi",
       });
       const imgUrl = item.hinhAnh || item["Chứng từ"] || "";
@@ -87,7 +85,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
         nguoiCapNhat: "Ba",
         soTien: "",
         hinhAnh: "",
-        ghiChu: "",
         loaiThuChi: "Chi",
       });
       setPreview("");
@@ -273,10 +270,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
                   ))}
                 </div>
               )}
-            </div>
-            <div className="form-group full-width">
-              <label>Ghi chú</label>
-              <textarea name="ghiChu" value={formData.ghiChu} onChange={handleChange} rows="2" />
             </div>
           </div>
 

@@ -14,7 +14,7 @@ const TABLE_BANVE = process.env.REACT_APP_APPSHEET_TABLE_BANVE || "BanVe";
 const normalizeKey = (str) => {
     if (!str) return '';
     // Thống nhất danh sách knownKeys với sheetsAPI
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
     if (knownKeys.includes(str)) return str;
 
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
@@ -32,7 +32,6 @@ const normalizeKey = (str) => {
     if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket')) return 'url';
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
-    if (s.includes('ghi chu') || s.includes('note') || s.includes('luu y')) return 'ghiChu';
     if (s.includes('ten') || s.includes('name') || s.includes('giai doan') || s.includes('hop dong') || s.includes('ban ve') || s.includes('noi dung')) return 'name';
     if (s.includes('trang thai') || s.includes('status')) return 'status';
     if (s.includes('dung luong') || s.includes('size')) return 'size';
@@ -82,8 +81,7 @@ export const useAppData = (isLoggedIn) => {
                     doiTuongThuChi: c.doiTuongThuChi || "",
                     soTien: Number(String(c.soTien || 0).replace(/\D/g, "")),
                     hinhAnh: c.hinhAnh || "",
-                    nguoiCapNhat: c.nguoiCapNhat || "",
-                    ghiChu: c.ghiChu || ""
+                    nguoiCapNhat: c.nguoiCapNhat || ""
                 };
             });
             setData(cleanGD.sort((a, b) => b.ngay - a.ngay));

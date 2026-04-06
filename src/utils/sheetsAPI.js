@@ -5,7 +5,7 @@ const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "Gia
 const normalizeKey = (str) => {
     if (!str) return '';
     // Nếu key đã thuộc danh sách chuẩn thì giữ nguyên
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
     if (knownKeys.includes(str)) return str;
 
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
@@ -24,7 +24,6 @@ const normalizeKey = (str) => {
     if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket')) return 'url';
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh') || s.includes('chung tu')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
-    if (s.includes('ghi chu') || s.includes('note') || s.includes('luu y')) return 'ghiChu';
     // Nhận diện tên hạng mục, bản vẽ, hợp đồng
     if (s.includes('ten') || s.includes('name') || s.includes('noi dung') || s.includes('hop dong') || s.includes('ban ve')) return 'name';
     if (s.includes('dung luong') || s.includes('size')) return 'size';
@@ -238,9 +237,6 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(colName => {
           formattedPayload[colName] = payload.nguoiCapNhat;
       });
-      getAppSheetColumnNames(tableName, 'ghiChu', ['Ghi chú', 'ghiChu', 'Note']).forEach(colName => {
-          formattedPayload[colName] = payload.ghiChu;
-      });
     } else {
       formattedPayload = { ...formattedPayload, ...payload };
     }
@@ -345,9 +341,6 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       });
       getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(colName => {
           formattedPayload[colName] = payload.nguoiCapNhat;
-      });
-      getAppSheetColumnNames(tableName, 'ghiChu', ['Ghi chú', 'ghiChu', 'Note']).forEach(colName => {
-          formattedPayload[colName] = payload.ghiChu;
       });
     } else {
       formattedPayload = { ...formattedPayload, ...payload };
