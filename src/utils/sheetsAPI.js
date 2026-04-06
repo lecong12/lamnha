@@ -20,8 +20,8 @@ const normalizeKey = (str) => {
     if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
     if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
     if (s.includes('phan loai') || s.includes('category')) return 'category';
-    if (s.includes('url') || s.includes('link') || s.includes('file')) return 'url';
-    if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
+    if (s.includes('url') || s.includes('link') || s.includes('file') || s.includes('hop dong') || s.includes('ban ve')) return 'url';
+    if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh') || s.includes('chung tu')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     if (s.includes('ghi chu') || s.includes('note') || s.includes('luu y')) return 'ghiChu';
     if (s.includes('ten') || s.includes('name')) return 'name';

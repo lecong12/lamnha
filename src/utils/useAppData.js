@@ -113,12 +113,13 @@ export const useAppData = (isLoggedIn) => {
                 return {
                     id: row._RowNumber || row.id || `hd_${index}`,
                     appSheetId: row._RowNumber,
-                    keyId: row.id, // 'id' đã được normalize bởi fetchTableData
-                    name: row.name || row.ten || "Không tên", // 'name' đã được normalize
-                    url: row.url || "", // Sử dụng trực tiếp 'url' đã được làm sạch bởi fetchFileData
-                    date: parseDate(row.date || row.ngay), // 'date' hoặc 'ngay' đã được normalize
-                    size: Number(row.size || 0), // 'size' đã được normalize
-                    category: row.category || row.doiTuongThuChi || "Khác" // 'category' đã được normalize
+                    keyId: row.id || row.ID || row._RowNumber,
+                    name: row.name || row.ten || row.noiDung || "Hợp đồng không tên",
+                    url: row.url || "",
+                    // QUAN TRỌNG: Chuyển Date về String để tránh trắng màn hình React
+                    date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
+                    size: Number(row.size || 0),
+                    category: row.category || row.doiTuongThuChi || "Khác"
                 };
             });
             setContracts(cleanHopDong.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));
@@ -129,12 +130,12 @@ export const useAppData = (isLoggedIn) => {
                 return {
                     id: row._RowNumber || row.id || `bv_${index}`,
                     appSheetId: row._RowNumber,
-                    keyId: row.id, // 'id' đã được normalize
-                    name: row.name || "Không tên", // 'name' đã được normalize
-                    url: row.url || "", // Sử dụng trực tiếp 'url' đã được làm sạch
-                    date: parseDate(row.date || row.ngay), // 'date' hoặc 'ngay' đã được normalize
-                    size: Number(row.size || 0), // 'size' đã được normalize
-                    category: row.category || row.doiTuongThuChi || "Khác" // 'category' đã được normalize
+                    keyId: row.id || row.ID || row._RowNumber,
+                    name: row.name || row.ten || row.noiDung || "Bản vẽ không tên",
+                    url: row.url || "",
+                    date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
+                    size: Number(row.size || 0),
+                    category: row.category || row.doiTuongThuChi || "Khác"
                 };
             });
             setDrawings(cleanBanVe.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));
