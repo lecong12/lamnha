@@ -17,9 +17,14 @@ const parseDate = (value) => {
     // Try dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy, dd mm yyyy (Fix Regex)
     let parts = value.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
     if (parts) {
-      // parts[1]=day, parts[2]=month, parts[3]=year -> new Date(year, monthIndex, day)
-      const d = new Date(parts[3], parts[2] - 1, parts[1]);
-      if (!isNaN(d.getTime())) return d;
+      const day = parseInt(parts[1]);
+      const month = parseInt(parts[2]);
+      const year = parseInt(parts[3]);
+      // Chỉ parse theo kiểu VN nếu tháng hợp lệ (1-12) để tránh lỗi tự nhảy năm của JS (Month Rollover)
+      if (month >= 1 && month <= 12) {
+        const d = new Date(year, month - 1, day);
+        if (!isNaN(d.getTime())) return d;
+      }
     }
     
     // Try yyyy-mm-dd (ISO format)

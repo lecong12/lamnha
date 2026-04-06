@@ -38,10 +38,12 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     if (validStages.length === 0) return [];
 
-    // Tìm ngày bắt đầu thực tế của toàn bộ dự án để làm mốc "Ngày 0"
+    // Tìm ngày bắt đầu thực tế, loại bỏ các giá trị lỗi (như 1970) để tránh kéo giãn trục X
     const startTimes = validStages
-      .map(s => new Date(s.ngayBatDau).getTime())
-      .filter(t => !isNaN(t));
+      .map(s => s.ngayBatDau instanceof Date ? s.ngayBatDau.getTime() : new Date(s.ngayBatDau).getTime())
+      .filter(t => t > 1000000000000 && !isNaN(t)); // Chỉ lấy các ngày sau năm 2000
+    
+    if (startTimes.length === 0) return [];
     const projectStartDate = new Date(Math.min(...startTimes));
 
 
