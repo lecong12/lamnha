@@ -14,7 +14,7 @@ export const parseDate = (value) => {
     if (!cleanValue) return null;
 
     // Ưu tiên định dạng Việt Nam DD/MM/YYYY như trong Sheet
-    let parts = cleanValue.match(/^(\d{1,2})/\-. /\-. $/);
+    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
     if (parts) {
       const d = parseInt(parts[1], 10); // Số đầu là Ngày
       const m = parseInt(parts[2], 10); // Số hai là Tháng
@@ -29,7 +29,7 @@ export const parseDate = (value) => {
     }
 
     // Thử định dạng Quốc tế YYYY-MM-DD (ISO)
-    let isoParts = cleanValue.match(/^(\d{4})/\-. /\-. $/);
+    let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
     if (isoParts) {
       return new Date(parseInt(isoParts[1], 10), parseInt(isoParts[2], 10) - 1, parseInt(isoParts[3], 10), 0, 0, 0);
     }
