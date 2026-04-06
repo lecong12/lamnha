@@ -13,8 +13,8 @@ const TABLE_BANVE = process.env.REACT_APP_APPSHEET_TABLE_BANVE || "BanVe";
 
 const normalizeKey = (str) => {
     if (!str) return '';
-    // Nếu key đã đúng chuẩn camelCase từ sheetsAPI rồi thì giữ nguyên
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber', 'category', 'url', 'size'];
+    // Thống nhất danh sách knownKeys với sheetsAPI
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
     if (knownKeys.includes(str)) return str;
 
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
@@ -110,17 +110,15 @@ export const useAppData = (isLoggedIn) => {
             // 4. Xử lý Hợp Đồng
             const resHopDong = resHopDongResult.success ? resHopDongResult.data : [];
             const cleanHopDong = resHopDong.map((row, index) => {
-                const c = {};
-                Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
                 return {
                     id: row._RowNumber || row.id || `hd_${index}`,
                     appSheetId: row._RowNumber,
-                    keyId: c.id || row.id,
-                    name: c.name || c.ten || "Không tên",
-                    url: c.url || "",
-                    date: parseDate(c.date || c.ngay),
-                    size: Number(c.size || 0),
-                    category: c.category || c.doiTuongThuChi || "Khác"
+                    keyId: row.id, // 'id' đã được normalize bởi fetchTableData
+                    name: row.name || row.ten || "Không tên", // 'name' đã được normalize
+                    url: row.url || "", // Sử dụng trực tiếp 'url' đã được làm sạch bởi fetchFileData
+                    date: parseDate(row.date || row.ngay), // 'date' hoặc 'ngay' đã được normalize
+                    size: Number(row.size || 0), // 'size' đã được normalize
+                    category: row.category || row.doiTuongThuChi || "Khác" // 'category' đã được normalize
                 };
             });
             setContracts(cleanHopDong.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));
@@ -128,17 +126,15 @@ export const useAppData = (isLoggedIn) => {
             // 5. Xử lý Bản Vẽ
             const resBanVe = resBanVeResult.success ? resBanVeResult.data : [];
             const cleanBanVe = resBanVe.map((row, index) => {
-                const c = {};
-                Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
                 return {
                     id: row._RowNumber || row.id || `bv_${index}`,
                     appSheetId: row._RowNumber,
-                    keyId: c.id || row.id,
-                    name: c.name || "Không tên",
-                    url: c.url || "",
-                    date: parseDate(c.date || c.ngay),
-                    size: Number(c.size || 0),
-                    category: c.category || c.doiTuongThuChi || "Khác"
+                    keyId: row.id, // 'id' đã được normalize
+                    name: row.name || "Không tên", // 'name' đã được normalize
+                    url: row.url || "", // Sử dụng trực tiếp 'url' đã được làm sạch
+                    date: parseDate(row.date || row.ngay), // 'date' hoặc 'ngay' đã được normalize
+                    size: Number(row.size || 0), // 'size' đã được normalize
+                    category: row.category || row.doiTuongThuChi || "Khác" // 'category' đã được normalize
                 };
             });
             setDrawings(cleanBanVe.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));

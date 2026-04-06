@@ -5,13 +5,15 @@ const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "Gia
 const normalizeKey = (str) => {
     if (!str) return '';
     // Nếu key đã thuộc danh sách chuẩn thì giữ nguyên
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber', 'category', 'url', 'size'];
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', 'ghiChu', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
     if (knownKeys.includes(str)) return str;
 
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
     if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s.includes('key') || s.startsWith('id')) return 'id';
+    if (s.includes('ngay bat dau')) return 'ngayBatDau';
+    if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
     if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
     if (s.includes('noi dung') || s.includes('description')) return 'noiDung';
     if (s.includes('so tien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
@@ -161,10 +163,11 @@ export const fetchFileData = async (tableName, appId) => {
     return {
       success: true,
       data: data.map(row => {
-        const rawUrl = row.url || row.URL || row.Link || row['Link PDF'] || row['File URL'] || row.file || '';
+        // Vì normalizeKey đã đưa tất cả link/url/file về 'url', ta chỉ cần lấy row.url
+        const rawUrl = row.url || row.hinhAnh || "";
         return {
           ...row,
-          url: getCleanLink(rawUrl)
+          url: rawUrl ? getCleanLink(rawUrl) : ""
         };
       })
     };
