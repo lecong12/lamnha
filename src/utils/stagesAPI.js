@@ -28,7 +28,7 @@ export const parseDate = (value) => {
 
     // 2. Thử định dạng Quốc tế YYYY-MM-DD
     let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
-    if (parts) {
+    if (isoParts) {
       const d = new Date(parseInt(isoParts[1]), parseInt(isoParts[2]) - 1, parseInt(isoParts[3]));
       if (!isNaN(d.getTime())) return d;
     }
@@ -71,7 +71,9 @@ export const fetchStages = async (appId) => {
     
     if (responseText && responseText.trim()) {
       try {
-        rawData = JSON.parse(responseText);
+        const parsed = JSON.parse(responseText);
+        // AppSheet trả về { "Rows": [...] } hoặc [...]
+        rawData = Array.isArray(parsed) ? parsed : (parsed.Rows || []);
       } catch (parseError) {
         console.error("Lỗi parse JSON Tiến độ:", parseError);
         return { success: false, message: "Dữ liệu AppSheet trả về không hợp lệ.", data: [] };

@@ -120,7 +120,9 @@ export const fetchTableData = async (tableName, appId) => {
     let rawData = [];
     if (responseText && responseText.trim()) {
       try {
-        rawData = JSON.parse(responseText);
+        const parsed = JSON.parse(responseText);
+        // AppSheet trả về { "Rows": [...] } hoặc [...]
+        rawData = Array.isArray(parsed) ? parsed : (parsed.Rows || []);
       } catch (e) {
         console.error("Lỗi parse JSON từ AppSheet:", e);
       }
