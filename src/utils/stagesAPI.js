@@ -4,7 +4,7 @@ const STAGES_TABLE_NAME = process.env.REACT_APP_APPSHEET_TABLE_TIENDO || "TienDo
 const getApiUrl = (appId) => `https://www.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(STAGES_TABLE_NAME)}/Action`;
 
 // Helper: Xử lý ngày tháng an toàn (Hỗ trợ cả dd/mm/yyyy của VN)
-const parseDate = (value) => {
+export const parseDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return value;
   
