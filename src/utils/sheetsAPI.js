@@ -193,7 +193,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload["_RowNumber"] = payload.appSheetId;
     }
 
-    const finalKey = String(payload.keyId || payload.id);
+    const finalKey = payload.keyId || payload.id;
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
@@ -299,7 +299,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const targetTable = String(tableName).trim().toLowerCase();
     let formattedPayload = {};
 
-    const finalKey = String(payload.id || payload.keyId);
+    const finalKey = payload.id || payload.keyId;
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });

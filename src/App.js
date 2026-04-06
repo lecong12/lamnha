@@ -96,16 +96,27 @@ function App() {
   // --- PHẦN SỬA LỖI TRỌNG TÂM: ĐÃ KHỚP TÊN CỘT GOOGLE SHEET ---
   const handleSaveEdit = async (updatedItem) => {
     try {
-      // 1. Nhận diện Sửa/Thêm dựa trên appSheetId hoặc ID hiện có
-      const isEdit = !!updatedItem.appSheetId || (!!updatedItem.id && !String(updatedItem.id).startsWith('temp_'));
+      // 1. Nhận diện Sửa/Thêm dựa trên appSheetId (Chỉ bản ghi đã tồn tại mới có RowNumber)
+      const isEdit = !!updatedItem.appSheetId;
       showToast(isEdit ? "Đang cập nhật..." : "Đang thêm mới...", "info");
 
-      // 2. Chuẩn bị Payload: Giữ nguyên các key chuẩn (soTien, ngay, appSheetId) 
-      // để sheetsAPI.js tự động map sang tên cột trên Google Sheet
+      let finalId;
+      if (isEdit) {
+        finalId = updatedItem.keyId || updatedItem.id;
+      } else {
+        // 2. Công thức MAX(id) + 1 cho thêm mới
+        const numericIds = data
+          .map(item => {
+            const val = item.keyId || item.id;
+            return typeof val === 'number' ? val : parseInt(String(val).replace(/\D/g, ''));
+          })
+          .filter(n => !isNaN(n));
+        finalId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
+      }
+
       const payload = {
-        ...updatedItem, // Giữ lại appSheetId và keyId từ useAppData
-        // Ưu tiên keyId nếu có (dành cho Edit), nếu không tạo ID mới
-        id: updatedItem.keyId || updatedItem.id || `GD_${Date.now()}`,
+        ...updatedItem,
+        id: finalId, // Sử dụng ID số vừa tính toán
         soTien: parseInt(String(updatedItem.soTien).replace(/\D/g, "")) || 0,
         ngay: updatedItem.ngay,
         noiDung: updatedItem.noiDung?.trim() || "",
