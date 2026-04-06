@@ -19,10 +19,10 @@ export const parseDate = (value) => {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
       const year = parseInt(parts[3]);
-      if (month >= 1 && month <= 12) {
+      if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
         // Luôn tạo đối tượng Date sạch tại mốc 0h00
         const d = new Date(year, month - 1, day, 0, 0, 0);
-        if (!isNaN(d.getTime()) && d.getFullYear() === year) return d;
+        if (!isNaN(d.getTime()) && d.getFullYear() === year && d.getMonth() === month - 1) return d;
       }
     }
 
@@ -118,12 +118,12 @@ export const fetchStages = async (appId) => {
       // 4. Tìm cột Ngày bắt đầu / Kết thúc (chấp nhận cả tiếng Việt có dấu)
       const startKey = rowKeys.find(k => {
         const key = k.trim().toLowerCase().replace(/_/g, "");
-        return key === 'ngaybatdau' || key.includes('bat dau') || key.includes('bắt đầu') || key.includes('start');
+        return key === 'ngaybatdau' || key.includes('bat dau') || key.includes('bắt đầu') || key.includes('start') || key.includes('ngày bđ') || key.includes('ngay bd');
       });
 
       const endKey = rowKeys.find(k => {
         const key = k.trim().toLowerCase().replace(/_/g, "");
-        return key === 'ngayketthuc' || key.includes('ket thuc') || key.includes('kết thúc') || key.includes('end') || key.includes('hoan thanh');
+        return key === 'ngayketthuc' || key.includes('ket thuc') || key.includes('kết thúc') || key.includes('end') || key.includes('hoan thanh') || key.includes('ngày kt') || key.includes('ngay kt');
       });
 
       // 5. Tìm cột Trạng thái

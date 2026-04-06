@@ -31,36 +31,34 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
   const [activeBar, setActiveBar] = useState(null);
 
   const ganttData = useMemo(() => {
-    const validStages = stages.filter(s => {
-      // Ép kiểu Date qua parseDate an toàn
-      const d1 = parseDate(s.ngayBatDau);
-      const d2 = parseDate(s.ngayKetThuc);
-      return d1 && d2 && !isNaN(d1.getTime()) && !isNaN(d2.getTime()) && d1.getFullYear() > 2000;
-    }).sort((a, b) => {
-      // Ưu tiên sắp xếp theo RowNumber (thứ tự dòng trong Sheet) để đảm bảo đúng quy trình thi công
-      const rowA = Number(a.appSheetId) || 999;
-      const rowB = Number(b.appSheetId) || 999;
+    // KHÔNG lọc bỏ hạng mục để tránh "thiếu mục dữ liệu"
+    // Sắp xếp theo RowNumber thực tế của Google Sheet
+    const sortedStages = [...stages].sort((a, b) => {
+      const rowA = parseInt(a.appSheetId) || 999;
+      const rowB = parseInt(b.appSheetId) || 999;
       return rowA - rowB;
     });
 
-    if (validStages.length === 0) return [];
+    if (sortedStages.length === 0) return [];
 
-    // Tìm ngày bắt đầu dự án thực tế để làm mốc Ngày 0
-    const startTimes = validStages
+    // Tìm ngày bắt đầu thực tế của dự án từ các hạng mục có ngày hợp lệ
+    const startTimes = sortedStages
       .map(s => parseDate(s.ngayBatDau)?.getTime())
-      .filter(t => t && t > 1000000000000);
+      .filter(t => t && t > 1420070400000 && t < 1893456000000); // Giới hạn từ 2015 - 2030 để tránh ngày rác
     
-    if (startTimes.length === 0) return [];
-    const minTime = Math.min(...startTimes);
+    // Nếu không có ngày nào hợp lệ, dùng ngày hiện tại làm mốc
+    const minTime = startTimes.length > 0 ? Math.min(...startTimes) : Date.now();
     const dMin = new Date(minTime);
     const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate(), 0, 0, 0);
 
-    return validStages.map(stage => {
+    return sortedStages.map(stage => {
       const dS = parseDate(stage.ngayBatDau);
       const dE = parseDate(stage.ngayKetThuc);
       
-      const startDay = dayDiff(projectStartDate, dS);
-      const duration = dayDiff(dS, dE) + 1;
+      // Nếu thiếu ngày, đặt duration là 0 để chỉ hiện tên trên trục Y mà không vẽ thanh Bar
+      const hasValidDates = dS && dE && !isNaN(dS.getTime()) && !isNaN(dE.getTime());
+      const startDay = hasValidDates ? dayDiff(projectStartDate, dS) : 0;
+      const duration = hasValidDates ? Math.max(0, dayDiff(dS, dE) + 1) : 0;
       
       const name = stage.name.replace(/^\d+\.\s*/, "");
 
@@ -68,7 +66,7 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       if (stage.status === 'Đang thi công') color = '#3b82f6';
       if (stage.status === 'Hoàn thành') color = '#16a34a';
 
-      const dateRange = `${dS.toLocaleDateString('vi-VN')} - ${dE.toLocaleDateString('vi-VN')}`;
+      const dateRange = hasValidDates ? `${dS.toLocaleDateString('vi-VN')} - ${dE.toLocaleDateString('vi-VN')}` : "Chưa nhập ngày";
 
       return { id: stage.id, name, dateRange, startDay, duration, color, status: stage.status };
     });
