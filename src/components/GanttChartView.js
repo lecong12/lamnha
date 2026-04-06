@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { parseDate } from '../utils/stagesAPI';
 
 const dayDiff = (date1, date2) => {
   if (!date1 || !date2) return 0;
-  // Đảm bảo so sánh trên đối tượng Date đã được chuẩn hóa, không re-parse chuỗi
-  const d1 = date1 instanceof Date ? date1 : new Date(date1);
-  const d2 = date2 instanceof Date ? date2 : new Date(date2);
+  // Sử dụng parseDate thay vì new Date() trực tiếp để tránh lỗi MM/DD
+  const d1 = parseDate(date1);
+  const d2 = parseDate(date2);
+  if (!d1 || !d2) return 0;
+
   const t1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
   const t2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
   return Math.round((t2 - t1) / (86400000));
@@ -29,9 +32,10 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
   const ganttData = useMemo(() => {
     const validStages = stages.filter(s => {
-      const d1 = s.ngayBatDau instanceof Date ? s.ngayBatDau : new Date(s.ngayBatDau);
-      const d2 = s.ngayKetThuc instanceof Date ? s.ngayKetThuc : new Date(s.ngayKetThuc);
-      return s.ngayBatDau && s.ngayKetThuc && !isNaN(d1.getTime()) && !isNaN(d2.getTime()) && d1.getFullYear() > 2000;
+      // Ép kiểu Date qua parseDate an toàn
+      const d1 = parseDate(s.ngayBatDau);
+      const d2 = parseDate(s.ngayKetThuc);
+      return d1 && d2 && !isNaN(d1.getTime()) && !isNaN(d2.getTime()) && d1.getFullYear() > 2000;
     }).sort((a, b) => {
       // Ưu tiên sắp xếp theo RowNumber (thứ tự dòng trong Sheet) để đảm bảo đúng quy trình thi công
       const rowA = Number(a.appSheetId) || 999;
@@ -43,17 +47,17 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     // Tìm ngày bắt đầu dự án thực tế để làm mốc Ngày 0
     const startTimes = validStages
-      .map(s => s.ngayBatDau.getTime())
-      .filter(t => t > 1000000000000); // Bỏ qua các ngày rác (trước năm 2000)
+      .map(s => parseDate(s.ngayBatDau)?.getTime())
+      .filter(t => t && t > 1000000000000);
     
     if (startTimes.length === 0) return [];
     const minTime = Math.min(...startTimes);
     const dMin = new Date(minTime);
-    const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate());
+    const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate(), 0, 0, 0);
 
     return validStages.map(stage => {
-      const dS = stage.ngayBatDau instanceof Date ? stage.ngayBatDau : new Date(stage.ngayBatDau);
-      const dE = stage.ngayKetThuc instanceof Date ? stage.ngayKetThuc : new Date(stage.ngayKetThuc);
+      const dS = parseDate(stage.ngayBatDau);
+      const dE = parseDate(stage.ngayKetThuc);
       
       const startDay = dayDiff(projectStartDate, dS);
       const duration = dayDiff(dS, dE) + 1;

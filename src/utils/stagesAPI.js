@@ -8,32 +8,31 @@ export const parseDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return value;
   
-  // Nếu là chuỗi
   if (typeof value === 'string') {
-    const cleanValue = value.trim();
+    // Làm sạch chuỗi: loại bỏ phần giờ nếu có (ví dụ: "14/03/2026 00:00:00")
+    const cleanValue = value.trim().split(' ')[0];
     if (!cleanValue) return null;
 
-    // 1. Ưu tiên định dạng Việt Nam/AppSheet VN: DD/MM/YYYY hoặc D/M/YYYY
-    // Regex này bắt cụm ngày tháng ngay cả khi có phần giờ (00:00:00) phía sau
-    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
+    // 1. Ưu tiên tuyệt đối định dạng Việt Nam DD/MM/YYYY
+    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
       const year = parseInt(parts[3]);
-      // Chỉ parse nếu tháng hợp lệ để tránh lỗi tự nhảy năm của JS
       if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-        return new Date(year, month - 1, day);
+        // Dùng Date.UTC hoặc setHours để tránh lệch múi giờ
+        return new Date(year, month - 1, day, 0, 0, 0);
       }
     }
 
-    // 2. Thử định dạng Quốc tế YYYY-MM-DD
-    parts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
+    // 2. Thử định dạng Quốc tế YYYY-MM-DD (ISO)
+    parts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
     if (parts) {
-      return new Date(parseInt(parts[1]), parseInt(parts[2]) - 1, parseInt(parts[3]));
+      return new Date(parseInt(parts[1]), parseInt(parts[2]) - 1, parseInt(parts[3]), 0, 0, 0);
     }
 
-    // Nếu không khớp các định dạng trên, thử parse tự động nhưng hạn chế tối đa
-    const d = new Date(value);
+    // Fallback cuối cùng
+    const d = new Date(cleanValue);
     return isNaN(d.getTime()) ? null : d;
   }
   return null;

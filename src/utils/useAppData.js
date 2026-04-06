@@ -117,7 +117,7 @@ export const useAppData = (isLoggedIn) => {
                     keyId: c.id || row.id,
                     name: c.name || c.ten || "Không tên",
                     url: c.url || "",
-                    date: c.date || c.ngay || "", // Map đồng nhất ngày
+                    date: parseDate(c.date || c.ngay),
                     size: Number(c.size || 0),
                     category: c.category || c.doiTuongThuChi || "Khác"
                 };
@@ -135,7 +135,7 @@ export const useAppData = (isLoggedIn) => {
                     keyId: c.id || row.id,
                     name: c.name || "Không tên",
                     url: c.url || "",
-                    date: c.date || c.ngay || "",
+                    date: parseDate(c.date || c.ngay),
                     size: Number(c.size || 0),
                     category: c.category || c.doiTuongThuChi || "Khác"
                 };
