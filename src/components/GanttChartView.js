@@ -4,11 +4,11 @@ import { parseDate } from '../utils/stagesAPI';
 
 const dayDiff = (date1, date2) => {
   if (!date1 || !date2) return 0;
-  // Sử dụng parseDate thay vì new Date() trực tiếp để tránh lỗi MM/DD
   const d1 = parseDate(date1);
   const d2 = parseDate(date2);
   if (!d1 || !d2) return 0;
 
+  // So sánh dựa trên mốc UTC để đảm bảo khoảng cách ngày luôn là số nguyên, không lệch múi giờ
   const t1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
   const t2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
   return Math.round((t2 - t1) / (86400000));
@@ -39,12 +39,12 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
     // BƯỚC 2: Tìm ngày bắt đầu thực tế của dự án (Lọc bỏ các ngày rác/null)
     const startTimes = sortedStages
       .map(s => parseDate(s.ngayBatDau)?.getTime())
-      .filter(t => t && t > 1000000000000); // Chỉ lấy các ngày từ sau năm 2000
+      .filter(t => t && t > 946684800000); // Chỉ lấy các ngày từ sau năm 2000
     
     // Nếu không có bất kỳ ngày nào hợp lệ, dùng ngày hôm nay làm mốc 0
     const minTime = startTimes.length > 0 ? Math.min(...startTimes) : Date.now();
-    const dMin = new Date(minTime);
-    const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate(), 0, 0, 0);
+    const dMin = parseDate(new Date(minTime));
+    const projectStartDate = dMin || new Date();
 
     // BƯỚC 3: Map TOÀN BỘ 33 hạng mục (Không lọc bỏ)
     return sortedStages.map(stage => {
@@ -53,10 +53,10 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       
       // Nếu thiếu ngày, đặt duration là 0 để chỉ hiện tên trên trục Y mà không vẽ thanh Bar
       const hasValidDates = dS && dE && !isNaN(dS.getTime()) && !isNaN(dE.getTime());
-      const startDay = hasValidDates ? dayDiff(projectStartDate, dS) : 0;
+      const startDay = hasValidDates ? Math.max(0, dayDiff(projectStartDate, dS)) : 0;
       const duration = hasValidDates ? Math.max(0, dayDiff(dS, dE) + 1) : 0;
       
-      const name = stage.name.replace(/^\d+\.\s*/, "");
+      const displayName = stage.name?.replace(/^\d+\.\s*/, "") || "Không tên";
 
       let color = "#a8a29e";
       if (stage.status === 'Đang thi công') color = '#3b82f6';
@@ -64,7 +64,15 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
       const dateRange = hasValidDates ? `${dS.toLocaleDateString('vi-VN')} - ${dE.toLocaleDateString('vi-VN')}` : "Chưa nhập ngày";
 
-      return { id: stage.id, name, dateRange, startDay, duration, color, status: stage.status };
+      return { 
+        id: stage.id, 
+        displayName, // Dùng để hiển thị nhãn
+        dateRange, 
+        startDay, 
+        duration, 
+        color, 
+        status: stage.status 
+      };
     });
   }, [stages]);
 
@@ -94,15 +102,16 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
           <BarChart data={ganttData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <XAxis 
               type="number" 
-              domain={['dataMin', 'dataMax + 5']} 
+              domain={[0, 'dataMax + 5']} 
               tickFormatter={(tick) => tick >= 0 ? `Ngày ${tick}` : ''} 
               tick={{ fill: isDarkMode ? 'var(--text-muted)' : '#6b7280', fontSize: 11 }} 
             />
             <YAxis 
               type="category" 
-              dataKey="name" 
+              dataKey="id" 
               width={150} 
               tick={{ fill: isDarkMode ? 'var(--text-main)' : '#374151', fontSize: 12 }} 
+              tickFormatter={(id) => ganttData.find(d => d.id === id)?.displayName || ""}
               interval={0} 
             />
             <Tooltip cursor={{fill: 'rgba(239, 246, 255, 0.5)'}} content={<GanttTooltip />} allowEscapeViewBox={{ x: true, y: true }} />

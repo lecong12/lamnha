@@ -9,33 +9,40 @@ export const parseDate = (value) => {
   if (value instanceof Date) return value;
   
   if (typeof value === 'string') {
-    // Làm sạch chuỗi: loại bỏ phần giờ nếu có (ví dụ: "14/03/2026 00:00:00")
-    const cleanValue = value.trim().split(' ')[0];
+    // Làm sạch chuỗi: loại bỏ phần giờ nếu có (ví dụ: "14/03/2026 00:00:00" hoặc định dạng ISO có 'T')
+    const cleanValue = value.trim().split(/[ T]/)[0];
     if (!cleanValue) return null;
 
-    // Regex bắt ngày tháng định dạng VN (DD/MM/YYYY). Không chặn $ ở cuối để tránh lỗi chuỗi kèm giờ
-    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
+    // 1. Ưu tiên tuyệt đối định dạng Việt Nam DD/MM/YYYY
+    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
       const year = parseInt(parts[3]);
-      // Kiểm tra tính hợp lệ: Tháng phải từ 1-12, Ngày 1-31
+      // Kiểm tra tính hợp lệ nghiêm ngặt: Tháng 1-12, Ngày 1-31
       if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-        // Ép buộc tạo Date theo đúng thứ tự Ngày/Tháng của Việt Nam
-        const d = new Date(year, month - 1, day, 0, 0, 0);
-        // Kiểm tra chống "Month Rollover" (Ví dụ: ngày 31 tháng 4 tự nhảy sang 1 tháng 5)
-        if (!isNaN(d.getTime()) && d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
+        // Ép buộc tạo đối tượng Date theo đúng thứ tự Ngày/Tháng (Giờ 00:00:00 local)
+        const dt = new Date(year, month - 1, day, 0, 0, 0);
+        // Chống lỗi "Rollover" (VD: ngày 31 tháng 4 tự nhảy sang 1 tháng 5)
+        if (!isNaN(dt.getTime()) && dt.getFullYear() === year && dt.getMonth() === month - 1 && dt.getDate() === day) {
+          return dt;
+        }
       }
     }
 
-    // 2. Thử định dạng Quốc tế YYYY-MM-DD
-    let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
+    // 2. Thử định dạng Quốc tế YYYY-MM-DD (Thường gặp từ API)
+    let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
     if (isoParts) {
-      const d = new Date(parseInt(isoParts[1]), parseInt(isoParts[2]) - 1, parseInt(isoParts[3]));
-      if (!isNaN(d.getTime())) return d;
+      const y = parseInt(isoParts[1]);
+      const m = parseInt(isoParts[2]);
+      const d = parseInt(isoParts[3]);
+      const dt = new Date(y, m - 1, d, 0, 0, 0);
+      if (!isNaN(dt.getTime()) && dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d) {
+        return dt;
+      }
     }
 
-    return null; // Không tự đoán để tránh sai lệch
+    return null; // Trả về null nếu không khớp định dạng chuẩn để tránh sai lệch dữ liệu
   }
   return null;
 };
