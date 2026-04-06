@@ -8,23 +8,21 @@ const parseDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return value;
   
-  console.log("Attempting to parse date:", value); // Log raw date value
-
   // Nếu là chuỗi
   if (typeof value === 'string') {
-    if (!value.trim()) return null;
+    const cleanValue = value.trim();
+    if (!cleanValue) return null;
 
-    // Regex mới: Loại bỏ $ ở cuối để chấp nhận chuỗi có kèm giờ (14/03/2026 00:00:00)
-    // Ưu tiên định dạng Việt Nam DD/MM/YYYY
-    let parts = value.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
+    // 1. Thử định dạng Việt Nam DD/MM/YYYY (Bắt buộc khớp trước để tránh MM/DD)
+    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
       const year = parseInt(parts[3]);
-      // Chỉ parse theo kiểu VN nếu tháng hợp lệ (1-12) để tránh lỗi tự nhảy năm của JS (Month Rollover)
+      // Kiểm tra tính hợp lệ của ngày tháng để tránh nhảy năm
       if (month >= 1 && month <= 12) {
         const d = new Date(year, month - 1, day);
-        if (!isNaN(d.getTime())) return d;
+        if (!isNaN(d.getTime()) && d.getFullYear() === year) return d;
       }
     }
     
