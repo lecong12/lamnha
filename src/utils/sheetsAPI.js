@@ -1,5 +1,4 @@
 // AppSheet API Configuration
-import { parseDate } from './stagesAPI';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
@@ -108,7 +107,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "vi-VN", // Thống nhất dùng vi-VN để đồng bộ toàn hệ thống
+          Locale: "vi-VN", // Thống nhất dùng vi-VN để nhận định dạng DD/MM/YYYY đồng bộ với Google Sheet
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -199,14 +198,14 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Dùng định dạng ISO YYYY-MM-DD để gửi lên API nhằm tránh lỗi đảo ngược ngày/tháng
+    // Gửi định dạng DD/MM/YYYY để khớp với Locale vi-VN và định dạng trên Sheet
     const formatDate = (date) => {
-      const d = date instanceof Date ? date : new Date(date);
-      if (isNaN(d.getTime())) return "";
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
+      const d = date instanceof Date ? date : parseDate(date);
+      if (!d || isNaN(d.getTime())) return "";
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
     };
 
     const formattedDate = formatDate(payload.ngay);
@@ -305,14 +304,14 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Dùng định dạng ISO YYYY-MM-DD để gửi lên API nhằm tránh lỗi đảo ngược ngày/tháng
+    // Gửi định dạng DD/MM/YYYY để khớp với Locale vi-VN và định dạng trên Sheet
     const formatDate = (date) => {
-      const d = date instanceof Date ? date : new Date(date);
-      if (isNaN(d.getTime())) return "";
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
+      const d = date instanceof Date ? date : parseDate(date);
+      if (!d || isNaN(d.getTime())) return "";
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
     };
 
     const formattedDate = formatDate(payload.ngay);
