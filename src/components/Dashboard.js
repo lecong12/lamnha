@@ -1,5 +1,5 @@
 import React from "react";
-import { FiTrendingDown, FiActivity } from "react-icons/fi";
+import { FiTrendingDown, FiActivity, FiCalendar, FiFileText, FiCamera, FiAlertCircle } from "react-icons/fi";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart,
   Bar,
@@ -25,13 +25,36 @@ const safeNumber = (val) => {
 function Dashboard({ stats, data, extraData, isDarkMode }) {
   // Lấy dữ liệu đã được fetch và xử lý từ component cha (App.js)
   const stages = extraData.tienDo || [];
+  const budget = extraData.nganSach || [];
+  const contracts = extraData.contracts || [];
+  const drawings = extraData.drawings || [];
 
   // Định nghĩa màu sắc theo chế độ sáng/tối
   const textColor = isDarkMode ? "#f3f4f6" : "#1f2937";
   const axisColor = isDarkMode ? "#9ca3af" : "#6b7280";
   const tooltipBg = isDarkMode ? "#1f2937" : "#ffffff";
 
-  // Tính toán tiến độ hoàn thành
+  // 1. Tính toán tiến độ và hạng mục hiện tại
+  const currentStage = stages.find(s => s.status === 'Đang thi công') || 
+                       [...stages].reverse().find(s => s.status === 'Hoàn thành') || 
+                       stages[0];
+
+  // 2. Tính toán ngày thi công (từ ngày bắt đầu mục đầu tiên)
+  const startDates = stages.map(s => s.ngayBatDau).filter(Boolean);
+  const firstDate = startDates.length > 0 ? new Date(Math.min(...startDates.map(d => d.getTime()))) : null;
+  const daysElapsed = firstDate ? Math.floor((new Date() - firstDate) / (1000 * 60 * 60 * 24)) + 1 : 0;
+
+  // 3. Tính toán Ngân sách
+  const totalPlanned = budget.reduce((sum, item) => sum + safeNumber(item.duKien), 0);
+  const budgetAlert = stats.tongChi > totalPlanned && totalPlanned > 0;
+
+  // 4. Lấy 6 ảnh nghiệm thu mới nhất từ tất cả các giai đoạn
+  const latestPhotos = stages
+    .filter(s => Array.isArray(s.anhNghiemThu) && s.anhNghiemThu.length > 0)
+    .sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0))
+    .flatMap(s => s.anhNghiemThu.map(url => ({ url, stageName: s.name })))
+    .slice(0, 6);
+
   const completedStagesCount = stages.filter(s => s.status === 'Hoàn thành').length;
   const completionPercentage = stages.length > 0 ? Math.round((completedStagesCount / stages.length) * 100) : 0;
 
@@ -87,27 +110,57 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   return (
     <div className="dashboard">
       {/* Stats Cards */}
-      <div className="stats-grid-simplified">
-        <div className="stat-card chi">
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px', marginBottom: '25px' }}>
+        {/* Tài chính */}
+        <div className="stat-card" style={{ borderLeft: budgetAlert ? '4px solid #ef4444' : '4px solid #16a34a' }}>
           <div className="stat-icon">
-            <FiTrendingDown />
+            {budgetAlert ? <FiAlertCircle color="#ef4444" /> : <FiTrendingDown color="#16a34a" />}
           </div>
           <div className="stat-info">
             <span className="stat-label">Tổng Chi Phí</span>
-            <span className="stat-value" style={{ color: 'var(--text-primary, inherit)' }}>{formatCurrency(stats.tongChi)}</span>
+            <span className="stat-value">{formatCurrency(stats.tongChi)}</span>
+            {totalPlanned > 0 && <small style={{ color: 'var(--text-muted)' }}>Kế hoạch: {formatCurrency(totalPlanned)}</small>}
           </div>
         </div>
 
-        <div className="stat-card giao-dich">
+        {/* Tiến độ công việc */}
+        <div className="stat-card" style={{ borderLeft: '4px solid #3b82f6' }}>
           <div className="stat-icon">
-            <FiActivity />
+            <FiActivity color="#3b82f6" />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Tiến độ hoàn thành</span>
+            <span className="stat-label">Đang thực hiện</span>
+            <span className="stat-value" style={{ fontSize: '1.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {currentStage?.name?.replace(/^\d+\.\s*/, "") || "N/A"}
+            </span>
             <div className="progress-bar-container">
               <div className="progress-bar" style={{ width: `${completionPercentage}%` }}></div>
             </div>
-            <span className="stat-value" style={{ color: 'var(--text-primary, inherit)' }}>{completionPercentage}%</span>
+          </div>
+          <span className="stat-badge" style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '0.8rem', fontWeight: 'bold' }}>{completionPercentage}%</span>
+        </div>
+
+        {/* Thời gian */}
+        <div className="stat-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+          <div className="stat-icon">
+            <FiCalendar color="#f59e0b" />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Thời gian thi công</span>
+            <span className="stat-value">Ngày thứ {daysElapsed}</span>
+            <small style={{ color: 'var(--text-muted)' }}>Khởi công: {firstDate?.toLocaleDateString('vi-VN') || "---"}</small>
+          </div>
+        </div>
+
+        {/* Hồ sơ */}
+        <div className="stat-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
+          <div className="stat-icon">
+            <FiFileText color="#8b5cf6" />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Hồ sơ & Bản vẽ</span>
+            <span className="stat-value">{contracts.length + drawings.length} tệp tin</span>
+            <small style={{ color: 'var(--text-muted)' }}>{contracts.length} Hợp đồng • {drawings.length} Bản vẽ</small>
           </div>
         </div>
       </div>
@@ -203,6 +256,27 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
         </div>
       </div>
 
+      {/* Nhật ký hình ảnh mới nhất */}
+      {latestPhotos.length > 0 && (
+        <div className="chart-card" style={{ marginTop: '20px' }}>
+          <h3 className="chart-title"><FiCamera /> Ảnh hiện trường mới nhất</h3>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
+            gap: '12px', 
+            marginTop: '15px' 
+          }}>
+            {latestPhotos.map((photo, idx) => (
+              <div key={idx} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+                <img src={photo.url} alt="Site" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', color: 'white', padding: '4px 8px', fontSize: '10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {photo.stageName}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
