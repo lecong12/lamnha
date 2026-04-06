@@ -32,8 +32,8 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       const d2 = new Date(s.ngayKetThuc);
       return s.ngayBatDau && s.ngayKetThuc && !isNaN(d1.getTime()) && !isNaN(d2.getTime());
     }).sort((a, b) => {
-      // Sort by start date for logical Gantt chart order
-      return new Date(a.ngayBatDau).getTime() - new Date(b.ngayBatDau).getTime();
+      // Ưu tiên sắp xếp theo thứ tự hạng mục trong Sheet (appSheetId) để đúng quy trình thi công
+      return (a.appSheetId || 0) - (b.appSheetId || 0);
     });
 
     if (validStages.length === 0) return [];
@@ -85,13 +85,13 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
             <XAxis 
               type="number" 
               domain={['dataMin', 'dataMax + 5']} 
-              tickFormatter={(tick) => `Ngày ${tick}`} 
+              tickFormatter={(tick) => tick >= 0 ? `Ngày ${tick}` : ''} 
               tick={{ fill: isDarkMode ? 'var(--text-muted)' : '#6b7280', fontSize: 11 }} 
             />
             <YAxis 
               type="category" 
               dataKey="name" 
-              width={120} 
+              width={150} 
               tick={{ fill: isDarkMode ? 'var(--text-main)' : '#374151', fontSize: 12 }} 
               interval={0} 
             />
