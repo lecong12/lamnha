@@ -29,9 +29,9 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
   const ganttData = useMemo(() => {
     const validStages = stages.filter(s => {
-      const d1 = new Date(s.ngayBatDau);
-      const d2 = new Date(s.ngayKetThuc);
-      return s.ngayBatDau && s.ngayKetThuc && !isNaN(d1.getTime()) && !isNaN(d2.getTime());
+      const d1 = s.ngayBatDau instanceof Date ? s.ngayBatDau : new Date(s.ngayBatDau);
+      const d2 = s.ngayKetThuc instanceof Date ? s.ngayKetThuc : new Date(s.ngayKetThuc);
+      return s.ngayBatDau && s.ngayKetThuc && !isNaN(d1.getTime()) && !isNaN(d2.getTime()) && d1.getFullYear() > 2000;
     }).sort((a, b) => {
       // Ưu tiên sắp xếp theo RowNumber (thứ tự dòng trong Sheet) để đảm bảo đúng quy trình thi công
       const rowA = Number(a.appSheetId) || 999;
@@ -41,14 +41,13 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     if (validStages.length === 0) return [];
 
-    // Tìm ngày bắt đầu thực tế, loại bỏ các giá trị lỗi (như 1970) để tránh kéo giãn trục X
+    // Tìm ngày bắt đầu dự án thực tế để làm mốc Ngày 0
     const startTimes = validStages
-      .map(s => s.ngayBatDau instanceof Date ? s.ngayBatDau.getTime() : new Date(s.ngayBatDau).getTime())
-      .filter(t => t > 1577836800000 && !isNaN(t)); // Chỉ lấy các ngày từ năm 2020 trở đi
+      .map(s => s.ngayBatDau.getTime())
+      .filter(t => t > 0);
     
     if (startTimes.length === 0) return [];
     const minTime = Math.min(...startTimes);
-    // Chuẩn hóa projectStartDate về 0h00 để tính khoảng cách chính xác
     const dMin = new Date(minTime);
     const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate());
 

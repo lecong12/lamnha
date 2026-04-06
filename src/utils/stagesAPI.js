@@ -13,27 +13,23 @@ const parseDate = (value) => {
     const cleanValue = value.trim();
     if (!cleanValue) return null;
 
-    // 1. Thử định dạng Quốc tế YYYY-MM-DD (An toàn nhất từ API)
-    let parts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
-    if (parts) {
-      const year = parseInt(parts[1]);
-      const month = parseInt(parts[2]);
-      const day = parseInt(parts[3]);
-      const d = new Date(year, month - 1, day);
-      if (!isNaN(d.getTime())) return d;
-    }
-    
-    // 2. Thử định dạng Việt Nam/Mỹ DD/MM/YYYY hoặc MM/DD/YYYY
-    parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
+    // 1. Ưu tiên định dạng Việt Nam/AppSheet VN: DD/MM/YYYY hoặc D/M/YYYY
+    // Regex này bắt cụm ngày tháng ngay cả khi có phần giờ (00:00:00) phía sau
+    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
       const year = parseInt(parts[3]);
-      // Ép buộc định dạng Việt Nam: v1 là Ngày, v2 là Tháng
-      if (month >= 1 && month <= 12) {
-        const d = new Date(year, month - 1, day);
-        if (!isNaN(d.getTime())) return d;
+      // Chỉ parse nếu tháng hợp lệ để tránh lỗi tự nhảy năm của JS
+      if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        return new Date(year, month - 1, day);
       }
+    }
+
+    // 2. Thử định dạng Quốc tế YYYY-MM-DD
+    parts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
+    if (parts) {
+      return new Date(parseInt(parts[1]), parseInt(parts[2]) - 1, parseInt(parts[3]));
     }
 
     // Nếu không khớp các định dạng trên, thử parse tự động nhưng hạn chế tối đa
@@ -59,7 +55,7 @@ export const fetchStages = async (appId) => {
       },
       body: JSON.stringify({ 
         Action: "Find", 
-        Properties: { Locale: "en-US" }, // Dùng en-US để AppSheet trả về YYYY-MM-DD
+        Properties: { Locale: "vi-VN" }, // Ép AppSheet trả về DD/MM/YYYY đồng bộ với Việt Nam
         Rows: [] 
       }),
     });
