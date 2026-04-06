@@ -138,15 +138,23 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
       )}
 
       {/* Stats Cards */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px', marginBottom: '25px' }}>
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '15px', marginBottom: '25px' }}>
         {/* Tiến độ công việc */}
-        <div className="stat-card" style={{ borderLeft: '4px solid #3b82f6' }}>
+        <div className="stat-card" style={{ borderLeft: '4px solid #3b82f6', position: 'relative' }}>
           <div className="stat-icon">
             <FiActivity color="#3b82f6" />
           </div>
           <div className="stat-info">
             <span className="stat-label">Đang thực hiện</span>
-            <span className="stat-value" style={{ fontSize: '1.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span className="stat-value" style={{ 
+              fontSize: '1.1rem', 
+              whiteSpace: 'nowrap', 
+              overflow: 'hidden', 
+              textOverflow: 'ellipsis',
+              display: 'block',
+              width: '100%',
+              minHeight: '1.5em' 
+            }}>
               {currentStage?.name?.replace(/^\d+\.\s*/, "") || "N/A"}
             </span>
             <div className="progress-bar-container">
@@ -157,7 +165,7 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
         </div>
 
         {/* Thời gian */}
-        <div className="stat-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+        <div className="stat-card" style={{ borderLeft: '4px solid #f59e0b', position: 'relative' }}>
           <div className="stat-icon">
             <FiCalendar color="#f59e0b" />
           </div>
@@ -169,19 +177,19 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
         </div>
 
         {/* Hồ sơ */}
-        <div className="stat-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
+        <div className="stat-card" style={{ borderLeft: '4px solid #8b5cf6', position: 'relative' }}>
           <div className="stat-icon">
             <FiFileText color="#8b5cf6" />
           </div>
           <div className="stat-info">
             <span className="stat-label">Hồ sơ & Bản vẽ</span>
-            <span className="stat-value">{totalFiles} tệp tin</span>
-            <small style={{ color: 'var(--text-muted)' }}>{totalContracts} Hợp đồng • {totalDrawings} Bản vẽ</small>
+            <span className="stat-value">{totalFiles || 0} tệp tin</span>
+            <small style={{ color: 'var(--text-muted)' }}>{totalContracts || 0} Hợp đồng • {totalDrawings || 0} Bản vẽ</small>
           </div>
         </div>
 
         {/* Tài chính - ĐƯA XUỐNG DƯỚI CÙNG TRONG GRID */}
-        <div className="stat-card" style={{ borderLeft: budgetAlert ? '4px solid #ef4444' : '4px solid #16a34a' }}>
+        <div className="stat-card" style={{ borderLeft: budgetAlert ? '4px solid #ef4444' : '4px solid #16a34a', position: 'relative' }}>
           <div className="stat-icon">
             {budgetAlert ? <FiAlertCircle color="#ef4444" /> : <FiTrendingDown color="#16a34a" />}
           </div>
