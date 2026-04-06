@@ -14,7 +14,7 @@ export const fetchBudget = async (appId) => {
         "ApplicationAccessKey": APPSHEET_ACCESS_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ Action: "Find", Properties: { Locale: "en-US" }, Rows: [] }),
+      body: JSON.stringify({ Action: "Find", Properties: { Locale: "vi-VN" }, Rows: [] }),
     });
 
     if (!response.ok) {

@@ -44,7 +44,7 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
     // Tìm ngày bắt đầu dự án thực tế để làm mốc Ngày 0
     const startTimes = validStages
       .map(s => s.ngayBatDau.getTime())
-      .filter(t => t > 0);
+      .filter(t => t > 1000000000000); // Bỏ qua các ngày rác (trước năm 2000)
     
     if (startTimes.length === 0) return [];
     const minTime = Math.min(...startTimes);

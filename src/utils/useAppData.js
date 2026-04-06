@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchStages, updateStageInSheet } from "./stagesAPI";
+import { fetchStages, updateStageInSheet, parseDate } from "./stagesAPI";
 import { fetchTableData, updateRowInSheet, addRowToSheet, fetchFileData } from "./sheetsAPI";
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
@@ -74,7 +74,7 @@ export const useAppData = (isLoggedIn) => {
                     id: row._RowNumber || c.id || `gd_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: c.id || row.id || row.ID || row._RowNumber,
-                    ngay: c.ngay ? new Date(c.ngay) : new Date(),
+                    ngay: parseDate(c.ngay) || new Date(),
                     loaiThuChi: c.loaiThuChi || "Chi",
                     noiDung: c.noiDung || "",
                     doiTuongThuChi: c.doiTuongThuChi || "",
