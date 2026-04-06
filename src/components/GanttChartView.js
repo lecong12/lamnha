@@ -3,11 +3,12 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 
 const dayDiff = (date1, date2) => {
   if (!date1 || !date2) return 0;
-  const d1 = new Date(date1);
-  d1.setHours(0, 0, 0, 0);
-  const d2 = new Date(date2);
-  d2.setHours(0, 0, 0, 0);
-  return Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+  // Đảm bảo so sánh trên đối tượng Date đã được chuẩn hóa, không re-parse chuỗi
+  const d1 = date1 instanceof Date ? date1 : new Date(date1);
+  const d2 = date2 instanceof Date ? date2 : new Date(date2);
+  const t1 = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate()).getTime();
+  const t2 = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate()).getTime();
+  return Math.round((t2 - t1) / (1000 * 60 * 60 * 24));
 };
 
 const GanttTooltip = ({ active, payload }) => {
@@ -40,7 +41,7 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     // Tìm ngày bắt đầu thực tế, loại bỏ các giá trị lỗi (như 1970) để tránh kéo giãn trục X
     const startTimes = validStages
-      .map(s => s.ngayBatDau instanceof Date ? s.ngayBatDau.getTime() : new Date(s.ngayBatDau).getTime())
+      .map(s => s.ngayBatDau instanceof Date ? s.ngayBatDau.getTime() : 0)
       .filter(t => t > 1000000000000 && !isNaN(t)); // Chỉ lấy các ngày sau năm 2000
     
     if (startTimes.length === 0) return [];

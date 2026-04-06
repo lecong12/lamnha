@@ -14,8 +14,9 @@ const parseDate = (value) => {
   if (typeof value === 'string') {
     if (!value.trim()) return null;
 
-    // Try dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy, dd mm yyyy (Fix Regex)
-    let parts = value.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
+    // Regex mới: Loại bỏ $ ở cuối để chấp nhận chuỗi có kèm giờ (14/03/2026 00:00:00)
+    // Ưu tiên định dạng Việt Nam DD/MM/YYYY
+    let parts = value.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
@@ -27,14 +28,14 @@ const parseDate = (value) => {
       }
     }
     
-    // Try yyyy-mm-dd (ISO format)
-    parts = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    // Thử định dạng Quốc tế YYYY-MM-DD
+    parts = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
     if (parts) {
       const d = new Date(parts[1], parts[2] - 1, parts[3]);
       if (!isNaN(d.getTime())) return d;
     }
 
-    // Thử parse chuẩn ISO (yyyy-mm-dd) nếu regex trên không khớp
+    // Nếu không khớp các định dạng trên, thử parse tự động nhưng hạn chế tối đa
     const d = new Date(value);
     return isNaN(d.getTime()) ? null : d;
   }
