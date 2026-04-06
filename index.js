@@ -58,7 +58,7 @@ app.post('/api/gemini-extract', async (req, res) => {
         temperature: 0.1, // Giảm độ sáng tạo để trích xuất chính xác hơn
         responseMimeType: "application/json",
       },
-      systemInstruction: "Bạn là một chuyên gia OCR hóa đơn xây dựng tại Việt Nam. Phải luôn trả về JSON đúng định dạng. Nếu không tìm thấy số tiền, hãy để là 0. Định dạng ngày tháng phải là DD/MM/YYYY. Nếu không thấy ngày, hãy để null."
+      systemInstruction: "Bạn là một chuyên gia OCR hóa đơn xây dựng tại Việt Nam. Phải luôn trả về JSON đúng định dạng. Nếu không tìm thấy số tiền, hãy để là 0. Định dạng ngày tháng phải là YYYY-MM-DD. Nếu không thấy ngày, hãy để null."
     });
     
     let imageData;
@@ -98,7 +98,7 @@ app.post('/api/gemini-extract', async (req, res) => {
       {
         "ten": "Tên cửa hàng/doanh nghiệp bán",
         "sdt": "Số điện thoại người bán (bắt đầu bằng 0)",
-        "ngay": "Ngày mua hàng (Định dạng DD/MM/YYYY)",
+        "ngay": "Ngày mua hàng (Định dạng YYYY-MM-DD)",
         "soTien": 0,
         "noiDung": "Tóm tắt vật tư (Ví dụ: 50 bao xi măng Hà Tiên, 2 khối cát)"
       }

@@ -140,6 +140,7 @@ function App() {
         showToast(isEdit ? "Cập nhật thành công!" : "Thêm mới thành công!", "success");
         setEditingItem(null);
         await fetchAllData(); 
+        setActiveTab('list'); // Đảm bảo quay lại danh sách sau khi lưu
       } else {
         throw new Error(result?.message || "AppSheet từ chối ghi dữ liệu.");
       }

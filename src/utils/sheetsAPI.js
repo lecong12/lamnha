@@ -198,11 +198,14 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Hàm helper format ngày YYYY-MM-DD không bị lệch múi giờ
+    // Dùng định dạng ISO YYYY-MM-DD để gửi lên API nhằm tránh lỗi đảo ngược ngày/tháng
     const formatDate = (date) => {
       const d = date instanceof Date ? date : new Date(date);
       if (isNaN(d.getTime())) return "";
-      return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
     };
 
     const formattedDate = formatDate(payload.ngay);
@@ -301,11 +304,14 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Đảm bảo ngày tháng gửi lên khớp với Locale vi-VN (DD/MM/YYYY)
+    // Dùng định dạng ISO YYYY-MM-DD để gửi lên API nhằm tránh lỗi đảo ngược ngày/tháng
     const formatDate = (date) => {
       const d = date instanceof Date ? date : new Date(date);
       if (isNaN(d.getTime())) return "";
-      return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
     };
 
     const formattedDate = formatDate(payload.ngay);
