@@ -54,6 +54,7 @@ body {
 .table-container, 
 .contract-item, 
 .drawing-card, 
+.stat-card,
 .modal-content, 
 .summary-card,
 .progress-stage-card,
@@ -99,6 +100,14 @@ td {
 /* Đảm bảo nhãn trong các stat card cũng sáng rõ */
 .dark-theme .stat-label {
   color: #cbd5e1 !important;
+}
+
+.dark-theme .stat-value {
+  color: #ffffff !important; /* Làm sáng giá trị 'Đang thực hiện', 'Ngày thứ X' */
+}
+
+.dark-theme .stat-info small {
+  color: #cbd5e1 !important; /* Làm rõ phần 'Khởi công' và 'Kế hoạch' */
 }
 
 /* Loading Spinner */
