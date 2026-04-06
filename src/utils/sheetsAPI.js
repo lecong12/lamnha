@@ -94,10 +94,11 @@ const getCleanLink = (rawLink) => {
 const formatAppSheetDate = (date) => {
   const d = date instanceof Date ? date : parseDate(date);
   if (!d || isNaN(d.getTime())) return "";
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  // Gửi lên API bằng YYYY-MM-DD để tránh mọi lỗi đảo ngược ngày/tháng
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 };
 
 
@@ -119,7 +120,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "vi-VN", // Thống nhất dùng vi-VN để nhận định dạng DD/MM/YYYY đồng bộ với Google Sheet
+          Locale: "en-US", // Ép AppSheet gửi định dạng ISO YYYY-MM-DD
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -216,7 +217,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     });
 
     if (targetTable === "ghichu") {
-        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
+        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'Ghi chú', 'noiDung']).forEach(colName => {
             formattedPayload[colName] = payload.noiDung;
         });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
@@ -260,7 +261,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "vi-VN", 
+          Locale: "en-US", 
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -312,7 +313,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     });
 
     if (targetTable === "ghichu") {
-        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
+        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'Ghi chú', 'noiDung']).forEach(colName => {
             formattedPayload[colName] = payload.noiDung;
         });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
@@ -357,7 +358,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-US",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],

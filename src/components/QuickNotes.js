@@ -29,8 +29,8 @@ function QuickNotes({ showToast }) {
 
         // Sắp xếp: Ưu tiên ngày mới nhất, nếu cùng ngày thì dựa vào ID (timestamp) mới nhất
         const sorted = mappedNotes.sort((a, b) => {
-          const dateA = new Date(a.ngay || 0);
-          const dateB = new Date(b.ngay || 0);
+          const dateA = parseDate(a.ngay) || new Date(0);
+          const dateB = parseDate(b.ngay) || new Date(0);
           if (dateB - dateA !== 0) {
             return dateB - dateA; // Sắp xếp theo ngày giảm dần
           }
