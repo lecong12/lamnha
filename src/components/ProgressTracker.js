@@ -83,9 +83,9 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
       const fileData = text ? JSON.parse(text) : {};
 
       if (fileData.secure_url) {
-        // Thêm ảnh mới vào danh sách hiện có (Tối đa 5 ảnh)
+        // Thêm ảnh mới vào danh sách hiện có (Tối đa 6 ảnh)
         const currentImages = Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu : [];
-        const updatedImages = [...currentImages, fileData.secure_url].slice(-5);
+        const updatedImages = [...currentImages, fileData.secure_url].slice(-6);
 
         const result = await onUpdateStage(stageId, { anhNghiemThu: updatedImages });
         if (result && result.success) {
@@ -171,8 +171,8 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
                 </div>
               )}
 
-              {/* Nút thêm ảnh mới (chỉ hiện nếu chưa có file chờ và chưa quá 5 ảnh) */}
-              {!pendingFiles[stage.id] && (!stage.anhNghiemThu || stage.anhNghiemThu.length < 5) && (
+              {/* Nút thêm ảnh mới (chỉ hiện nếu chưa có file chờ và chưa quá 6 ảnh) */}
+              {!pendingFiles[stage.id] && (!stage.anhNghiemThu || stage.anhNghiemThu.length < 6) && (
                 <label style={{ 
                   aspectRatio: '1/1', 
                   border: '1px dashed #cbd5e1', 
@@ -194,7 +194,7 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
 
             {/* Hiển thị số lượng */}
             <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '8px', textAlign: 'right' }}>
-              Dung lượng: {Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu.length : 0}/5 ảnh
+              Dung lượng: {Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu.length : 0}/6 ảnh
             </div>
           </div>
         ))}
