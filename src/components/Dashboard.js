@@ -118,7 +118,7 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
       {/* Nhật ký hình ảnh mới nhất - ĐƯA LÊN TRÊN ĐẦU */}
       {latestPhotos.length > 0 && (
         <div className="chart-card" style={{ marginBottom: '25px' }}>
-          <h3 className="chart-title"><FiCamera /> Ảnh hiện trường mới nhất</h3>
+          <h3 className="chart-title"><FiCamera /> Ảnh công trường mới nhất</h3>
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
