@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FiCamera, FiEye, FiLoader, FiCheck, FiX, FiUser, FiPhone, FiMapPin, FiTrash2 } from 'react-icons/fi';
+import { FiCamera, FiEye, FiLoader, FiCheck, FiX, FiPhone, FiMapPin, FiTrash2 } from 'react-icons/fi';
 import { extractInfoWithAI } from '../utils/aiService';
 import { addRowToSheet, fetchTableData, deleteRowFromSheet } from '../utils/sheetsAPI';
 
@@ -32,7 +32,7 @@ function BusinessScanner({ showToast }) {
     } finally {
       setLoading(false);
     }
-  }, [APP_ID]);
+  }, []);
 
   useEffect(() => { 
     loadData(); 
