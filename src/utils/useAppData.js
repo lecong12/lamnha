@@ -115,8 +115,10 @@ export const useAppData = (isLoggedIn) => {
                     keyId: row.id || row.keyId || row._RowNumber,
                     name: row.name || row.ten || row.noiDung || row["Tên hợp đồng"] || row["Tên Hợp đồng"] || `Hợp đồng ${index + 1}`,
                     url: row.url || "",
-                    // QUAN TRỌNG: Chuyển Date về String để tránh trắng màn hình React
-                    date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
+                    date: (() => {
+                        const d = parseDate(row.date || row.ngay);
+                        return d ? d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : (row.date || row.ngay || "");
+                    })(),
                     size: Number(row.size || 0),
                     category: row.category || row.doiTuongThuChi || "Khác"
                 };
@@ -132,7 +134,10 @@ export const useAppData = (isLoggedIn) => {
                     keyId: row.id || row.keyId || row._RowNumber,
                     name: row.name || row.ten || row.noiDung || row["Tên bản vẽ"] || row["Tên Bản vẽ"] || `Bản vẽ ${index + 1}`,
                     url: row.url || "",
-                    date: parseDate(row.date || row.ngay)?.toLocaleDateString('vi-VN') || row.date || row.ngay || "",
+                    date: (() => {
+                        const d = parseDate(row.date || row.ngay);
+                        return d ? d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : (row.date || row.ngay || "");
+                    })(),
                     size: Number(row.size || 0),
                     category: row.category || row.doiTuongThuChi || "Khác"
                 };
