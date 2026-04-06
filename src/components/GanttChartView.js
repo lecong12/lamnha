@@ -14,6 +14,14 @@ const dayDiff = (date1, date2) => {
   return Math.round((t2 - t1) / (86400000));
 };
 
+const formatDateVN = (date) => {
+  if (!date || !(date instanceof Date)) return "";
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  return `${d}/${m}/${y}`;
+};
+
 const GanttTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -39,12 +47,12 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
     // BƯỚC 2: Tìm ngày bắt đầu thực tế của dự án (Lọc bỏ các ngày rác/null)
     const startTimes = sortedStages
       .map(s => parseDate(s.ngayBatDau)?.getTime())
-      .filter(t => t && t > 946684800000); // Chỉ lấy các ngày từ sau năm 2000
+      .filter(t => t && t > 946684800000); 
     
-    // Nếu không có bất kỳ ngày nào hợp lệ, dùng ngày hôm nay làm mốc 0
+    // Chuẩn hóa projectStartDate về đúng 00:00:00
     const minTime = startTimes.length > 0 ? Math.min(...startTimes) : Date.now();
-    const dMin = parseDate(new Date(minTime));
-    const projectStartDate = dMin || new Date();
+    const dMin = new Date(minTime);
+    const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate(), 0, 0, 0);
 
     // BƯỚC 3: Map TOÀN BỘ 33 hạng mục (Không lọc bỏ)
     return sortedStages.map(stage => {
@@ -62,7 +70,7 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       if (stage.status === 'Đang thi công') color = '#3b82f6';
       if (stage.status === 'Hoàn thành') color = '#16a34a';
 
-      const dateRange = hasValidDates ? `${dS.toLocaleDateString('vi-VN')} - ${dE.toLocaleDateString('vi-VN')}` : "Chưa nhập ngày";
+      const dateRange = hasValidDates ? `${formatDateVN(dS)} - ${formatDateVN(dE)}` : "Chưa nhập ngày";
 
       return { 
         id: stage.id, 

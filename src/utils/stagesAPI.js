@@ -9,28 +9,25 @@ export const parseDate = (value) => {
   if (value instanceof Date) return value;
   
   if (typeof value === 'string') {
-    // Làm sạch chuỗi: loại bỏ phần giờ nếu có (ví dụ: "14/03/2026 00:00:00" hoặc định dạng ISO có 'T')
-    const cleanValue = value.trim().split(/[ T]/)[0];
+    // Làm sạch chuỗi: lấy phần ngày, bỏ phần giờ/thời gian thừa
+    const cleanValue = value.trim().split(/[ T]/)[0].replace(/[\\"]/g, "");
     if (!cleanValue) return null;
 
-    // 1. Ưu tiên tuyệt đối định dạng Việt Nam DD/MM/YYYY
+    // 1. Xử lý định dạng Việt Nam DD/MM/YYYY
     let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
       const year = parseInt(parts[3]);
-      // Kiểm tra tính hợp lệ nghiêm ngặt: Tháng 1-12, Ngày 1-31
       if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-        // Ép buộc tạo đối tượng Date theo đúng thứ tự Ngày/Tháng (Giờ 00:00:00 local)
         const dt = new Date(year, month - 1, day, 0, 0, 0);
-        // Chống lỗi "Rollover" (VD: ngày 31 tháng 4 tự nhảy sang 1 tháng 5)
         if (!isNaN(dt.getTime()) && dt.getFullYear() === year && dt.getMonth() === month - 1 && dt.getDate() === day) {
           return dt;
         }
       }
     }
 
-    // 2. Thử định dạng Quốc tế YYYY-MM-DD (Thường gặp từ API)
+    // 2. Xử lý định dạng Quốc tế YYYY-MM-DD
     let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
     if (isoParts) {
       const y = parseInt(isoParts[1]);
@@ -42,7 +39,7 @@ export const parseDate = (value) => {
       }
     }
 
-    return null; // Trả về null nếu không khớp định dạng chuẩn để tránh sai lệch dữ liệu
+    return null; // Không dùng new Date(value) để tránh trình duyệt tự đoán sai MM/DD
   }
   return null;
 };
