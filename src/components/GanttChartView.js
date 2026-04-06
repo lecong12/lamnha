@@ -27,7 +27,7 @@ const GanttTooltip = ({ active, payload }) => {
     const data = payload[0].payload;
     return (
       <div className="custom-tooltip">
-        <p className="tooltip-label">{`${data.name}`}</p>
+        <p className="tooltip-label">{`${data.displayName}`}</p>
         <p className="tooltip-desc">{`Thời gian: ${data.duration} ngày (${data.dateRange})`}</p>
       </div>
     );
@@ -44,20 +44,21 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     if (sortedStages.length === 0) return [];
 
-    // BƯỚC 2: Tìm ngày bắt đầu thực tế của dự án (Lọc bỏ các ngày rác/null)
+    // BƯỚC 2: Tìm ngày bắt đầu dự án (Chỉ lấy các ngày hợp lệ trong khoảng 2020-2030)
     const startTimes = sortedStages
       .map(s => parseDate(s.ngayBatDau)?.getTime())
-      .filter(t => t && t > 946684800000); 
+      .filter(t => t && t > 1577836800000 && t < 1893456000000); 
     
-    // Chuẩn hóa projectStartDate về đúng 00:00:00
+    // Nếu không có ngày nào hợp lệ, dùng ngày hiện tại làm mốc
     const minTime = startTimes.length > 0 ? Math.min(...startTimes) : Date.now();
     const dMin = new Date(minTime);
+    // Chuẩn hóa về 0h00 sáng để tính toán khoảng cách ngày chính xác
     const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate(), 0, 0, 0);
 
     // BƯỚC 3: Map TOÀN BỘ 33 hạng mục (Không lọc bỏ)
     return sortedStages.map(stage => {
-      const dS = parseDate(stage.ngayBatDau);
-      const dE = parseDate(stage.ngayKetThuc);
+      const dS = parseDate(stage.ngayBatDau || stage["Ngày bắt đầu"]);
+      const dE = parseDate(stage.ngayKetThuc || stage["Ngày kết thúc"]);
       
       // Nếu thiếu ngày, đặt duration là 0 để chỉ hiện tên trên trục Y mà không vẽ thanh Bar
       const hasValidDates = dS && dE && !isNaN(dS.getTime()) && !isNaN(dE.getTime());
@@ -138,7 +139,7 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       {/* Menu nhỏ để đổi trạng thái */}
       {activeBar && (
         <div className="gantt-status-menu" style={{ position: 'absolute', top: '100px', left: '50%', transform: 'translateX(-50%)', background: isDarkMode ? 'var(--bg-card)' : 'white', padding: '10px', borderRadius: '8px', boxShadow: isDarkMode ? 'var(--shadow)' : '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100 }}>
-          <p style={{margin: 0, marginBottom: '10px', fontWeight: 600, fontSize: '14px'}}>{activeBar.name}</p>
+          <p style={{margin: 0, marginBottom: '10px', fontWeight: 600, fontSize: '14px'}}>{activeBar.displayName}</p>
           <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
             <button onClick={() => handleStatusChange(activeBar.id, 'Chưa bắt đầu')} disabled={activeBar.status === 'Chưa bắt đầu'}>Chưa bắt đầu</button>
             <button onClick={() => handleStatusChange(activeBar.id, 'Đang thi công')} disabled={activeBar.status === 'Đang thi công'}>Đang thi công</button>

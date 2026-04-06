@@ -10,36 +10,31 @@ export const parseDate = (value) => {
   
   if (typeof value === 'string') {
     // Làm sạch chuỗi: lấy phần ngày, bỏ phần giờ/thời gian thừa
-    const cleanValue = value.trim().split(/[ T]/)[0].replace(/[\\"]/g, "");
+    const cleanValue = value.trim().split(/[ T]/)[0].replace(/\\/g, "").replace(/"/g, "");
     if (!cleanValue) return null;
 
-    // 1. Xử lý định dạng Việt Nam DD/MM/YYYY
-    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
+    // Ưu tiên định dạng Việt Nam DD/MM/YYYY như trong Sheet
+    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
     if (parts) {
-      const day = parseInt(parts[1]);
-      const month = parseInt(parts[2]);
-      const year = parseInt(parts[3]);
-      if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-        const dt = new Date(year, month - 1, day, 0, 0, 0);
-        if (!isNaN(dt.getTime()) && dt.getFullYear() === year && dt.getMonth() === month - 1 && dt.getDate() === day) {
+      const d = parseInt(parts[1], 10); // Số đầu là Ngày
+      const m = parseInt(parts[2], 10); // Số hai là Tháng
+      const y = parseInt(parts[3], 10); // Số ba là Năm
+      
+      if (m >= 1 && m <= 12) {
+        const dt = new Date(y, m - 1, d, 0, 0, 0);
+        if (!isNaN(dt.getTime()) && dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d) {
           return dt;
         }
       }
     }
 
-    // 2. Xử lý định dạng Quốc tế YYYY-MM-DD
-    let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
+    // Thử định dạng Quốc tế YYYY-MM-DD (ISO)
+    let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
     if (isoParts) {
-      const y = parseInt(isoParts[1]);
-      const m = parseInt(isoParts[2]);
-      const d = parseInt(isoParts[3]);
-      const dt = new Date(y, m - 1, d, 0, 0, 0);
-      if (!isNaN(dt.getTime()) && dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d) {
-        return dt;
-      }
+      return new Date(parseInt(isoParts[1], 10), parseInt(isoParts[2], 10) - 1, parseInt(isoParts[3], 10), 0, 0, 0);
     }
 
-    return null; // Không dùng new Date(value) để tránh trình duyệt tự đoán sai MM/DD
+    return null; 
   }
   return null;
 };
