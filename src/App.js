@@ -100,17 +100,17 @@ function App() {
       const isEdit = !!updatedItem.appSheetId;
       showToast(isEdit ? "Đang cập nhật..." : "Đang thêm mới...", "info");
 
-      let finalId = updatedItem.keyId || updatedItem.id;
+      let finalId;
       
       // 2. Tính toán ID mới theo công thức MAX(id) + 1 nếu là thêm mới
       if (isEdit) {
-        finalId = updatedItem.keyId || updatedItem.id;
+        // Khi sửa, giữ nguyên ID cũ (có thể là keyId hoặc id gốc)
+        finalId = updatedItem.keyId;
       } else {
-        // Lấy tất cả ID từ mảng gốc (không dùng filteredData để tránh trùng ID khi đang lọc)
+        // Thêm mới: Tìm ID số lớn nhất trong toàn bộ dữ liệu
         const numericIds = (data || [])
           .map(item => {
-            // Bóc tách số từ ID (hỗ trợ cả "GD_156" hoặc "156")
-            const val = String(item.keyId || item.id || "");
+            const val = String(item.keyId || "");
             const match = val.match(/\d+/);
             return match ? parseInt(match[0], 10) : null;
           })
@@ -119,15 +119,17 @@ function App() {
         finalId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
       }
 
-      console.log(`[CRUD] ${isEdit ? 'UPDATE' : 'ADD'} - Final ID:`, finalId);
-
       const payload = {
-        ...updatedItem,
-        id: finalId, 
-        soTien: parseInt(String(updatedItem.soTien).replace(/\D/g, "")) || 0,
+        appSheetId: updatedItem.appSheetId,
+        keyId: finalId,
+        id: finalId,
         ngay: updatedItem.ngay,
         noiDung: updatedItem.noiDung?.trim() || "",
-        loaiThuChi: "Chi"
+        doiTuongThuChi: updatedItem.doiTuongThuChi,
+        soTien: parseInt(String(updatedItem.soTien).replace(/\D/g, "")) || 0,
+        nguoiCapNhat: updatedItem.nguoiCapNhat,
+        hinhAnh: updatedItem.hinhAnh,
+        loaiThuChi: "Chi" // Mặc định là Chi
       };
 
       const result = isEdit 

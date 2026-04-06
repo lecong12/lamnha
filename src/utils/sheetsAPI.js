@@ -11,11 +11,11 @@ const normalizeKey = (str) => {
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
-    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s.includes('key') || s.startsWith('id')) return 'id';
+    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s === 'key' || s.startsWith('id')) return 'id';
     if (s.includes('ngay bat dau')) return 'ngayBatDau';
     if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
     if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
-    if (s.includes('noi dung') || s.includes('description')) return 'noiDung';
+    if (s === 'noi dung' || s.includes('description')) return 'noiDung';
     if (s.includes('so tien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
     if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
     if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
@@ -25,7 +25,7 @@ const normalizeKey = (str) => {
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh') || s.includes('chung tu')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     // Nhận diện tên hạng mục, bản vẽ, hợp đồng
-    if (s.includes('ten') || s.includes('name') || s.includes('noi dung') || s.includes('hop dong') || s.includes('ban ve')) return 'name';
+    if (s.includes('ten') || s.includes('name') || s.includes('giai doan') || s.includes('hop dong') || s.includes('ban ve')) return 'name';
     if (s.includes('dung luong') || s.includes('size')) return 'size';
     
     return s.replace(/\s+/g, '');
@@ -219,9 +219,6 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : (payload["Số tiền"] || 0);
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
       
-      getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu Chi', 'loaiThuChi', 'Loại']).forEach(colName => {
-          formattedPayload[colName] = payload.loaiThuChi;
-      });
       getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
           formattedPayload[colName] = payload.noiDung;
       });
@@ -324,9 +321,6 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : (payload["Số tiền"] || 0);
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
 
-      getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu Chi', 'loaiThuChi', 'Loại']).forEach(colName => {
-          formattedPayload[colName] = payload.loaiThuChi;
-      });
       getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
           formattedPayload[colName] = payload.noiDung;
       });
