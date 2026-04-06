@@ -168,3 +168,18 @@ function BusinessScanner({ showToast }) {
           </div>
         ))}
       </div>
+
+      {/* Modal hiển thị ảnh phóng to */}
+      {viewUrl && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setViewUrl(null)}>
+          <button style={{ position: 'absolute', top: '20px', right: '20px', background: 'var(--accent-color)', color: '#fff', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewUrl(null)}>
+            <FiX size={24} />
+          </button>
+          <img src={viewUrl} alt="Original" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 0 20px rgba(0,0,0,0.5)' }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default BusinessScanner;
