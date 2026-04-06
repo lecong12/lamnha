@@ -27,8 +27,9 @@ const GanttTooltip = ({ active, payload }) => {
     const data = payload[0].payload;
     return (
       <div className="custom-tooltip">
-        <p className="tooltip-label">{`${data.displayName}`}</p>
+        <p className="tooltip-label" style={{ fontWeight: 'bold', marginBottom: '5px', color: 'var(--accent-color)' }}>{`${data.displayName}`}</p>
         <p className="tooltip-desc">{`Thời gian: ${data.duration} ngày (${data.dateRange})`}</p>
+        <p className="tooltip-desc" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{`(${data.dateRange})`}</p>
       </div>
     );
   }
@@ -60,10 +61,10 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       const dS = parseDate(stage.ngayBatDau || stage["Ngày bắt đầu"]);
       const dE = parseDate(stage.ngayKetThuc || stage["Ngày kết thúc"]);
       
-      // Nếu thiếu ngày, đặt duration là 0 để chỉ hiện tên trên trục Y mà không vẽ thanh Bar
       const hasValidDates = dS && dE && !isNaN(dS.getTime()) && !isNaN(dE.getTime());
       const startDay = hasValidDates ? Math.max(0, dayDiff(projectStartDate, dS)) : 0;
-      const duration = hasValidDates ? Math.max(0, dayDiff(dS, dE) + 1) : 0;
+      // Đảm bảo duration tối thiểu là 1 nếu có ngày hợp lệ
+      const duration = hasValidDates ? Math.max(1, dayDiff(dS, dE) + 1) : 0;
       
       const displayName = stage.name?.replace(/^\d+\.\s*/, "") || "Không tên";
 
@@ -71,7 +72,7 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       if (stage.status === 'Đang thi công') color = '#3b82f6';
       if (stage.status === 'Hoàn thành') color = '#16a34a';
 
-      const dateRange = hasValidDates ? `${formatDateVN(dS)} - ${formatDateVN(dE)}` : "Chưa nhập ngày";
+      const dateRange = hasValidDates ? `${formatDateVN(dS)} - ${formatDateVN(dE)}` : "Chưa có ngày";
 
       return { 
         id: stage.id, 

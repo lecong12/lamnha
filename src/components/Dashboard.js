@@ -152,11 +152,12 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
               overflow: 'hidden', 
               textOverflow: 'ellipsis',
               display: 'block',
-              width: '100%',
+              maxWidth: '100%',
               minHeight: '1.5em',
+              minWidth: '0', // Cho phép flex-item co giãn để text-overflow hoạt động
               color: isDarkMode ? "#ffffff" : "inherit"
             }}>
-              {currentStage?.name?.replace(/^\d+\.\s*/, "") || "N/A"}
+              {currentStage?.name?.toString().replace(/^\d+\.\s*/, "") || "---"}
             </span>
             <div className="progress-bar-container">
               <div className="progress-bar" style={{ width: `${completionPercentage}%` }}></div>
