@@ -13,24 +13,27 @@ const parseDate = (value) => {
     const cleanValue = value.trim();
     if (!cleanValue) return null;
 
-    // 1. Thử định dạng Việt Nam DD/MM/YYYY (Bắt buộc khớp trước để tránh MM/DD)
-    let parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
+    // 1. Thử định dạng Quốc tế YYYY-MM-DD (An toàn nhất từ API)
+    let parts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
+    if (parts) {
+      const year = parseInt(parts[1]);
+      const month = parseInt(parts[2]);
+      const day = parseInt(parts[3]);
+      const d = new Date(year, month - 1, day);
+      if (!isNaN(d.getTime())) return d;
+    }
+    
+    // 2. Thử định dạng Việt Nam/Mỹ DD/MM/YYYY hoặc MM/DD/YYYY
+    parts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
     if (parts) {
       const day = parseInt(parts[1]);
       const month = parseInt(parts[2]);
       const year = parseInt(parts[3]);
-      // Kiểm tra tính hợp lệ của ngày tháng để tránh nhảy năm
+      // Ép buộc định dạng Việt Nam: v1 là Ngày, v2 là Tháng
       if (month >= 1 && month <= 12) {
         const d = new Date(year, month - 1, day);
-        if (!isNaN(d.getTime()) && d.getFullYear() === year) return d;
+        if (!isNaN(d.getTime())) return d;
       }
-    }
-    
-    // Thử định dạng Quốc tế YYYY-MM-DD
-    parts = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-    if (parts) {
-      const d = new Date(parts[1], parts[2] - 1, parts[3]);
-      if (!isNaN(d.getTime())) return d;
     }
 
     // Nếu không khớp các định dạng trên, thử parse tự động nhưng hạn chế tối đa
@@ -54,7 +57,11 @@ export const fetchStages = async (appId) => {
         "ApplicationAccessKey": APPSHEET_ACCESS_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ Action: "Find", Properties: { Locale: "vi-VN" }, Rows: [] }),
+      body: JSON.stringify({ 
+        Action: "Find", 
+        Properties: { Locale: "en-US" }, // Dùng en-US để AppSheet trả về YYYY-MM-DD
+        Rows: [] 
+      }),
     });
 
     if (!response.ok) {

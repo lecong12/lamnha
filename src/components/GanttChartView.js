@@ -6,9 +6,9 @@ const dayDiff = (date1, date2) => {
   // Đảm bảo so sánh trên đối tượng Date đã được chuẩn hóa, không re-parse chuỗi
   const d1 = date1 instanceof Date ? date1 : new Date(date1);
   const d2 = date2 instanceof Date ? date2 : new Date(date2);
-  const t1 = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate()).getTime();
-  const t2 = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate()).getTime();
-  return Math.round((t2 - t1) / (1000 * 60 * 60 * 24));
+  const t1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+  const t2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+  return Math.round((t2 - t1) / (86400000));
 };
 
 const GanttTooltip = ({ active, payload }) => {
@@ -33,29 +33,31 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       const d2 = new Date(s.ngayKetThuc);
       return s.ngayBatDau && s.ngayKetThuc && !isNaN(d1.getTime()) && !isNaN(d2.getTime());
     }).sort((a, b) => {
-      // Ưu tiên sắp xếp theo thứ tự hạng mục trong Sheet (appSheetId) để đúng quy trình thi công
-      return (Number(a.appSheetId) || 0) - (Number(b.appSheetId) || 0);
+      // Ưu tiên sắp xếp theo RowNumber (thứ tự dòng trong Sheet) để đảm bảo đúng quy trình thi công
+      const rowA = Number(a.appSheetId) || 999;
+      const rowB = Number(b.appSheetId) || 999;
+      return rowA - rowB;
     });
 
     if (validStages.length === 0) return [];
 
     // Tìm ngày bắt đầu thực tế, loại bỏ các giá trị lỗi (như 1970) để tránh kéo giãn trục X
     const startTimes = validStages
-      .map(s => s.ngayBatDau instanceof Date ? s.ngayBatDau.getTime() : 0)
-      .filter(t => t > 1000000000000 && !isNaN(t)); // Chỉ lấy các ngày sau năm 2000
+      .map(s => s.ngayBatDau instanceof Date ? s.ngayBatDau.getTime() : new Date(s.ngayBatDau).getTime())
+      .filter(t => t > 1577836800000 && !isNaN(t)); // Chỉ lấy các ngày từ năm 2020 trở đi
     
     if (startTimes.length === 0) return [];
     const minTime = Math.min(...startTimes);
-    const projectStartDate = new Date(minTime);
+    // Chuẩn hóa projectStartDate về 0h00 để tính khoảng cách chính xác
+    const dMin = new Date(minTime);
+    const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate());
 
     return validStages.map(stage => {
-      const dStart = stage.ngayBatDau instanceof Date ? stage.ngayBatDau : new Date(stage.ngayBatDau);
-      const dEnd = stage.ngayKetThuc instanceof Date ? stage.ngayKetThuc : new Date(stage.ngayKetThuc);
+      const dS = stage.ngayBatDau instanceof Date ? stage.ngayBatDau : new Date(stage.ngayBatDau);
+      const dE = stage.ngayKetThuc instanceof Date ? stage.ngayKetThuc : new Date(stage.ngayKetThuc);
       
-      const startDay = dayDiff(projectStartDate, dStart);
-      // Tính toán số ngày thực tế: (Ngày kết thúc - Ngày bắt đầu) + 1
-      const diff = dEnd.getTime() - dStart.getTime();
-      const duration = Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)) + 1);
+      const startDay = dayDiff(projectStartDate, dS);
+      const duration = dayDiff(dS, dE) + 1;
       
       const name = stage.name.replace(/^\d+\.\s*/, "");
 
@@ -63,7 +65,7 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       if (stage.status === 'Đang thi công') color = '#3b82f6';
       if (stage.status === 'Hoàn thành') color = '#16a34a';
 
-      const dateRange = `${dStart.toLocaleDateString('vi-VN')} - ${dEnd.toLocaleDateString('vi-VN')}`;
+      const dateRange = `${dS.toLocaleDateString('vi-VN')} - ${dE.toLocaleDateString('vi-VN')}`;
 
       return { id: stage.id, name, dateRange, startDay, duration, color, status: stage.status };
     });
