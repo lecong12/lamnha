@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiCamera, FiLoader, FiSave, FiX } from 'react-icons/fi';
+import { FiCamera, FiLoader, FiSave, FiX, FiTrash2 } from 'react-icons/fi';
 
 // Cấu hình Cloudinary
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
@@ -8,9 +8,19 @@ const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").rep
 function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
   const [uploadingStageId, setUploadingStageId] = useState(null);
   const [pendingFiles, setPendingFiles] = useState({});
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const handleUpdateStatus = async (stageId, newStatus) => {
     await onUpdateStage(stageId, { status: newStatus });
+  };
+
+  const handleDeleteImage = async (stage, index) => {
+    if (!window.confirm("Xóa ảnh này?")) return;
+    
+    const newImages = [...stage.anhNghiemThu];
+    newImages.splice(index, 1);
+    
+    await onUpdateStage(stage.id, { anhNghiemThu: newImages });
   };
 
   const handleFileSelect = (e, stageId) => {
@@ -38,7 +48,8 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
     });
   };
 
-  const handleConfirmUpload = async (stageId) => {
+  const handleConfirmUpload = async (stage) => {
+    const stageId = stage.id;
     const { file } = pendingFiles[stageId] || {};
     if (!file) return;
 
@@ -52,7 +63,6 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
       const data = new FormData();
       data.append("file", file);
       data.append("upload_preset", UPLOAD_PRESET);
-      // data.append("resource_type", "image"); // Mặc định là image, không cần gửi auto
       notify("Đang upload ảnh...", "info");
 
       const controller = new AbortController();
@@ -73,8 +83,11 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
       const fileData = text ? JSON.parse(text) : {};
 
       if (fileData.secure_url) {
-        // Cập nhật thuộc tính anhNghiemThu (Hàm updateStageInSheet sẽ tự map lại tên cột thực tế)
-        const result = await onUpdateStage(stageId, { anhNghiemThu: fileData.secure_url });
+        // Thêm ảnh mới vào danh sách hiện có (Tối đa 5 ảnh)
+        const currentImages = Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu : [];
+        const updatedImages = [...currentImages, fileData.secure_url].slice(-5);
+
+        const result = await onUpdateStage(stageId, { anhNghiemThu: updatedImages });
         if (result && result.success) {
           notify("Lưu thành công!", "success");
           handleCancelUpload(stageId);
@@ -112,56 +125,96 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
               <option value="Hoàn thành">Hoàn thành</option>
             </select>
             
-            <div className="stage-image-container" style={{ marginTop: '10px', position: 'relative' }}>
-              {pendingFiles[stage.id] ? (
-                <div style={{ position: 'relative' }}>
+            <div className="stage-images-grid" style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(3, 1fr)', 
+              gap: '8px', 
+              marginTop: '12px' 
+            }}>
+              {/* Danh sách ảnh đã lưu */}
+              {Array.isArray(stage.anhNghiemThu) && stage.anhNghiemThu.map((url, idx) => (
+                <div key={idx} style={{ position: 'relative', aspectRatio: '1/1' }}>
+                  <img 
+                    src={url} 
+                    alt={`Nghiệm thu ${idx}`} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} 
+                    onClick={() => setSelectedImage(url)}
+                  />
+                  <button 
+                    onClick={() => handleDeleteImage(stage, idx)}
+                    style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.8)', color: 'white', border: 'none', borderRadius: '4px', padding: '4px', cursor: 'pointer' }}
+                  >
+                    <FiTrash2 size={12} />
+                  </button>
+                </div>
+              ))}
+
+              {/* Ảnh đang chờ upload */}
+              {pendingFiles[stage.id] && (
+                <div style={{ position: 'relative', aspectRatio: '1/1', border: '2px solid #3b82f6', borderRadius: '6px', overflow: 'hidden' }}>
                   <img 
                     src={pendingFiles[stage.id].preview} 
                     alt="Preview" 
-                    style={{ width: '100%', borderRadius: '4px', objectFit: 'cover', maxHeight: '150px', display: 'block', border: '2px solid #3b82f6' }} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6, cursor: 'pointer' }} 
+                    onClick={() => setSelectedImage(pendingFiles[stage.id].preview)}
                   />
-                  <div style={{ position: 'absolute', bottom: 5, right: 5, display: 'flex', gap: '5px' }}>
-                    <button 
-                      onClick={() => handleConfirmUpload(stage.id)} 
-                      disabled={uploadingStageId === stage.id}
-                      style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
-                    >
-                      {uploadingStageId === stage.id ? <FiLoader className="spin" /> : <FiSave />} 
-                      Lưu
-                    </button>
-                    <button 
-                      onClick={() => handleCancelUpload(stage.id)}
-                      disabled={uploadingStageId === stage.id}
-                      style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
-                    >
-                      <FiX /> Hủy
-                    </button>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', background: 'rgba(0,0,0,0.2)' }}>
+                    {uploadingStageId === stage.id ? (
+                      <FiLoader className="spin" color="white" />
+                    ) : (
+                      <>
+                        <button onClick={() => handleConfirmUpload(stage)} style={{ background: '#16a34a', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', fontSize: '10px' }}><FiSave /> Lưu</button>
+                        <button onClick={() => handleCancelUpload(stage.id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', fontSize: '10px' }}><FiX /> Hủy</button>
+                      </>
+                    )}
                   </div>
                 </div>
-              ) : stage.anhNghiemThu ? (
-                <div style={{ position: 'relative' }}>
-                  <img 
-                    src={stage.anhNghiemThu} 
-                    alt="Ảnh nghiệm thu" 
-                    style={{ width: '100%', borderRadius: '4px', objectFit: 'cover', maxHeight: '150px', display: 'block' }} 
-                  />
-                  <label className="upload-btn-overlay" style={{ position: 'absolute', bottom: 5, right: 5, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <FiCamera /> 
-                    <span>Sửa</span>
-                    <input type="file" accept="image/*" hidden onChange={(e) => handleFileSelect(e, stage.id)} disabled={uploadingStageId === stage.id} />
-                  </label>
-                </div>
-              ) : (
-                <label className="upload-placeholder" style={{ border: '1px dashed #cbd5e1', borderRadius: '4px', padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b', fontSize: '13px' }}>
+              )}
+
+              {/* Nút thêm ảnh mới (chỉ hiện nếu chưa có file chờ và chưa quá 5 ảnh) */}
+              {!pendingFiles[stage.id] && (!stage.anhNghiemThu || stage.anhNghiemThu.length < 5) && (
+                <label style={{ 
+                  aspectRatio: '1/1', 
+                  border: '1px dashed #cbd5e1', 
+                  borderRadius: '6px', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  cursor: 'pointer',
+                  color: '#64748b',
+                  fontSize: '11px'
+                }}>
                   <FiCamera size={20} />
-                  <span style={{ marginTop: '5px' }}>Thêm ảnh nghiệm thu</span>
+                  <span style={{ marginTop: '4px' }}>Thêm ảnh</span>
                   <input type="file" accept="image/*" hidden onChange={(e) => handleFileSelect(e, stage.id)} disabled={uploadingStageId === stage.id} />
                 </label>
               )}
             </div>
+
+            {/* Hiển thị số lượng */}
+            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '8px', textAlign: 'right' }}>
+              Dung lượng: {Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu.length : 0}/5 ảnh
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Lightbox hiển thị ảnh phóng to */}
+      {selectedImage && (
+        <div 
+          style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} 
+          onClick={() => setSelectedImage(null)}
+        >
+          <button 
+            style={{ position: 'absolute', top: '20px', right: '20px', background: 'var(--accent-color, #2d8e2b)', color: '#fff', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+            onClick={() => setSelectedImage(null)}
+          >
+            <FiX size={24} />
+          </button>
+          <img src={selectedImage} alt="Phóng to" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+        </div>
+      )}
     </div>
   );
 }

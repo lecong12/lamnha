@@ -147,7 +147,10 @@ export const fetchStages = async (appId) => {
         status: row[statusKey] || row.status || "Chưa bắt đầu",
         ngayBatDau: parseDate(row[startKey] || row.ngayBatDau), // Tự động parse ngày
         ngayKetThuc: parseDate(row[endKey] || row.ngayKetThuc),
-        anhNghiemThu: row[finalImgKey] || "", // Map đúng cột ảnh
+        // Chuyển chuỗi URL (ngăn cách bởi dấu phẩy) thành mảng
+        anhNghiemThu: typeof row[finalImgKey] === 'string' 
+          ? row[finalImgKey].split(',').map(url => url.trim()).filter(Boolean)
+          : (row[finalImgKey] ? [row[finalImgKey]] : []),
         // Add other fields from AppSheet if needed, e.g., 'status'
       };
     })
@@ -185,7 +188,10 @@ export const updateStageInSheet = async (stage, appId) => {
       "_RowNumber": stage.appSheetId, // Gửi kèm RowNumber để hỗ trợ tìm kiếm
       [keyColumnName]: String(stage.keyId), // Dùng đúng tên cột Key tìm được (id, ID, TT...)
       [statusColumnName]: stage.status,
-      [imgColumnName]: stage.anhNghiemThu || "", // Dùng đúng tên cột Ảnh tìm được
+      // Chuyển mảng ảnh thành chuỗi ngăn cách bởi dấu phẩy để lưu vào Sheet
+      [imgColumnName]: Array.isArray(stage.anhNghiemThu) 
+        ? stage.anhNghiemThu.join(',') 
+        : (stage.anhNghiemThu || ""),
     }];
 
     // Log dữ liệu gửi đi để kiểm tra xem có link ảnh chưa
