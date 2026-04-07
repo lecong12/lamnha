@@ -12,7 +12,7 @@ const normalizeKey = (str) => {
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
-    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s === 'key' || s.startsWith('id')) return 'id';
+    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s === 'key' || s.startsWith('id') || s.includes('mã')) return 'id';
     if (s.includes('ngay bat dau')) return 'ngayBatDau';
     if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
     if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
@@ -273,7 +273,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     if (!response.ok) {
       throw new Error(responseText || `Lỗi HTTP ${response.status}`);
     }
-
+    console.log(`[sheetsAPI] Phản hồi từ AppSheet (Add):`, responseText);
     let result = null;
     if (responseText && responseText.trim()) {
       try {

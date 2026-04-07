@@ -58,19 +58,19 @@ function QuickNotes({ showToast }) {
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     
-    // Tính toán ID mới: Lấy số lớn nhất từ các ID hiện tại và cộng thêm 1
-    const numericIds = notes.map(n => {
-      const val = String(n.id).replace(/\D/g, "");
-      return parseInt(val) || 0;
-    });
-    const nextId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
+    // Tạo ID mới: Sử dụng timestamp để đảm bảo ID là duy nhất và dạng chuỗi
+    // Điều này phù hợp hơn với cách AppSheet thường tạo ID mặc định (UNIQUEID())
+    const nextId = `GC_${Date.now()}`; 
 
     // 1. Cấu trúc dữ liệu gửi lên API (Gửi đa dạng tên cột để đảm bảo trúng đích)
     const apiPayload = { 
       id: nextId, 
       ngay: dateStr, 
       noiDung: newNote.trim(),
-      "Ghi chú": newNote.trim() // Thêm fallback cho tên cột "Ghi chú"
+      "Ghi chú": newNote.trim(), // Fallback cho tên cột "Ghi chú"
+      "Nội dung": newNote.trim(), // Fallback cho tên cột "Nội dung"
+      "Ngày": dateStr, // Fallback cho tên cột "Ngày"
+      "Mã ghi chú": nextId // Fallback cho tên cột ID
     };
 
     try {
