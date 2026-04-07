@@ -120,7 +120,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-US", // Ép AppSheet gửi định dạng ISO YYYY-MM-DD
+          Locale: "vi-VN", // Thống nhất dùng vi-VN để đồng bộ với định dạng Google Sheet (DD/MM/YYYY)
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -261,7 +261,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "en-US", 
+          Locale: "vi-VN", 
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -358,7 +358,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "en-US",
+          Locale: "vi-VN",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
