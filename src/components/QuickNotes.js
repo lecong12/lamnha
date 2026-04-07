@@ -66,10 +66,9 @@ function QuickNotes({ showToast }) {
       id: nextId, 
       ngay: dateStr, 
       noiDung: newNote.trim(),
-      "Ghi chú": newNote.trim(), // Fallback cho tên cột "Ghi chú"
+      "Ghi chú": newNote.trim(), 
       "Nội dung": newNote.trim(), // Fallback cho tên cột "Nội dung"
-      "Ngày": dateStr, // Fallback cho tên cột "Ngày"
-      "Mã ghi chú": nextId // Fallback cho tên cột ID
+      "Ngày": dateStr
     };
 
     try {

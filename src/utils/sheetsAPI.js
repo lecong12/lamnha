@@ -1,5 +1,5 @@
 // AppSheet API Configuration
-import { parseDate } from './stagesAPI';
+import { toInputString } from './dateUtils';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
@@ -92,13 +92,7 @@ const getCleanLink = (rawLink) => {
 
 // Helper function for formatting date to DD/MM/YYYY for AppSheet
 const formatAppSheetDate = (date) => {
-  const d = date instanceof Date ? date : parseDate(date);
-  if (!d || isNaN(d.getTime())) return "";
-  // Gửi lên API bằng YYYY-MM-DD để tránh mọi lỗi đảo ngược ngày/tháng
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return toInputString(date);
 };
 
 
