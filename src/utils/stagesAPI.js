@@ -3,40 +3,6 @@ const STAGES_TABLE_NAME = process.env.REACT_APP_APPSHEET_TABLE_TIENDO || "TienDo
 
 const getApiUrl = (appId) => `https://www.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(STAGES_TABLE_NAME)}/Action`;
 
-// Helper: Xử lý ngày tháng an toàn (Hỗ trợ cả dd/mm/yyyy của VN)
-export const parseDate = (value) => {
-  if (!value) return null;
-  if (value instanceof Date) return value;
-  
-  if (typeof value === 'string') {
-    // Làm sạch chuỗi: lấy phần ngày, loại bỏ giờ và ký tự rác
-    const cleanValue = value.trim().split(/[ T]/)[0].replace(/\\/g, "").replace(/"/g, "");
-    if (!cleanValue) return null;
-
-    // 1. Ưu tiên định dạng Quốc tế YYYY-MM-DD (ISO) - Đây là chuẩn an toàn nhất từ API
-    let isoParts = cleanValue.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
-    if (isoParts) {
-      const y = parseInt(isoParts[1], 10);
-      const m = parseInt(isoParts[2], 10);
-      const d = parseInt(isoParts[3], 10);
-      return new Date(y, m - 1, d, 0, 0, 0);
-    }
-
-    // 2. Định dạng Việt Nam DD/MM/YYYY (Dùng khi nhập liệu thủ công)
-    let vnParts = cleanValue.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
-    if (vnParts) {
-      const d = parseInt(vnParts[1], 10);
-      const m = parseInt(vnParts[2], 10);
-      const y = parseInt(vnParts[3], 10);
-      if (m >= 1 && m <= 12) {
-        return new Date(y, m - 1, d, 0, 0, 0);
-      }
-    }
-    return null;
-  }
-  return null;
-};
-
 // Alias để đảm bảo các file cũ import 'parseDate' không bị lỗi build
 export { toSafeDate as parseDate };
 
