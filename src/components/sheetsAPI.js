@@ -1,5 +1,5 @@
 // AppSheet API Configuration
-import { parseDate } from './stagesAPI';
+import { toInputString } from './dateUtils';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
@@ -12,7 +12,7 @@ const normalizeKey = (str) => {
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
-    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s === 'key' || s.startsWith('id') || s.includes('mã')) return 'id';
+    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s === 'key' || s.startsWith('id')) return 'id';
     if (s.includes('ngay bat dau')) return 'ngayBatDau';
     if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
     if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
@@ -92,13 +92,7 @@ const getCleanLink = (rawLink) => {
 
 // Helper function for formatting date to DD/MM/YYYY for AppSheet
 const formatAppSheetDate = (date) => {
-  const d = date instanceof Date ? date : parseDate(date);
-  if (!d || isNaN(d.getTime())) return "";
-  // Gửi lên API bằng YYYY-MM-DD để tránh mọi lỗi đảo ngược ngày/tháng
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return toInputString(date);
 };
 
 
@@ -273,7 +267,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     if (!response.ok) {
       throw new Error(responseText || `Lỗi HTTP ${response.status}`);
     }
-    console.log(`[sheetsAPI] Phản hồi từ AppSheet (Add):`, responseText);
+
     let result = null;
     if (responseText && responseText.trim()) {
       try {

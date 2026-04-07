@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { parseDate } from '../utils/stagesAPI';
+import { toSafeDate, toDisplayString } from '../utils/dateUtils';
 
 const dayDiff = (date1, date2) => {
   if (!date1 || !date2) return 0;
-  const d1 = parseDate(date1);
-  const d2 = parseDate(date2);
+  const d1 = toSafeDate(date1);
+  const d2 = toSafeDate(date2);
   if (!d1 || !d2) return 0;
 
   // So sánh dựa trên mốc UTC để đảm bảo khoảng cách ngày luôn là số nguyên, không lệch múi giờ
@@ -15,11 +15,7 @@ const dayDiff = (date1, date2) => {
 };
 
 const formatDateVN = (date) => {
-  if (!date || !(date instanceof Date)) return "";
-  const d = String(date.getDate()).padStart(2, '0');
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const y = date.getFullYear();
-  return `${d}/${m}/${y}`;
+  return toDisplayString(date);
 };
 
 const GanttTooltip = ({ active, payload }) => {

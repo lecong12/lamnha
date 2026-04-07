@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiTrash2, FiExternalLink, FiFileText, FiLoader } from 'react-icons/fi';
 import { fetchTableData, addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
-import { parseDate } from '../utils/stagesAPI';
+import { toSafeDate, toDisplayString, getTodayInputString } from '../utils/dateUtils';
 import './QuickNotes.css';
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
@@ -29,8 +29,8 @@ function QuickNotes({ showToast }) {
 
         // Sắp xếp: Ưu tiên ngày mới nhất, nếu cùng ngày thì dựa vào ID (timestamp) mới nhất
         const sorted = mappedNotes.sort((a, b) => {
-          const dateA = parseDate(a.ngay) || new Date(0);
-          const dateB = parseDate(b.ngay) || new Date(0);
+          const dateA = toSafeDate(a.ngay) || new Date(0);
+          const dateB = toSafeDate(b.ngay) || new Date(0);
           if (dateB - dateA !== 0) {
             return dateB - dateA; // Sắp xếp theo ngày giảm dần
           }
@@ -55,8 +55,7 @@ function QuickNotes({ showToast }) {
     if (!newNote.trim()) return;
     
     setAdding(true);
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
+    const dateStr = getTodayInputString();
     
     // Tạo ID mới: Sử dụng timestamp để đảm bảo ID là duy nhất và dạng chuỗi
     // Điều này phù hợp hơn với cách AppSheet thường tạo ID mặc định (UNIQUEID())
@@ -116,13 +115,7 @@ function QuickNotes({ showToast }) {
 
   // Helper hiển thị ngày
   const displayDate = (dateVal) => {
-    if (!dateVal) return "";
-    const d = parseDate(dateVal);
-    if (!d) return dateVal;
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
+    return toDisplayString(dateVal);
   };
 
   return (

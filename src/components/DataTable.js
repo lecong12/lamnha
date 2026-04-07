@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { toDisplayString } from "../utils/dateUtils";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -20,11 +21,7 @@ const formatCurrency = (value) => {
 };
 
 const formatDate = (date) => {
-  if (!date || !(date instanceof Date)) return "-";
-  const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const yyyy = date.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  return toDisplayString(date);
 };
 
 const formatStageName = (name) => {
