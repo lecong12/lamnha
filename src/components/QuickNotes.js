@@ -114,7 +114,7 @@ function QuickNotes({ showToast }) {
 
   // Helper hiển thị ngày
   const displayDate = (dateVal) => {
-    return toDisplayString(dateVal);
+    return toDisplayString(dateVal); // Đảm bảo gọi đúng hàm từ dateUtils
   };
 
   return (

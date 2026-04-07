@@ -37,6 +37,9 @@ export const parseDate = (value) => {
   return null;
 };
 
+// Alias để đảm bảo các file cũ import 'parseDate' không bị lỗi build
+export { toSafeDate as parseDate };
+
 /**
  * Lấy danh sách các giai đoạn từ bảng data_tien_do
  */
