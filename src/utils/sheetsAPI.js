@@ -90,12 +90,6 @@ const getCleanLink = (rawLink) => {
   return current;
 };
 
-// Helper function for formatting date to DD/MM/YYYY for AppSheet
-const formatAppSheetDate = (date) => {
-  return toInputString(date);
-};
-
-
 // Sử dụng endpoint chuẩn của AppSheet, có thể thay đổi tên bảng linh hoạt
 const getApiUrl = (appId, tableName) => 
   `https://www.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(tableName)}/Action`;
@@ -114,7 +108,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "vi-VN", // Thống nhất dùng vi-VN để đồng bộ với định dạng Google Sheet (DD/MM/YYYY)
+          Locale: "en-US", // Dùng en-US để API trao đổi ngày tháng dạng ISO YYYY-MM-DD
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -205,7 +199,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    const formattedDate = formatAppSheetDate(payload.ngay);
+    const formattedDate = toInputString(payload.ngay);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });
@@ -255,7 +249,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "vi-VN", 
+          Locale: "en-US", 
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -352,7 +346,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-US",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],

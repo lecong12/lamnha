@@ -9,16 +9,16 @@ export const toSafeDate = (value) => {
   // Làm sạch chuỗi: lấy phần ngày, loại bỏ giờ và ký tự rác
   let str = String(value).trim().split(/[ T]/)[0].replace(/\\/g, "").replace(/"/g, "");
   
-  // 1. Định dạng VN: DD/MM/YYYY
-  const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
-  if (vnMatch) {
-    return new Date(parseInt(vnMatch[3], 10), parseInt(vnMatch[2], 10) - 1, parseInt(vnMatch[1], 10), 0, 0, 0);
-  }
-
-  // 2. Định dạng ISO: YYYY-MM-DD
+  // 1. Ưu tiên định dạng ISO: YYYY-MM-DD (Chuẩn an toàn nhất)
   const isoMatch = str.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
   if (isoMatch) {
     return new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10), 0, 0, 0);
+  }
+
+  // 2. Định dạng VN: DD/MM/YYYY
+  const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
+  if (vnMatch) {
+    return new Date(parseInt(vnMatch[3], 10), parseInt(vnMatch[2], 10) - 1, parseInt(vnMatch[1], 10), 0, 0, 0);
   }
 
   const fallback = new Date(str);
