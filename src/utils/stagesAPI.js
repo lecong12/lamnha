@@ -4,7 +4,7 @@ const STAGES_TABLE_NAME = process.env.REACT_APP_APPSHEET_TABLE_TIENDO || "TienDo
 const getApiUrl = (appId) => `https://www.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(STAGES_TABLE_NAME)}/Action`;
 
 // Alias để đảm bảo các file cũ import 'parseDate' không bị lỗi build
-export { toSafeDate as parseDate };
+export { toSafeDate as parseDate, toSafeDate };
 
 /**
  * Lấy danh sách các giai đoạn từ bảng data_tien_do
