@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiSave, FiCamera, FiImage, FiLoader, FiFileText } from "react-icons/fi";
 import { extractInfoWithAI } from "../utils/aiService";
-import { toInputString, toSafeDate } from "../utils/dateUtils";
+import { toInputString } from "../utils/dateUtils";
 import "./EditModal.css";
 
 // Danh sách hạng mục ngân sách
