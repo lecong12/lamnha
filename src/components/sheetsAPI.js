@@ -90,6 +90,18 @@ const getCleanLink = (rawLink) => {
   return current;
 };
 
+// Helper function for formatting date to DD/MM/YYYY for AppSheet
+const formatAppSheetDate = (date) => {
+  const d = date instanceof Date ? date : parseDate(date);
+  if (!d || isNaN(d.getTime())) return "";
+  // Gửi lên API bằng YYYY-MM-DD để tránh mọi lỗi đảo ngược ngày/tháng
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+
 // Sử dụng endpoint chuẩn của AppSheet, có thể thay đổi tên bảng linh hoạt
 const getApiUrl = (appId, tableName) => 
   `https://www.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(tableName)}/Action`;
@@ -108,7 +120,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "vi-VN", // Thống nhất dùng vi-VN để đồng bộ toàn hệ thống
+          Locale: "en-US", // Ép AppSheet gửi định dạng ISO YYYY-MM-DD
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -199,23 +211,13 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Gửi định dạng DD/MM/YYYY để khớp với Locale vi-VN của AppSheet
-    const formatDate = (date) => {
-      const d = parseDate(date);
-      if (!d) return "";
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${dd}/${mm}/${yyyy}`;
-    };
-
-    const formattedDate = formatDate(payload.ngay);
+    const formattedDate = formatAppSheetDate(payload.ngay);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });
 
     if (targetTable === "ghichu") {
-        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
+        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'Ghi chú', 'noiDung']).forEach(colName => {
             formattedPayload[colName] = payload.noiDung;
         });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
@@ -259,7 +261,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "vi-VN", 
+          Locale: "en-US", 
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -305,23 +307,13 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    // Gửi định dạng DD/MM/YYYY để khớp với Locale vi-VN của AppSheet
-    const formatDate = (date) => {
-      const d = parseDate(date);
-      if (!d) return "";
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${dd}/${mm}/${yyyy}`;
-    };
-
-    const formattedDate = formatDate(payload.ngay);
+    const formattedDate = formatAppSheetDate(payload.ngay);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });
 
     if (targetTable === "ghichu") {
-        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung']).forEach(colName => {
+        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'Ghi chú', 'noiDung']).forEach(colName => {
             formattedPayload[colName] = payload.noiDung;
         });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
@@ -366,7 +358,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-US",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],

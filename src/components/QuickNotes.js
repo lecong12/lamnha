@@ -66,8 +66,12 @@ function QuickNotes({ showToast }) {
     const nextId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
 
     // 1. Cấu trúc dữ liệu gửi lên API (Gửi đa dạng tên cột để đảm bảo trúng đích)
-    const apiPayload = {
-      id: nextId, ngay: dateStr, noiDung: newNote.trim() };
+    const apiPayload = { 
+      id: nextId, 
+      ngay: dateStr, 
+      noiDung: newNote.trim(),
+      "Ghi chú": newNote.trim() // Thêm fallback cho tên cột "Ghi chú"
+    };
 
     try {
         const res = await addRowToSheet("GhiChu", apiPayload, APP_ID);
