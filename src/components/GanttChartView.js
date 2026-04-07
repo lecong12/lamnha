@@ -43,7 +43,7 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     // BƯỚC 2: Tìm ngày bắt đầu dự án (Chỉ lấy các ngày hợp lệ trong khoảng 2020-2030)
     const startTimes = sortedStages
-      .map(s => parseDate(s.ngayBatDau)?.getTime())
+      .map(s => toSafeDate(s.ngayBatDau)?.getTime())
       .filter(t => t && t > 1577836800000 && t < 1893456000000); 
     
     // Nếu không có ngày nào hợp lệ, dùng ngày hiện tại làm mốc
@@ -54,8 +54,8 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     // BƯỚC 3: Map TOÀN BỘ 33 hạng mục (Không lọc bỏ)
     return sortedStages.map(stage => {
-      const dS = parseDate(stage.ngayBatDau || stage["Ngày bắt đầu"]);
-      const dE = parseDate(stage.ngayKetThuc || stage["Ngày kết thúc"]);
+      const dS = toSafeDate(stage.ngayBatDau || stage["Ngày bắt đầu"]);
+      const dE = toSafeDate(stage.ngayKetThuc || stage["Ngày kết thúc"]);
       
       const hasValidDates = dS && dE && !isNaN(dS.getTime()) && !isNaN(dE.getTime());
       const startDay = hasValidDates ? Math.max(0, dayDiff(projectStartDate, dS)) : 0;

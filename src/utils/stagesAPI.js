@@ -144,8 +144,8 @@ export const fetchStages = async (appId) => {
         statusColumn: statusKey, // Lưu lại tên cột Trạng thái để dùng lúc Update
         name: row[nameKey] || row.name || row["Tên công việc"] || row["Hạng mục"] || `Giai đoạn ${index + 1}`, // Fallback nếu không tìm thấy tên
         status: row[statusKey] || row.status || "Chưa bắt đầu",
-        ngayBatDau: parseDate(row[startKey] || row.ngayBatDau), // Tự động parse ngày
-        ngayKetThuc: parseDate(row[endKey] || row.ngayKetThuc),
+        ngayBatDau: toSafeDate(row[startKey] || row.ngayBatDau), 
+        ngayKetThuc: toSafeDate(row[endKey] || row.ngayKetThuc),
         // Chuyển chuỗi URL (ngăn cách bởi dấu phẩy) thành mảng
         anhNghiemThu: typeof row[finalImgKey] === 'string' 
           ? row[finalImgKey].split(',').map(url => url.trim()).filter(Boolean)

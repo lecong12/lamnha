@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchStages, updateStageInSheet, parseDate } from "./stagesAPI";
+import { fetchStages, updateStageInSheet } from "./stagesAPI";
 import { fetchTableData, updateRowInSheet, addRowToSheet, fetchFileData } from "./sheetsAPI";
+import { toSafeDate } from "./dateUtils";
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
 const ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
@@ -75,7 +76,7 @@ export const useAppData = (isLoggedIn) => {
                     id: row._RowNumber || c.id || `gd_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: c.id || row.id || row.ID || row._RowNumber,
-                    ngay: parseDate(c.ngay) || new Date(),
+                    ngay: toSafeDate(c.ngay) || new Date(),
                     loaiThuChi: c.loaiThuChi || "Chi",
                     noiDung: c.noiDung || "",
                     doiTuongThuChi: c.doiTuongThuChi || "",
@@ -115,8 +116,9 @@ export const useAppData = (isLoggedIn) => {
                     keyId: row.id || row.keyId || row._RowNumber,
                     name: row.name || row.ten || row.noiDung || row["Tên hợp đồng"] || row["Tên Hợp đồng"] || `Hợp đồng ${index + 1}`,
                     url: row.url || "",
+                    // QUAN TRỌNG: Chuyển Date về String để tránh trắng màn hình React
                     date: (() => {
-                        const d = parseDate(row.date || row.ngay);
+                        const d = toSafeDate(row.date || row.ngay);
                         return d ? d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : (row.date || row.ngay || "");
                     })(),
                     size: Number(row.size || 0),
@@ -135,7 +137,7 @@ export const useAppData = (isLoggedIn) => {
                     name: row.name || row.ten || row.noiDung || row["Tên bản vẽ"] || row["Tên Bản vẽ"] || `Bản vẽ ${index + 1}`,
                     url: row.url || "",
                     date: (() => {
-                        const d = parseDate(row.date || row.ngay);
+                        const d = toSafeDate(row.date || row.ngay);
                         return d ? d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : (row.date || row.ngay || "");
                     })(),
                     size: Number(row.size || 0),
