@@ -1,6 +1,20 @@
 // AppSheet API Configuration
 import { toInputString } from './dateUtils';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
+
+// Helper để chuẩn hóa ID: loại bỏ tiền tố (GC_, GD_) và chuyển thành số nếu có thể
+const formatRowId = (id) => {
+  if (id === null || id === undefined) return id;
+  if (typeof id === 'string') {
+    // Nếu chuỗi có định dạng PREFIX_12345 hoặc chỉ là số
+    const parts = id.split('_');
+    const possibleNum = parts.length > 1 ? parts[1] : parts[0];
+    if (!isNaN(possibleNum) && possibleNum.trim() !== "") {
+      return Number(possibleNum);
+    }
+  }
+  return id;
+};
 const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
 const normalizeKey = (str) => {
@@ -27,19 +41,6 @@ const normalizeKey = (str) => {
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     // Nhận diện tên hạng mục, bản vẽ, hợp đồng
     if (s.includes('ten') || s.includes('name') || s.includes('giai doan') || s.includes('hop dong') || s.includes('ban ve')) return 'name';
-    if (s.includes('dung luong') || s.includes('size')) return 'size';
-    
-    return s.replace(/\s+/g, '');
-};
-
-// Biến lưu trữ mapping tên cột thực tế từ AppSheet
-const columnMapping = {
-  [TABLE_GIAODICH_ENV]: {},
-  "GhiChu": {},
-  "BanVe": {},
-  "HopDong": {}
-};
-
 // Helper để lấy tên cột AppSheet thực tế hoặc danh sách fallback
 const getAppSheetColumnNames = (tableName, normalizedKey, defaultNames) => {
     const mapping = columnMapping[tableName] || {};
@@ -196,7 +197,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     }
 
     const finalKey = payload.keyId !== undefined ? payload.keyId : payload.id;
-    getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
+    getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
 
@@ -289,14 +290,14 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const targetTable = String(tableName).trim().toLowerCase();
     // Bắt đầu với một object sạch để tránh xung đột các phiên bản key (id vs ID)
     let formattedPayload = {};
-
+    
     // 1. Map ID/Key
-    const finalKey = payload.id !== undefined ? payload.id : payload.keyId;
+    const finalKey = formatRowId(payload.id !== undefined ? payload.id : payload.keyId); // Áp dụng formatRowId
     // Thêm các fallback phổ biến cho cột khóa
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
-
+    
     // 2. Map Ngày (luôn ép về YYYY-MM-DD để gửi API)
     const formattedDate = toInputString(payload.ngay || payload["Ngày"]);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
@@ -330,11 +331,11 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       });
     }
     
-    // Merge thông minh: Chỉ lấy các giá trị từ payload nếu formattedPayload chưa có
-    // Điều này tránh việc gửi cả "id" và "ID" cùng lúc gây xung đột key
+    // Merge các trường còn lại từ payload gốc nếu chúng chưa được định nghĩa trong formattedPayload
+    // Điều này giúp bảo toàn các cột tùy chỉnh mà không gây xung đột với các cột đã map
     Object.keys(payload).forEach(key => {
-        if (formattedPayload[key] === undefined) {
-            formattedPayload[key] = payload[key];
+        if (formattedPayload[key] === undefined && key !== 'id' && key !== 'keyId' && key !== 'ngay' && key !== 'noiDung' && key !== 'soTien' && key !== 'doiTuongThuChi' && key !== 'hinhAnh' && key !== 'nguoiCapNhat') {
+            formattedPayload[key] = payload[key]; // Chỉ thêm nếu chưa có và không phải là các key đã được xử lý
         }
     });
 
@@ -398,7 +399,7 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
   try {
     // Lấy tên cột khóa thực tế từ mapping đã lưu lúc Fetch
     const mapping = columnMapping[tableName] || {};
-    const keyCol = mapping['id'] || getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT'])[0]; // Lấy tên cột Key (ID/id/TT/STT...)
+    const keyCol = mapping['id'] || getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma'])[0]; // Lấy tên cột Key (ID/id/TT/STT...)
 
     const deleteRow = { [keyCol]: String(payloadId) };
 
