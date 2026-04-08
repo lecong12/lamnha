@@ -57,10 +57,6 @@ function QuickNotes({ showToast }) {
     setAdding(true);
     const dateStr = getTodayInputString();
     
-    // Tạo ID mới: Sử dụng timestamp để đảm bảo ID là duy nhất và dạng chuỗi
-    // Điều này phù hợp hơn với cách AppSheet thường tạo ID mặc định (UNIQUEID())
-    const nextId = `GC_${Date.now()}`; 
-
     // 1. Cấu trúc dữ liệu gửi lên API (Gửi đa dạng tên cột để đảm bảo trúng đích)
     const apiPayload = { 
       ngay: dateStr, 
