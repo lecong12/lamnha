@@ -188,7 +188,8 @@ export const fetchFileData = async (tableName, appId) => {
 export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
     const targetTable = String(tableName).trim().toLowerCase();
-    let formattedPayload = {};
+    // Khởi tạo bằng toàn bộ payload gốc để đảm bảo không mất các cột đặc thù của bảng
+    let formattedPayload = { ...payload };
     
     if (payload.appSheetId) {
         formattedPayload["_RowNumber"] = payload.appSheetId;
@@ -228,8 +229,6 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(colName => {
           formattedPayload[colName] = payload.nguoiCapNhat;
       });
-    } else {
-      formattedPayload = { ...formattedPayload, ...payload };
     }
 
     Object.keys(formattedPayload).forEach(key => 
@@ -288,7 +287,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
     const targetTable = String(tableName).trim().toLowerCase();
-    let formattedPayload = {};
+    // Khởi tạo bằng toàn bộ payload gốc
+    let formattedPayload = { ...payload };
 
     const finalKey = payload.id !== undefined ? payload.id : payload.keyId;
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
@@ -323,8 +323,6 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(colName => {
           formattedPayload[colName] = payload.nguoiCapNhat;
       });
-    } else {
-      formattedPayload = { ...formattedPayload, ...payload };
     }
 
     console.log(`[sheetsAPI] Payload gửi lên ${tableName}:`, formattedPayload);
@@ -400,7 +398,7 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
       },
       body: JSON.stringify({
         Action: "Delete",
-        Properties: { Locale: "vi-VN" },
+        Properties: { Locale: "en-US" }, // Thống nhất dùng en-US
         Rows: [deleteRow], 
       }),
     });
