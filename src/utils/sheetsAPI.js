@@ -248,7 +248,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "en-US", 
+          Locale: "en-US", // Thống nhất dùng en-US để truyền tải ngày ISO YYYY-MM-DD
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -287,23 +287,27 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
     const targetTable = String(tableName).trim().toLowerCase();
-    // Khởi tạo bằng toàn bộ payload gốc
-    let formattedPayload = { ...payload };
+    // Bắt đầu với một object sạch để tránh xung đột các phiên bản key (id vs ID)
+    let formattedPayload = {};
 
+    // 1. Map ID/Key
     const finalKey = payload.id !== undefined ? payload.id : payload.keyId;
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
 
-    const formattedDate = toInputString(payload.ngay);
+    // 2. Map Ngày (luôn ép về YYYY-MM-DD để gửi API)
+    const formattedDate = toInputString(payload.ngay || payload["Ngày"]);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });
 
+    // 3. Map Nội dung/Dữ liệu đặc thù
     if (targetTable === "ghichu") {
-        getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'Ghi chú', 'noiDung']).forEach(colName => {
-            formattedPayload[colName] = payload.noiDung;
-        });
+      const noiDungValue = payload.noiDung || payload["Nội dung"] || payload["Ghi chú"] || "";
+      getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'Ghi chú', 'noiDung']).forEach(colName => {
+          formattedPayload[colName] = noiDungValue;
+      });
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : (payload["Số tiền"] || 0);
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
@@ -324,6 +328,9 @@ export const addRowToSheet = async (tableName, payload, appId) => {
           formattedPayload[colName] = payload.nguoiCapNhat;
       });
     }
+
+    // Merge các trường còn lại từ payload (giữ lại các cột tùy chỉnh khác)
+    formattedPayload = { ...payload, ...formattedPayload };
 
     console.log(`[sheetsAPI] Payload gửi lên ${tableName}:`, formattedPayload);
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchStages, updateStageInSheet } from "./stagesAPI";
 import { fetchTableData, updateRowInSheet, addRowToSheet, fetchFileData } from "./sheetsAPI";
-import { toSafeDate } from "./dateUtils";
+import { toSafeDate, toDisplayString } from "./dateUtils";
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
 const ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
@@ -72,11 +72,13 @@ export const useAppData = (isLoggedIn) => {
             const cleanGD = resGD.map((row, index) => {
                 const c = {};
                 Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
+                const d = toSafeDate(c.ngay) || new Date();
                 return {
                     id: row._RowNumber || c.id || `gd_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: c.id || row.id || row.ID || row._RowNumber,
-                    ngay: toSafeDate(c.ngay) || new Date(),
+                    ngay: d, // Đối tượng Date để sắp xếp
+                    date: toDisplayString(d), // Chuỗi định dạng VN (DD/MM/YYYY) để hiển thị
                     loaiThuChi: c.loaiThuChi || "Chi",
                     noiDung: c.noiDung || "",
                     doiTuongThuChi: c.doiTuongThuChi || "",
