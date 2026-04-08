@@ -292,7 +292,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
 
     // 1. Map ID/Key
     const finalKey = payload.id !== undefined ? payload.id : payload.keyId;
-    getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT']).forEach(colName => {
+    // Thêm các fallback phổ biến cho cột khóa
+    getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
 
@@ -328,15 +329,21 @@ export const addRowToSheet = async (tableName, payload, appId) => {
           formattedPayload[colName] = payload.nguoiCapNhat;
       });
     }
+    
+    // Merge thông minh: Chỉ lấy các giá trị từ payload nếu formattedPayload chưa có
+    // Điều này tránh việc gửi cả "id" và "ID" cùng lúc gây xung đột key
+    Object.keys(payload).forEach(key => {
+        if (formattedPayload[key] === undefined) {
+            formattedPayload[key] = payload[key];
+        }
+    });
 
-    // Merge các trường còn lại từ payload (giữ lại các cột tùy chỉnh khác)
-    formattedPayload = { ...payload, ...formattedPayload };
-
-    console.log(`[sheetsAPI] Payload gửi lên ${tableName}:`, formattedPayload);
-
-    Object.keys(formattedPayload).forEach(key => 
-      (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') && delete formattedPayload[key]
-    );
+    // Làm sạch dữ liệu rác
+    Object.keys(formattedPayload).forEach(key => {
+      if (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') {
+        delete formattedPayload[key];
+      }
+    });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
