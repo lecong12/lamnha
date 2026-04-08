@@ -41,6 +41,16 @@ const normalizeKey = (str) => {
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     // Nhận diện tên hạng mục, bản vẽ, hợp đồng
     if (s.includes('ten') || s.includes('name') || s.includes('giai doan') || s.includes('hop dong') || s.includes('ban ve')) return 'name';
+    
+    return s.replace(/\s+/g, '');
+};
+
+// Biến lưu trữ mapping tên cột thực tế từ AppSheet
+const columnMapping = {
+  "GhiChu": {},
+  "GiaoDich": {}
+};
+
 // Helper để lấy tên cột AppSheet thực tế hoặc danh sách fallback
 const getAppSheetColumnNames = (tableName, normalizedKey, defaultNames) => {
     const mapping = columnMapping[tableName] || {};
