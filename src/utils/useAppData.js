@@ -72,7 +72,7 @@ export const useAppData = (isLoggedIn) => {
             const cleanGD = resGD.map((row, index) => {
                 const c = {};
                 Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
-                const d = toSafeDate(c.ngay) || new Date();
+                const d = toSafeDate(c.ngay || row["Ngày"]) || new Date();
                 return {
                     id: row._RowNumber || c.id || `gd_${index}`,
                     appSheetId: row._RowNumber,

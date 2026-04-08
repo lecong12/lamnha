@@ -119,7 +119,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-US", // Dùng en-US để API trao đổi ngày tháng dạng ISO YYYY-MM-DD
+          Locale: "en-GB", // Dùng en-GB để nhận ngày dạng DD/MM/YYYY, tránh nhầm lẫn tháng/ngày
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -298,18 +298,14 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
     const targetTable = String(tableName).trim().toLowerCase();
-    // Bắt đầu với một object sạch để tránh xung đột các phiên bản key (id vs ID)
     let formattedPayload = {};
     
-    // 1. Map ID/Key
-    // Luôn gửi ID nếu có. Nếu bạn muốn AppSheet tự tạo, hãy để trống Initial Value trong AppSheet.
-    // Việc gửi ID từ Client giúp tránh lỗi "Key column is required".
-    const clientProvidedId = payload.id !== undefined ? payload.id : payload.keyId;
-    if (clientProvidedId) {
-      getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma']).forEach(colName => {
-          formattedPayload[colName] = formatRowId(clientProvidedId);
-      });
-    }
+    // 1. Map ID/Key (Bắt buộc phải có Key khi dùng API Add để AppSheet xác nhận dòng mới)
+    // Nếu không có ID từ payload, ta dùng timestamp làm ID số tự động để đảm bảo API hoạt động
+    const finalKey = payload.id || payload.keyId || Date.now();
+    const idCols = getAppSheetColumnNames(tableName, 'id', ['id', 'ID', 'TT', 'STT', 'Mã', 'Ma']);
+    // Chỉ gán vào tên cột đầu tiên (ưu tiên mapping từ fetch) để tránh dư thừa dữ liệu
+    formattedPayload[idCols[0]] = formatRowId(finalKey);
     
     // 2. Map Ngày (luôn ép về YYYY-MM-DD để gửi API)
     const formattedDate = toInputString(payload.ngay || payload["Ngày"]);
@@ -320,9 +316,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     // 3. Map Nội dung/Dữ liệu đặc thù
     if (targetTable === "ghichu") {
       const noiDungValue = payload.noiDung || payload["Nội dung"] || payload["Ghi chú"] || "";
-      getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'Ghi chú', 'noiDung']).forEach(colName => {
-          formattedPayload[colName] = noiDungValue;
-      });
+      const noteCols = getAppSheetColumnNames(tableName, 'noiDung', ['noiDung', 'Nội dung', 'Ghi chú']);
+      formattedPayload[noteCols[0]] = noiDungValue;
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : (payload["Số tiền"] || 0);
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
