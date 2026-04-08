@@ -394,7 +394,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       }
     }
     
-    if (result && result.Rows && result.Rows.length === 0) {
+    // Chỉ báo thành công nếu AppSheet trả về ít nhất một dòng đã được thêm
+    if (!result || !result.Rows || result.Rows.length === 0) {
       throw new Error("AppSheet xác nhận thành công nhưng không có dòng nào được tạo.");
     }
 
