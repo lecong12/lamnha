@@ -302,11 +302,14 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     let formattedPayload = {};
     
     // 1. Map ID/Key
-    const finalKey = formatRowId(payload.id !== undefined ? payload.id : payload.keyId); // Áp dụng formatRowId
-    // Thêm các fallback phổ biến cho cột khóa
-    getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma']).forEach(colName => {
-        formattedPayload[colName] = finalKey;
-    });
+    // Nếu ID được cung cấp từ payload và KHÔNG phải là ID tạm thời do client tạo (ví dụ: GC_...),
+    // thì gửi ID đó. Ngược lại, để AppSheet tự động tạo ID.
+    const clientProvidedId = payload.id !== undefined ? payload.id : payload.keyId;
+    if (clientProvidedId && !String(clientProvidedId).startsWith('GC_')) { // Check for client-generated temporary ID
+      getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma']).forEach(colName => {
+          formattedPayload[colName] = formatRowId(clientProvidedId); // Apply formatRowId if it's a valid client ID
+      });
+    }
     
     // 2. Map Ngày (luôn ép về YYYY-MM-DD để gửi API)
     const formattedDate = toInputString(payload.ngay || payload["Ngày"]);
