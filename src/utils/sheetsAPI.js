@@ -26,11 +26,11 @@ const normalizeKey = (str) => {
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
-    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s === 'key' || s.startsWith('id')) return 'id';
+    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s === 'key' || s.startsWith('id') || s === 'stt') return 'id';
     if (s.includes('ngay bat dau')) return 'ngayBatDau';
     if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
     if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
-    if (s === 'noi dung' || s.includes('description')) return 'noiDung';
+    if (s === 'noidung' || s.includes('noi dung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
     if (s.includes('so tien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
     if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
     if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
@@ -302,12 +302,12 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     let formattedPayload = {};
     
     // 1. Map ID/Key
-    // Nếu ID được cung cấp từ payload và KHÔNG phải là ID tạm thời do client tạo (ví dụ: GC_...),
-    // thì gửi ID đó. Ngược lại, để AppSheet tự động tạo ID.
+    // Luôn gửi ID nếu có. Nếu bạn muốn AppSheet tự tạo, hãy để trống Initial Value trong AppSheet.
+    // Việc gửi ID từ Client giúp tránh lỗi "Key column is required".
     const clientProvidedId = payload.id !== undefined ? payload.id : payload.keyId;
-    if (clientProvidedId && !String(clientProvidedId).startsWith('GC_')) { // Check for client-generated temporary ID
+    if (clientProvidedId) {
       getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma']).forEach(colName => {
-          formattedPayload[colName] = formatRowId(clientProvidedId); // Apply formatRowId if it's a valid client ID
+          formattedPayload[colName] = formatRowId(clientProvidedId);
       });
     }
     

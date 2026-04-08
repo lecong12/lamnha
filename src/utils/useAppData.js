@@ -24,7 +24,7 @@ const normalizeKey = (str) => {
     if (s.includes('ngay bat dau')) return 'ngayBatDau';
     if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
     if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
-    if (s === 'noi dung' || s.includes('description')) return 'noiDung';
+    if (s === 'noidung' || s.includes('noi dung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
     if (s.includes('so tien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
     if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
     if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
