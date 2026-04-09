@@ -24,7 +24,7 @@ export const fetchStages = async (appId) => {
       },
       body: JSON.stringify({ 
         Action: "Find", 
-        Properties: { Locale: "en-US" }, // Dùng en-US để nhận dữ liệu ISO YYYY-MM-DD
+        Properties: { Locale: "en-GB" }, // Thống nhất dùng en-GB để nhận ngày DD/MM/YYYY
         Rows: [] 
       }),
     });

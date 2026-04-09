@@ -57,13 +57,10 @@ function QuickNotes({ showToast }) {
     setAdding(true);
     const dateStr = getTodayInputString();
     
-    // 1. Cấu trúc dữ liệu gửi lên API (Gửi đa dạng tên cột để đảm bảo trúng đích)
+    // Chỉ gửi các key chuẩn, sheetsAPI sẽ tự map sang tên cột Tiếng Việt của bạn
     const apiPayload = { 
       ngay: dateStr, 
-      noiDung: newNote.trim(),
-      "Ghi chú": newNote.trim(), 
-      "Nội dung": newNote.trim(), // Fallback cho tên cột "Nội dung"
-      "Ngày": dateStr
+      noiDung: newNote.trim()
     };
 
     try {

@@ -16,7 +16,7 @@ export const fetchBudget = async (appId) => {
       },
       body: JSON.stringify({ 
         Action: "Find", 
-        Properties: { Locale: "en-US" }, // Unify to en-US for ISO dates
+        Properties: { Locale: "en-GB" }, // Thống nhất sang en-GB
         Rows: [] 
       }),
     });
