@@ -206,7 +206,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload["_RowNumber"] = payload.appSheetId;
     }
 
-    const finalKey = payload.keyId !== undefined ? payload.keyId : payload.id;
+    const finalKey = formatRowId(payload.keyId !== undefined ? payload.keyId : payload.id);
     getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma']).forEach(colName => {
         formattedPayload[colName] = finalKey;
     });
@@ -303,9 +303,9 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     // 1. Map ID/Key: Đảm bảo luôn có Key duy nhất
     // Nếu bạn muốn AppSheet tự tạo ID (UNIQUEID), hãy cấu hình trong AppSheet Editor Initial Value.
     // Ở đây ta vẫn gửi một ID duy nhất để đảm bảo API không bị từ chối.
-    const finalKey = payload.id || payload.keyId || `GC_${Date.now()}`;
+    const finalKey = formatRowId(payload.id || payload.keyId || `GC_${Date.now()}`);
     const idCols = getAppSheetColumnNames(tableName, 'id', ['id', 'ID', 'TT', 'STT', 'Mã']);
-    formattedPayload[idCols[0]] = String(finalKey);
+    formattedPayload[idCols[0]] = finalKey;
     
     // 2. Map Ngày (luôn ép về YYYY-MM-DD để gửi API)
     const formattedDate = toInputString(payload.ngay || payload["Ngày"]);
@@ -413,7 +413,7 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
     const mapping = columnMapping[tableName] || {};
     const keyCol = mapping['id'] || getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma'])[0]; // Lấy tên cột Key (ID/id/TT/STT...)
 
-    const deleteRow = { [keyCol]: String(payloadId) };
+    const deleteRow = { [keyCol]: formatRowId(payloadId) };
 
     console.log(`Đang thực hiện xóa tại bảng ${tableName}, Cột: ${keyCol}, Giá trị: ${payloadId}`);
 
