@@ -12,7 +12,7 @@ const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "Gia
 export const normalizeKey = (str) => {
     if (!str) return '';
     // Nếu key đã thuộc danh sách chuẩn thì giữ nguyên
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst', 'date'];
     if (knownKeys.includes(str)) return str;
 
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d").trim();
@@ -36,10 +36,7 @@ export const normalizeKey = (str) => {
 };
 
 // Biến lưu trữ mapping tên cột thực tế từ AppSheet
-const columnMapping = {
-  "GhiChu": {},
-  "GiaoDich": {}
-};
+const columnMapping = {};
 
 // Helper để lấy tên cột AppSheet thực tế hoặc danh sách fallback
 const getAppSheetColumnNames = (tableName, normalizedKey, defaultNames) => {
@@ -241,7 +238,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     // Giữ lại các cột khác từ payload nếu chúng không trùng với các key logic đã xử lý
     Object.keys(payload).forEach(key => {
       const normKey = normalizeKey(key);
-      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'nguoiCapNhat', 'appSheetId'];
+      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'nguoiCapNhat', 'appSheetId', 'loaiThuChi', '_RowNumber', 'date'];
       if (!reserved.includes(normKey) && formattedPayload[key] === undefined) {
         formattedPayload[key] = payload[key];
       }
@@ -347,13 +344,17 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     // 4. Merge các trường khác
     Object.keys(payload).forEach(key => {
       const normKey = normalizeKey(key);
-      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'loaiThuChi'];
+      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'loaiThuChi', 'nguoiCapNhat', 'appSheetId', '_RowNumber', 'date'];
       if (!reserved.includes(normKey) && formattedPayload[key] === undefined) {
         formattedPayload[key] = payload[key];
       }
     });
 
-    // Làm sạch dữ liệu rác
+    // QUAN TRỌNG: Không được gửi _RowNumber hoặc appSheetId khi thêm mới
+    // AppSheet sẽ coi đây là xung đột và không tạo dòng.
+    delete formattedPayload["_RowNumber"];
+    delete formattedPayload["appSheetId"];
+
     Object.keys(formattedPayload).forEach(key => {
       if (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') {
         delete formattedPayload[key];
