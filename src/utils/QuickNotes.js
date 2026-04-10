@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiTrash2, FiExternalLink, FiFileText, FiLoader } from 'react-icons/fi';
-import { fetchTableData, addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
-import { toSafeDate, toDisplayString, getTodayInputString } from '../utils/dateUtils';
-import './QuickNotes.css';
-
-const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
+import { fetchTableData, addRowToSheet, deleteRowFromSheet } from '.
 
 function QuickNotes({ showToast }) {
   const [notes, setNotes] = useState([]);

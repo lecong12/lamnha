@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchStages, updateStageInSheet } from "./stagesAPI";
-import { fetchTableData, updateRowInSheet, addRowToSheet, fetchFileData } from "./sheetsAPI";
+import { fetchTableData, updateRowInSheet, addRowToSheet, fetchFileData, normalizeKey } from "./sheetsAPI";
 import { toSafeDate, toDisplayString } from "./dateUtils";
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
@@ -11,34 +11,6 @@ const TABLE_GIAODICH = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDic
 const TABLE_NGANSACH = process.env.REACT_APP_APPSHEET_TABLE_NGANSACH || "NganSach";
 const TABLE_HOPDONG = process.env.REACT_APP_APPSHEET_TABLE_HOPDONG || "HopDong";
 const TABLE_BANVE = process.env.REACT_APP_APPSHEET_TABLE_BANVE || "BanVe";
-
-const normalizeKey = (str) => {
-    if (!str) return '';
-    // Thống nhất danh sách knownKeys với sheetsAPI
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
-    if (knownKeys.includes(str)) return str;
-
-    const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
-    
-    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s.includes('key') || s.startsWith('id')) return 'id';
-    if (s.includes('ngay bat dau')) return 'ngayBatDau';
-    if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
-    if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
-    if (s === 'noidung' || s.includes('noi dung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
-    if (s.includes('so tien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
-    if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
-    if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
-    if (s.includes('phan loai') || s.includes('category')) return 'category';
-    // Đồng bộ logic với sheetsAPI
-    if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket')) return 'url';
-    if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
-    if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
-    if (s.includes('ten') || s.includes('name') || s.includes('giai doan') || s.includes('hop dong') || s.includes('ban ve')) return 'name';
-    if (s.includes('trang thai') || s.includes('status')) return 'status';
-    if (s.includes('dung luong') || s.includes('size')) return 'size';
-    // Fallback for single words like 'id', 'ngay'
-    return s.replace(/\s+/g, '');
-};
 
 export const useAppData = (isLoggedIn) => {
     const [data, setData] = useState([]);

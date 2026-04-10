@@ -9,13 +9,13 @@ const formatRowId = (id) => {
 };
 const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
-const normalizeKey = (str) => {
+export const normalizeKey = (str) => {
     if (!str) return '';
     // Nếu key đã thuộc danh sách chuẩn thì giữ nguyên
     const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
     if (knownKeys.includes(str)) return str;
 
-    const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
+    const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d").trim();
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
     if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s === 'key' || s.startsWith('id') || s === 'stt') return 'id';
@@ -28,10 +28,9 @@ const normalizeKey = (str) => {
     if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
     if (s.includes('phan loai') || s.includes('category')) return 'category';
     // Chỉ map các từ khóa thực sự là đường dẫn về 'url'
-    if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket')) return 'url';
-    if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh') || s.includes('chung tu')) return 'hinhAnh';
+    if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket') || s.includes('ban ve') || s.includes('hop dong')) return 'url';
+    if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
-    // Nhận diện tên hạng mục, bản vẽ, hợp đồng
     if (s.includes('ten') || s.includes('name') || s.includes('giai doan') || s.includes('hop dong') || s.includes('ban ve')) return 'name';
     
     return s.replace(/\s+/g, '');
@@ -187,9 +186,6 @@ export const fetchFileData = async (tableName, appId) => {
   }
 };
 
-/**
- * Cập nhật dòng linh hoạt cho MỌI bảng
- */
 /**
  * Cập nhật dòng linh hoạt cho MỌI bảng
  */
@@ -351,17 +347,9 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       formattedPayload['Ghi chú'] = payload.noiDung;
       formattedPayload[amountCol] = cleanAmount;
 
-      getAppSheetColumnNames(tableName, 'soTien', ['Số tiền', 'soTien', 'Amount']).forEach(colName => {
-          formattedPayload[colName] = cleanAmount;
-      });
-      getAppSheetColumnNames(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi', 'Category', 'Phân loại']).forEach(colName => {
-          formattedPayload[colName] = payload.doiTuongThuChi || payload.hangMuc || "";
-      });
-      getAppSheetColumnNames(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh', 'Chứng từ', 'Minh chứng']).forEach(colName => {
-          formattedPayload[colName] = payload.hinhAnh;
-      });
-      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(colName => {
-          formattedPayload[colName] = payload.nguoiCapNhat;
+      const catColNames = ['Hạng mục', 'doiTuongThuChi', 'Category', 'Phân loại'];
+      getAppSheetColumnNames(tableName, 'doiTuongThuChi', catColNames).forEach(col => {
+          formattedPayload[col] = payload.doiTuongThuChi || payload.hangMuc || "";
       });
     }
     
