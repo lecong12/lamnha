@@ -231,7 +231,6 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       
       const contentCol = mapping['noiDung'] || 'Nội dung';
       const amountCol = mapping['soTien'] || 'Số tiền';
-      const catCol = mapping['doiTuongThuChi'] || 'Hạng mục';
 
       formattedPayload[contentCol] = payload.noiDung;
       formattedPayload[amountCol] = cleanAmount;
