@@ -176,7 +176,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
       ...formData,
       soTien: parsedSoTien,
       ngay: formData.ngay,
-      loaiThuChi: "Chi"
     };
 
     console.log("Submit Form Data:", finalData);

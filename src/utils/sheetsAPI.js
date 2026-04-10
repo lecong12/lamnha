@@ -175,12 +175,10 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         "_RowNumber": payload.appSheetId || payload._RowNumber,
         "id": rowId,
         "Ngày": dateStr,
-        "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung || "",
         "Số tiền": cleanAmount,
         "Hạng mục": payload.doiTuongThuChi || "",
         "Chứng từ": payload.hinhAnh || "",
-        "Hình ảnh": payload.hinhAnh || "", // Gửi cả 2 để fallback
         "Người cập nhật": payload.nguoiCapNhat
       };
     }
@@ -263,12 +261,10 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       formattedPayload = {
         "id": numericId,
         "Ngày": dateStr,
-        "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung || "",
         "Số tiền": cleanAmount,
         "Hạng mục": payload.doiTuongThuChi || "",
         "Chứng từ": payload.hinhAnh || "",
-        "Hình ảnh": payload.hinhAnh || "", // Fallback
         "Người cập nhật": payload.nguoiCapNhat
       };
     }
@@ -328,9 +324,9 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
     // Đảm bảo gửi đúng cột khóa (Key Column) cho từng bảng
     let deleteRow = {};
     if (tableName === "GhiChu") {
-      deleteRow = { "id": payloadId };
+      deleteRow = { "ID": payloadId };
     } else if (tableName === "GiaoDich") {
-      deleteRow = { "id": payloadId };
+      deleteRow = { "ID": payloadId };
     } else {
       // Mặc định cho các bảng khác, gửi cả ID và id để tăng khả năng tương thích
       deleteRow = { "ID": payloadId, "id": payloadId };

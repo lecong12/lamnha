@@ -67,14 +67,15 @@ export const useAppData = (isLoggedIn) => {
             const cleanGD = resGD.map((row, index) => {
                 const c = {};
                 Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
-                const actualId = c.id || row.id || row.ID || row._RowNumber;
+                // Ưu tiên lấy id lowercase khớp với AppSheet MAX(id)
+                const actualId = row.id || c.id || row.ID || row._RowNumber;
                 return {
                     id: actualId,
                     appSheetId: row._RowNumber,
                     keyId: actualId,
                     ngay: c.ngay ? new Date(c.ngay) : new Date(),
                     soTien: Number(String(c.soTien || 0).replace(/\D/g, "")),
-                    loaiThuChi: c.loaiThuChi || "Chi",
+                    loaiThuChi: "Chi", // Mặc định là Chi vì Sheet không có cột phân loại
                     noiDung: c.noiDung || "",
                     doiTuongThuChi: c.doiTuongThuChi || "Khác",
                     hinhAnh: c.hinhAnh || "",
