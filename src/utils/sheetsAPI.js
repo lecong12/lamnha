@@ -176,10 +176,11 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         "ID": rowId,
         "Ngày": dateStr,
         "Loại Thu Chi": payload.loaiThuChi,
-        "Nội dung": payload.noiDung,
+        "Nội dung": payload.noiDung || "",
         "Số tiền": cleanAmount,
-        "Hạng mục": payload.doiTuongThuChi,
-        "Hình ảnh": payload.hinhAnh || "",
+        "Hạng mục": payload.doiTuongThuChi || "",
+        "Chứng từ": payload.hinhAnh || "",
+        "Hình ảnh": payload.hinhAnh || "", // Gửi cả 2 để fallback
         "Người cập nhật": payload.nguoiCapNhat
       };
     }
@@ -261,10 +262,11 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         "ID": payload.id || payload.keyId || `GD_${Date.now()}`,
         "Ngày": dateStr,
         "Loại Thu Chi": payload.loaiThuChi,
-        "Nội dung": payload.noiDung,
+        "Nội dung": payload.noiDung || "",
         "Số tiền": cleanAmount,
-        "Hạng mục": payload.doiTuongThuChi,
-        "Hình ảnh": payload.hinhAnh || "",
+        "Hạng mục": payload.doiTuongThuChi || "",
+        "Chứng từ": payload.hinhAnh || "",
+        "Hình ảnh": payload.hinhAnh || "", // Fallback
         "Người cập nhật": payload.nguoiCapNhat
       };
     }
