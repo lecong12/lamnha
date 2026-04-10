@@ -157,10 +157,16 @@ export const updateStageInSheet = async (stage, appId) => {
     // Sử dụng tên cột Trạng thái đã tìm thấy lúc Fetch
     const statusColumnName = stage.statusColumn || 'status';
 
+    // Xác định nguồn ảnh: Ưu tiên mảng anhNghiemThu, nếu rỗng thì thử lấy từ hinhAnh (từ Modal upload)
+    let rawImages = stage.anhNghiemThu;
+    if ((!rawImages || rawImages.length === 0) && stage.hinhAnh) {
+      rawImages = [stage.hinhAnh];
+    }
+
     // Làm sạch và chuẩn hóa danh sách ảnh trước khi gửi để đảm bảo không dính rác JSON hoặc URL sai định dạng
-    const cleanedImages = Array.isArray(stage.anhNghiemThu) 
-      ? stage.anhNghiemThu.map(url => getCleanLink(url)).filter(Boolean).join(',') 
-      : (getCleanLink(stage.anhNghiemThu) || "");
+    const cleanedImages = Array.isArray(rawImages) 
+      ? rawImages.map(url => getCleanLink(url)).filter(Boolean).join(',') 
+      : (getCleanLink(rawImages) || "");
 
     const editData = [{
       [keyColumnName]: String(stage.keyId), // Dùng đúng tên cột Key tìm được (id, ID, TT...)
@@ -168,8 +174,8 @@ export const updateStageInSheet = async (stage, appId) => {
       [imgColumnName]: cleanedImages,
     }];
 
-    // Chỉ gửi kèm _RowNumber nếu cột Key không phải là ID chính để tăng độ chính xác khi xác định dòng
-    if (stage.appSheetId && keyColumnName !== 'id' && keyColumnName !== 'ID') {
+    // Luôn gửi kèm _RowNumber nếu có để AppSheet xác định dòng chính xác tuyệt đối
+    if (stage.appSheetId) {
       editData[0]["_RowNumber"] = stage.appSheetId;
     }
 
