@@ -163,7 +163,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     if (tableName === "GhiChu") {
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber, // Không dùng ID làm RowNumber nếu không phải số
-        "id": payload.id || payload.keyId,
+        "ID": payload.id || payload.keyId,
         "Ngày": dateStr,
         "Nội dung": payload.noiDung
       };
@@ -173,7 +173,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber,
-        "id": rowId,
+        "ID": rowId,
         "Ngày": dateStr,
         "Nội dung": payload.noiDung || "",
         "Số tiền": cleanAmount,

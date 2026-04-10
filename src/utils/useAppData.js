@@ -120,13 +120,14 @@ export const useAppData = (isLoggedIn) => {
         const stageToUpdate = tienDo.find(s => s.id === stageId);
         if (!stageToUpdate) return { success: false, message: "Không tìm thấy giai đoạn" };
 
-        // Đảm bảo nếu có hinhAnh mới từ upload, nó sẽ được ưu tiên
         let finalUpdates = { ...updates };
         if (updates.hinhAnh) {
-            // Cập nhật cả mảng để đồng bộ hiển thị ngay trên UI
-            finalUpdates.anhNghiemThu = [updates.hinhAnh]; 
+            // Cập nhật mảng hiển thị ngay lập tức trên UI (gộp ảnh mới vào ảnh cũ)
+            const currentImages = Array.isArray(stageToUpdate.anhNghiemThu) ? stageToUpdate.anhNghiemThu : [];
+            finalUpdates.anhNghiemThu = [...currentImages, updates.hinhAnh].slice(0, 6);
         }
 
+        // Cập nhật Local State trước (Optimistic)
         const updatedStage = { ...stageToUpdate, ...finalUpdates };
         const newTienDo = tienDo.map((s) => s.id === stageId ? updatedStage : s);
         setTienDo(newTienDo);

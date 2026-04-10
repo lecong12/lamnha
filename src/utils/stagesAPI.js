@@ -157,20 +157,17 @@ export const updateStageInSheet = async (stage, appId) => {
     // Sử dụng tên cột Trạng thái đã tìm thấy lúc Fetch
     const statusColumnName = stage.statusColumn || 'status';
 
-    // Xác định nguồn ảnh: Ưu tiên hinhAnh (link mới nhất từ upload) nếu có
-    let rawImages = [];
-    if (stage.hinhAnh) {
-      // Nếu có hinhAnh mới, ta dùng nó (có thể gộp với ảnh cũ nếu cần, ở đây ta ưu tiên ảnh mới nhất)
-      rawImages = [stage.hinhAnh];
-    } else if (Array.isArray(stage.anhNghiemThu) && stage.anhNghiemThu.length > 0) {
-      // Nếu không có upload mới, dùng danh sách ảnh cũ
-      rawImages = stage.anhNghiemThu;
+    // Logic xử lý ảnh: Kết hợp ảnh cũ đã có và ảnh mới vừa upload (hinhAnh)
+    // Lấy danh sách hiện tại (đã được parse thành mảng ở bước fetch)
+    let images = Array.isArray(stage.anhNghiemThu) ? [...stage.anhNghiemThu] : [];
+    
+    // Nếu có ảnh mới từ Cloudinary, thêm vào danh sách
+    if (stage.hinhAnh && typeof stage.hinhAnh === 'string') {
+      images.push(stage.hinhAnh);
     }
 
-    // Làm sạch và chuẩn hóa danh sách ảnh trước khi gửi để đảm bảo không dính rác JSON hoặc URL sai định dạng
-    const cleanedImages = rawImages.length > 0
-      ? rawImages.map(url => getCleanLink(url)).filter(Boolean).join(',') 
-      : (getCleanLink(rawImages) || "");
+    // Làm sạch các link (loại bỏ domain rác) và giới hạn tối đa 6 ảnh để tránh cell quá nặng
+    const cleanedImages = images.map(url => getCleanLink(url)).filter(Boolean).slice(0, 6).join(',');
 
     const editData = [{
       [keyColumnName]: String(stage.keyId), // Dùng đúng tên cột Key tìm được (id, ID, TT...)
