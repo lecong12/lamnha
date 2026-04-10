@@ -22,7 +22,6 @@ const Sidebar = ({ isOpen, toggle, activeTab, onTabChange, onLogout, isDarkMode,
   const menuItems = [
     { id: 'dashboard', icon: <FiTrendingUp size={20} />, label: 'Tổng quan' },
     { id: 'list', icon: <FiList size={20} />, label: 'Danh sách Giao dịch' },
-    { id: 'scanner', icon: <FiCamera size={20} />, label: 'Quét Card & Bảng hiệu' },
     { id: 'budget', icon: <FiDollarSign size={20} />, label: 'Đối chiếu Ngân sách' },
     { id: 'progress_tracker', icon: <FiCheckCircle size={20} />, label: 'Theo dõi Tiến độ' },
     { id: 'gantt_chart', icon: <FiBarChart2 size={20} />, label: 'Biểu đồ Tiến độ' },

@@ -6,7 +6,6 @@ function MobileFooter({ activeTab, onTabChange }) {
   const tabs = [
     { id: "dashboard", icon: FiHome, label: "Tổng quan" },
     { id: "list", icon: FiList, label: "Danh sách" },
-    { id: "scanner", icon: FiCamera, label: "Quét Card" },
     { id: "all", icon: FiGrid, label: "Tất cả" },
   ];
 

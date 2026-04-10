@@ -1,40 +1,12 @@
+import { toSafeDate as baseToSafeDate } from './dateUtils';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 const STAGES_TABLE_NAME = process.env.REACT_APP_APPSHEET_TABLE_TIENDO || "TienDo"; // Tên bảng chứa dữ liệu tiến độ
 
 const getApiUrl = (appId) => `https://www.appsheet.com/api/v2/apps/${appId}/tables/${encodeURIComponent(STAGES_TABLE_NAME)}/Action`;
 
-// Helper: Xử lý ngày tháng an toàn (Hỗ trợ cả dd/mm/yyyy của VN)
-const parseDate = (value) => {
-  if (!value) return null;
-  if (value instanceof Date) return value;
-  
-  console.log("Attempting to parse date:", value); // Log raw date value
-
-  // Nếu là chuỗi
-  if (typeof value === 'string') {
-    if (!value.trim()) return null;
-
-    // Try dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy, dd mm yyyy (Fix Regex)
-    let parts = value.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
-    if (parts) {
-      // parts[1]=day, parts[2]=month, parts[3]=year -> new Date(year, monthIndex, day)
-      const d = new Date(parts[3], parts[2] - 1, parts[1]);
-      if (!isNaN(d.getTime())) return d;
-    }
-    
-    // Try yyyy-mm-dd (ISO format)
-    parts = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if (parts) {
-      const d = new Date(parts[1], parts[2] - 1, parts[3]);
-      if (!isNaN(d.getTime())) return d;
-    }
-
-    // Thử parse chuẩn ISO (yyyy-mm-dd) nếu regex trên không khớp
-    const d = new Date(value);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  return null;
-};
+// Alias để đảm bảo các file cũ import 'parseDate' không bị lỗi build
+export const toSafeDate = baseToSafeDate;
+export const parseDate = baseToSafeDate;
 
 /**
  * Lấy danh sách các giai đoạn từ bảng data_tien_do
@@ -50,7 +22,14 @@ export const fetchStages = async (appId) => {
         "ApplicationAccessKey": APPSHEET_ACCESS_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ Action: "Find", Properties: { Locale: "vi-VN", Timezone: "Asia/Ho_Chi_Minh" }, Rows: [] }),
+      body: JSON.stringify({ 
+        Action: "Find", 
+        Properties: { 
+          Locale: "en-GB", // Nhận ngày dạng DD/MM/YYYY để khớp với parser VN
+          Timezone: "Asia/Ho_Chi_Minh"
+        },
+        Rows: [] 
+      }),
     });
 
     if (!response.ok) {
@@ -65,7 +44,9 @@ export const fetchStages = async (appId) => {
     
     if (responseText && responseText.trim()) {
       try {
-        rawData = JSON.parse(responseText);
+        const parsed = JSON.parse(responseText);
+        // AppSheet trả về { "Rows": [...] } hoặc [...]
+        rawData = Array.isArray(parsed) ? parsed : (parsed.Rows || []);
       } catch (parseError) {
         console.error("Lỗi parse JSON Tiến độ:", parseError);
         return { success: false, message: "Dữ liệu AppSheet trả về không hợp lệ.", data: [] };
@@ -85,7 +66,16 @@ export const fetchStages = async (appId) => {
                     rowKeys.find(k => k.trim().toLowerCase() === 'tt') || 
                     rowKeys.find(k => k.trim().toLowerCase() === 'stt') || 'id';
                     
-      const imgKey = rowKeys.find(k => k.trim().toLowerCase() === 'ảnh nghiệm thu' || k.trim().toLowerCase() === 'anh nghiem thu') || "Ảnh nghiệm thu";
+      const imgKey = rowKeys.find(k => {
+        const key = k.trim().toLowerCase();
+        return key.includes('ảnh') || key.includes('anh') || 
+               key.includes('hình') || key.includes('hinh') ||
+               key.includes('chứng từ') || key.includes('chung tu') ||
+               key.includes('minh chứng') || key.includes('minh chung');
+      });
+      
+      // Fallback imgKey nếu không tìm thấy
+      const finalImgKey = imgKey || rowKeys.find(k => k.includes('Ảnh')) || "Ảnh nghiệm thu";
 
       // 3. Tìm cột Tên (Name) để hiển thị tiêu đề
       const nameKey = rowKeys.find(k => {
@@ -101,13 +91,19 @@ export const fetchStages = async (appId) => {
       // 4. Tìm cột Ngày bắt đầu / Kết thúc (chấp nhận cả tiếng Việt có dấu)
       const startKey = rowKeys.find(k => {
         const key = k.trim().toLowerCase().replace(/_/g, "");
-        return key === 'ngaybatdau' || key.includes('bat dau') || key.includes('bắt đầu') || key.includes('start');
+        return key === 'ngaybatdau' || key.includes('bat dau') || key.includes('bắt đầu') || key.includes('start') || key.includes('ngày bđ') || key.includes('ngay bd');
       });
 
       const endKey = rowKeys.find(k => {
         const key = k.trim().toLowerCase().replace(/_/g, "");
-        return key === 'ngayketthuc' || key.includes('ket thuc') || key.includes('kết thúc') || key.includes('end') || key.includes('hoan thanh');
+        return key === 'ngayketthuc' || key.includes('ket thuc') || key.includes('kết thúc') || key.includes('end') || key.includes('hoan thanh') || key.includes('ngày kt') || key.includes('ngay kt');
       });
+
+      // 5. Tìm cột Trạng thái
+      const statusKey = rowKeys.find(k => {
+        const key = k.trim().toLowerCase();
+        return key === 'status' || key.includes('trạng thái') || key.includes('trang thai') || key.includes('tình trạng') || key.includes('tinh trang');
+      }) || 'status';
 
       // 2. Tạo ID duy nhất cho Frontend (QUAN TRỌNG: Sửa lỗi hiển thị ảnh ở tất cả các ô)
       // Ưu tiên dùng giá trị từ cột Key tìm được
@@ -118,15 +114,23 @@ export const fetchStages = async (appId) => {
         appSheetId: row._RowNumber, 
         keyId: row[idKey], // Giá trị Key thực sự để gửi API (Cột id)
         keyColumn: idKey, // Lưu lại tên cột Key tìm được để dùng lúc Update
-        imgColumn: imgKey, // Lưu lại tên cột Ảnh tìm được để dùng lúc Update
+        imgColumn: finalImgKey, // Lưu lại tên cột Ảnh tìm được để dùng lúc Update
+        statusColumn: statusKey, // Lưu lại tên cột Trạng thái để dùng lúc Update
         name: row[nameKey] || row.name || row["Tên công việc"] || row["Hạng mục"] || `Giai đoạn ${index + 1}`, // Fallback nếu không tìm thấy tên
-        status: row.status || row["Trạng thái"] || "Chưa bắt đầu",
-        ngayBatDau: parseDate(row[startKey] || row.ngayBatDau), // Tự động parse ngày
-        ngayKetThuc: parseDate(row[endKey] || row.ngayKetThuc),
-        anhNghiemThu: row[imgKey] || "", // Map đúng cột ảnh
-        // Add other fields from AppSheet if needed, e.g., 'status'
+        status: row[statusKey] || row.status || "Chưa bắt đầu",
+        ngayBatDau: toSafeDate(row[startKey] || row.ngayBatDau), 
+        ngayKetThuc: toSafeDate(row[endKey] || row.ngayKetThuc),
+        // Hỗ trợ lưu trữ và hiển thị tối đa 6 ảnh (ngăn cách bởi dấu phẩy trong AppSheet)
+        anhNghiemThu: typeof row[finalImgKey] === 'string' 
+          ? row[finalImgKey].split(',').map(url => url.trim()).filter(Boolean).slice(0, 6)
+          : (row[finalImgKey] ? [row[finalImgKey]] : []),
       };
-    }).sort((a, b) => a.appSheetId - b.appSheetId); // Sửa lỗi sắp xếp: Dùng thứ tự dòng trong Sheet (_RowNumber)
+    })
+    .sort((a, b) => {
+      // Ưu tiên sắp xếp theo thứ tự dòng thực tế trong Google Sheet (_RowNumber)
+      // Điều này đảm bảo danh sách hiển thị đúng trình tự kế hoạch xây dựng đã lập trong bảng tính
+      return (a.appSheetId || 0) - (b.appSheetId || 0);
+    });
 
     return { success: true, data: transformedData };
   } catch (error) {
@@ -149,12 +153,17 @@ export const updateStageInSheet = async (stage, appId) => {
     const keyColumnName = stage.keyColumn || 'id';
     // Sử dụng tên cột Ảnh đã tìm thấy lúc Fetch, mặc định là 'Ảnh nghiệm thu' nếu không có
     const imgColumnName = stage.imgColumn || 'Ảnh nghiệm thu';
+    // Sử dụng tên cột Trạng thái đã tìm thấy lúc Fetch
+    const statusColumnName = stage.statusColumn || 'status';
 
     const editData = [{
       "_RowNumber": stage.appSheetId, // Gửi kèm RowNumber để hỗ trợ tìm kiếm
       [keyColumnName]: String(stage.keyId), // Dùng đúng tên cột Key tìm được (id, ID, TT...)
-      "status": stage.status,
-      [imgColumnName]: stage.anhNghiemThu || "", // Dùng đúng tên cột Ảnh tìm được
+      [statusColumnName]: stage.status,
+      // Chuyển mảng ảnh thành chuỗi ngăn cách bởi dấu phẩy để lưu vào Sheet
+      [imgColumnName]: Array.isArray(stage.anhNghiemThu) 
+        ? stage.anhNghiemThu.join(',') 
+        : (stage.anhNghiemThu || ""),
     }];
 
     // Log dữ liệu gửi đi để kiểm tra xem có link ảnh chưa
@@ -177,7 +186,7 @@ export const updateStageInSheet = async (stage, appId) => {
       body: JSON.stringify({ 
         Action: "Edit", 
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-US", // Thống nhất dùng en-US cho API
           Timezone: "Asia/Ho_Chi_Minh",
         }, 
         Rows: editData 
