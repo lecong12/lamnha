@@ -107,7 +107,12 @@ export const useAppData = (isLoggedIn) => {
 
             // 3. Xử lý Tiến Độ
             // Dữ liệu từ fetchStages đã được chuẩn hóa, chỉ cần gán trực tiếp
-            setTienDo(resTD);
+            const cleanTD = resTD.map(stage => ({
+                ...stage,
+                displayNgayBatDau: toDisplayString(stage.ngayBatDau),
+                displayNgayKetThuc: toDisplayString(stage.ngayKetThuc)
+            }));
+            setTienDo(cleanTD);
 
             // 4. Xử lý Hợp Đồng
             const resHopDong = resHopDongResult.success ? resHopDongResult.data : [];

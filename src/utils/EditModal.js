@@ -145,20 +145,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
     try {
       const data = await extractInfoWithAI(ocrSource, 'invoice');
       if (data && !data.error) {
-        let formattedDate = formData.ngay;
-        if (data.ngay && typeof data.ngay === 'string') {
-          if (data.ngay.includes('-')) {
-            formattedDate = data.ngay; // Đã là ISO
-          } else if (data.ngay.includes('/')) {
-            const parts = data.ngay.split('/');
-            if (parts.length === 3) {
-              const d = parts[0].padStart(2, '0');
-              const m = parts[1].padStart(2, '0');
-              const y = parts[2];
-              formattedDate = `${y}-${m}-${d}`;
-            }
-          }
-        }
+        const formattedDate = data.ngay ? toInputString(data.ngay) : formData.ngay;
 
         const cleanAmount = data.soTien ? String(data.soTien).replace(/\D/g, "") : "";
         setFormData(prev => ({

@@ -16,7 +16,8 @@ export const fetchBudget = async (appId) => {
       },
       body: JSON.stringify({ 
         Action: "Find", 
-        Properties: { Locale: "en-GB" }, // Thống nhất sang en-GB
+        Properties: { sia/Ho_Chi_Minh" 
+        },
         Rows: [] 
       }),
     });

@@ -24,7 +24,10 @@ export const fetchStages = async (appId) => {
       },
       body: JSON.stringify({ 
         Action: "Find", 
-        Properties: { Locale: "en-GB" }, // Thống nhất dùng en-GB để nhận ngày DD/MM/YYYY
+        Properties: { 
+          Locale: "en-GB", // Nhận ngày dạng DD/MM/YYYY để khớp với parser VN
+          Timezone: "Asia/Ho_Chi_Minh"
+        },
         Rows: [] 
       }),
     });
