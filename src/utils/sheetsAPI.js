@@ -4,16 +4,8 @@ const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 
 // Helper để chuẩn hóa ID: loại bỏ tiền tố (GC_, GD_) và chuyển thành số nếu có thể
 const formatRowId = (id) => {
-  if (id === null || id === undefined) return id;
-  if (typeof id === 'string') {
-    // Nếu chuỗi có định dạng PREFIX_12345 hoặc chỉ là số
-    const parts = id.split('_');
-    const possibleNum = parts.length > 1 ? parts[1] : parts[0];
-    if (!isNaN(possibleNum) && possibleNum.trim() !== "") {
-      return Number(possibleNum);
-    }
-  }
-  return id;
+  if (id === null || id === undefined) return "";
+  return String(id); // Giữ nguyên ID dạng chuỗi để bảo toàn prefix và khớp với định dạng Key của AppSheet
 };
 const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)

@@ -33,12 +33,15 @@ export const fetchBudget = async (appId) => {
     
     if (responseText && responseText.trim()) {
       try {
-        rawData = JSON.parse(responseText);
+        const parsed = JSON.parse(responseText);
+        // AppSheet Action:Find trả về { "Rows": [...] }
+        rawData = Array.isArray(parsed) ? parsed : (parsed.Rows || []);
       } catch (parseError) {
         console.error("Lỗi parse JSON Ngân sách:", parseError);
         return { success: false, message: "Dữ liệu Ngân sách rỗng hoặc sai định dạng.", data: [] };
       }
     }
+    if (!Array.isArray(rawData)) rawData = [];
 
     const transformedData = rawData.map(row => ({
       hangMuc: row['Hạng mục'],
