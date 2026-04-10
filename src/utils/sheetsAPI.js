@@ -12,21 +12,21 @@ const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "Gia
 export const normalizeKey = (str) => {
     if (!str) return '';
     // Nếu key đã thuộc danh sách chuẩn thì giữ nguyên
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst', 'date'];
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
     if (knownKeys.includes(str)) return str;
 
-    const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d").trim();
+    const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d").replace(/[\s_]+/g, "").trim();
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
-    if (s === 'id' || s === 'tt' || s === 'stt' || s === 'ma' || s === 'ma gd' || s === 'key' || s.startsWith('id') || s === 'stt') return 'id';
+    if (['id', 'tt', 'stt', 'ma', 'magd', 'key'].includes(s) || s.startsWith('id')) return 'id';
     if (s.includes('ngay bat dau')) return 'ngayBatDau';
     if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
-    if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
-    if (s === 'noidung' || s.includes('noi dung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
-    if (s.includes('so tien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
-    if (s.includes('loai thu chi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
-    if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi')) return 'doiTuongThuChi';
-    if (s.includes('phan loai') || s.includes('category')) return 'category';
+    if (s.includes('ngay') || s.includes('date') || s.includes('thoigian')) return 'ngay';
+    if (s === 'noidung' || s.includes('noidung') || s.includes('ghichu') || s.includes('description')) return 'noiDung';
+    if (s.includes('sotien') || s.includes('amount') || s.includes('giatri')) return 'soTien';
+    if (s.includes('loaithuchi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
+    if (s.includes('hangmuc') || s.includes('doituong') || s.includes('mucchi')) return 'doiTuongThuChi';
+    if (s.includes('phanloai') || s.includes('category')) return 'category';
     // Chỉ map các từ khóa thực sự là đường dẫn về 'url'
     if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket') || s.includes('ban ve') || s.includes('hop dong')) return 'url';
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
@@ -36,7 +36,10 @@ export const normalizeKey = (str) => {
 };
 
 // Biến lưu trữ mapping tên cột thực tế từ AppSheet
-const columnMapping = {};
+const columnMapping = {
+  "GhiChu": {},
+  "GiaoDich": {}
+};
 
 // Helper để lấy tên cột AppSheet thực tế hoặc danh sách fallback
 const getAppSheetColumnNames = (tableName, normalizedKey, defaultNames) => {
@@ -230,6 +233,10 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload[col] = payload.hinhAnh || "";
       });
 
+      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(col => {
+        formattedPayload[col] = payload.nguoiCapNhat || "Ba";
+      });
+
       getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu/Chi', 'loaiThuChi', 'Type']).forEach(col => {
         formattedPayload[col] = payload.loaiThuChi || "Chi";
       });
@@ -238,7 +245,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     // Giữ lại các cột khác từ payload nếu chúng không trùng với các key logic đã xử lý
     Object.keys(payload).forEach(key => {
       const normKey = normalizeKey(key);
-      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'nguoiCapNhat', 'appSheetId', 'loaiThuChi', '_RowNumber', 'date'];
+      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'nguoiCapNhat', 'appSheetId'];
       if (!reserved.includes(normKey) && formattedPayload[key] === undefined) {
         formattedPayload[key] = payload[key];
       }
@@ -336,6 +343,10 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         formattedPayload[col] = payload.hinhAnh || "";
       });
 
+      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(col => {
+        formattedPayload[col] = payload.nguoiCapNhat || "Ba";
+      });
+
       getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu/Chi', 'loaiThuChi']).forEach(col => {
         formattedPayload[col] = payload.loaiThuChi || "Chi";
       });
@@ -344,17 +355,13 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     // 4. Merge các trường khác
     Object.keys(payload).forEach(key => {
       const normKey = normalizeKey(key);
-      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'loaiThuChi', 'nguoiCapNhat', 'appSheetId', '_RowNumber', 'date'];
+      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'loaiThuChi'];
       if (!reserved.includes(normKey) && formattedPayload[key] === undefined) {
         formattedPayload[key] = payload[key];
       }
     });
 
-    // QUAN TRỌNG: Không được gửi _RowNumber hoặc appSheetId khi thêm mới
-    // AppSheet sẽ coi đây là xung đột và không tạo dòng.
-    delete formattedPayload["_RowNumber"];
-    delete formattedPayload["appSheetId"];
-
+    // Làm sạch dữ liệu rác
     Object.keys(formattedPayload).forEach(key => {
       if (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') {
         delete formattedPayload[key];
