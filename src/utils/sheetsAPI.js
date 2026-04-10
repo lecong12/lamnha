@@ -191,7 +191,6 @@ export const fetchFileData = async (tableName, appId) => {
 export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
     const targetTable = String(tableName).trim().toLowerCase();
-    const mapping = columnMapping[tableName] || {};
     let formattedPayload = {};
     
     // 1. Đồng bộ Key dứt điểm (Bắt buộc để Edit)
@@ -304,7 +303,6 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
     const targetTable = String(tableName).trim().toLowerCase();
-    const mapping = columnMapping[tableName] || {};
     let formattedPayload = {};
     
     // 1. Map ID/Key (Dùng fallback rộng để trúng Key Column)
