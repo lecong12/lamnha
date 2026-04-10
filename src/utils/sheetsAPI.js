@@ -198,11 +198,11 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     // 1. Xử lý Key Column (Bắt buộc để Edit)
     // Ưu tiên dùng tên cột thật từ mapping đã lưu lúc Fetch
     const realKeyCol = mapping['id'] || 'ID';
-    const finalKey = formatRowId(payload.keyId || payload.id);
+    const finalKey = formatRowId(payload.keyId || payload.id || payload._RowNumber);
     
     formattedPayload[realKeyCol] = finalKey;
     // Gửi fallback vào các tên cột phổ biến khác
-    ['ID', 'id', 'TT', 'STT', 'Mã'].forEach(col => {
+    ['ID', 'id', 'TT', 'STT', 'Mã', 'Mã GD'].forEach(col => {
       if (!formattedPayload[col]) formattedPayload[col] = finalKey;
     });
 
@@ -318,14 +318,14 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const finalKey = formatRowId(payload.id || payload.keyId || `GC_${Date.now()}`);
     const realKeyCol = mapping['id'] || 'id';
     formattedPayload[realKeyCol] = finalKey;
-    // Luôn gửi ID vào các cột phổ biến để chắc chắn trúng Key Column
-    ['id', 'ID', 'TT', 'STT', 'Mã'].forEach(c => { if(!formattedPayload[c]) formattedPayload[c] = finalKey; });
+    ['id', 'ID', 'TT', 'STT', 'Mã', 'Mã GD'].forEach(c => { if(!formattedPayload[c]) formattedPayload[c] = finalKey; });
     
     // 2. Map Ngày (luôn ép về YYYY-MM-DD để gửi API)
     const formattedDate = toInputString(payload.ngay || payload["Ngày"]);
     if (formattedDate) {
       const dateCol = mapping['ngay'] || 'Ngày';
       formattedPayload[dateCol] = formattedDate;
+      formattedPayload['Ngày'] = formattedDate;
       formattedPayload['date'] = formattedDate;
     }
 
@@ -335,27 +335,34 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       const noteCol = mapping['noiDung'] || 'Nội dung';
       formattedPayload[noteCol] = noiDungValue;
       formattedPayload['Ghi chú'] = noiDungValue;
+      formattedPayload['noiDung'] = noiDungValue;
     } else if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
 
       const contentCol = mapping['noiDung'] || 'Nội dung';
       const amountCol = mapping['soTien'] || 'Số tiền';
+      const catCol = mapping['doiTuongThuChi'] || 'Hạng mục';
+      const imgCol = mapping['hinhAnh'] || 'Hình ảnh';
+      const userCol = mapping['nguoiCapNhat'] || 'Người cập nhật';
+      const typeCol = mapping['loaiThuChi'] || 'Loại Thu/Chi';
 
       formattedPayload[contentCol] = payload.noiDung;
       formattedPayload['Ghi chú'] = payload.noiDung;
       formattedPayload[amountCol] = cleanAmount;
+      formattedPayload[catCol] = payload.doiTuongThuChi || "";
+      formattedPayload[imgCol] = payload.hinhAnh || "";
+      formattedPayload[userCol] = payload.nguoiCapNhat || "";
+      formattedPayload[typeCol] = payload.loaiThuChi || "Chi";
 
-      const catColNames = ['Hạng mục', 'doiTuongThuChi', 'Category', 'Phân loại'];
-      getAppSheetColumnNames(tableName, 'doiTuongThuChi', catColNames).forEach(col => {
-          formattedPayload[col] = payload.doiTuongThuChi || payload.hangMuc || "";
-      });
+      // Fallback
+      ['Hạng mục', 'doiTuongThuChi'].forEach(c => { if(!formattedPayload[c]) formattedPayload[c] = payload.doiTuongThuChi; });
     }
     
     // 4. Merge các trường khác không nằm trong key logic
     Object.keys(payload).forEach(key => {
         const normKey = normalizeKey(key);
-        const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'nguoiCapNhat'];
+        const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'nguoiCapNhat', 'loaiThuChi'];
         if (!reserved.includes(normKey) && formattedPayload[key] === undefined) {
           formattedPayload[key] = payload[key];
         }
