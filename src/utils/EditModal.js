@@ -4,7 +4,6 @@ import { extractInfoWithAI } from "../utils/aiService";
 import { toInputString, getTodayInputString } from "../utils/dateUtils";
 import "./EditModal.css";
 
-// Danh sách hạng mục ngân sách
 const BUDGET_CATEGORIES = [
   'Chuẩn bị', 'Thiết kế', 'Giám sát', 'Phần thô', 
   'Nhân công', 'Hoàn thiện', 'Điện nước', 'Nội thất', 
@@ -37,8 +36,10 @@ const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").rep
 
 function EditModal({ item, onClose, onSave, showToast }) {
   const fileInputRef = useRef(null);
+  
+  // Khởi tạo state với giá trị rỗng hoặc ngày hôm nay chuẩn chuỗi
   const [formData, setFormData] = useState({
-    ngay: "",
+    ngay: getTodayInputString(),
     noiDung: "",
     doiTuongThuChi: "",
     nguoiCapNhat: "Ba",
@@ -53,44 +54,37 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
   useEffect(() => {
     if (item && (item.id || item._id || item.appSheetId)) {
-      // SỬA TẠI ĐÂY: Ép ngày về chuỗi YYYY-MM-DD ngay từ đầu
+      // ÉP BUỘC: Lấy ngày từ item và biến nó thành chuỗi YYYY-MM-DD duy nhất
       const rawDate = item.ngay || item["Ngày"];
       const dateStr = toInputString(rawDate);
 
       const rawAmount = item.soTien || item["Số tiền"];
 
       setFormData({
-        ngay: dateStr,
+        ngay: dateStr, 
         noiDung: item.noiDung || item["Nội dung"] || "",
         doiTuongThuChi: item.doiTuongThuChi || item["Hạng mục"] || "",
         nguoiCapNhat: item.nguoiCapNhat || item["Người cập nhật"] || "Ba",
         soTien: (rawAmount !== undefined && rawAmount !== null) ? new Intl.NumberFormat('vi-VN').format(rawAmount) : "",
         hinhAnh: item.hinhAnh || item["Chứng từ"] || "",
       });
+      
       const imgUrl = item.hinhAnh || item["Chứng từ"] || "";
       setPreview(imgUrl);
       setIsPdfPreview(imgUrl?.toLowerCase().endsWith('.pdf') || false);
-    } else {
-      setFormData({
-        ngay: getTodayInputString(), // Dùng hàm lấy ngày hôm nay chuẩn chuỗi
-        noiDung: "",
-        doiTuongThuChi: "",
-        nguoiCapNhat: "Ba",
-        soTien: "",
-        hinhAnh: "",
-      });
-      setPreview("");
-      setIsPdfPreview(false);
     }
   }, [item]);
 
+  // Xử lý thay đổi Input: Đảm bảo sạch sẽ và không gây chồng lấn
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
     if (name === "soTien") {
       const rawValue = value.replace(/\D/g, "");
       const formattedValue = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
       setFormData(prev => ({ ...prev, [name]: formattedValue }));
     } else {
+      // Đối với 'ngay', value trả về từ input type="date" luôn là YYYY-MM-DD
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
@@ -98,9 +92,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-      alert("Chỉ chọn ảnh hoặc PDF."); return;
-    }
 
     try {
       setUploading(true);
@@ -125,7 +116,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
         if (!isPdf) handleOCR(fileData.secure_url);
       }
     } catch (error) {
-      console.error("Upload error:", error);
       alert("Lỗi upload: " + error.message);
     } finally {
       setUploading(false);
@@ -142,10 +132,10 @@ function EditModal({ item, onClose, onSave, showToast }) {
     try {
       const data = await extractInfoWithAI(ocrSource);
       if (data && !data.error) {
-        // SỬA TẠI ĐÂY: Dùng toInputString để chuẩn hóa ngày AI đọc được
+        // AI nhận diện ngày cũng phải qua bộ lọc toInputString
         const formattedDate = data.ngay ? toInputString(data.ngay) : formData.ngay;
-
         const cleanAmount = data.soTien ? String(data.soTien).replace(/\D/g, "") : "";
+        
         setFormData(prev => ({
           ...prev,
           ngay: formattedDate,
@@ -163,7 +153,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
     const cleanSoTien = formData.soTien.toString().replace(/\./g, "");
     const parsedSoTien = parseInt(cleanSoTien) || 0;
 
@@ -172,14 +161,11 @@ function EditModal({ item, onClose, onSave, showToast }) {
       return;
     }
 
-    const finalData = {
+    onSave({
       ...item,
       ...formData,
-      soTien: parsedSoTien,
-      ngay: formData.ngay, // Lúc này đã là YYYY-MM-DD
-    };
-
-    onSave(finalData); 
+      soTien: parsedSoTien
+    }); 
   };
 
   const activeSuggestions = SUGGESTION_MAP[formData.doiTuongThuChi] || [];
@@ -199,7 +185,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
                 {isPdfPreview ? (
                   <div className="pdf-preview-placeholder"><FiFileText size={40} /><span>File PDF</span></div>
                 ) : (
-                  <img src={preview} alt="Chứng từ nghiệm thu" />
+                  <img src={preview} alt="Chứng từ" />
                 )}
                 {uploading && <div className="upload-overlay"><FiLoader className="spin" /></div>}
                 <button type="button" className="remove-image-btn" onClick={(e) => { e.stopPropagation(); setFormData(prev => ({...prev, hinhAnh: ""})); setPreview(""); }}>
@@ -220,7 +206,14 @@ function EditModal({ item, onClose, onSave, showToast }) {
           <div className="form-grid">
             <div className="form-group">
               <label>Ngày</label>
-              <input type="date" name="ngay" value={formData.ngay} onChange={handleChange} required />
+              {/* INPUT QUAN TRỌNG: value phải là YYYY-MM-DD sạch */}
+              <input 
+                type="date" 
+                name="ngay" 
+                value={formData.ngay} 
+                onChange={handleChange} 
+                required 
+              />
             </div>
             <div className="form-group">
               <label>Số tiền (VNĐ)</label>
@@ -245,7 +238,16 @@ function EditModal({ item, onClose, onSave, showToast }) {
               {activeSuggestions.length > 0 && (
                 <div className="suggestion-list" style={{marginTop: '8px', display: 'flex', gap: '5px', flexWrap: 'wrap'}}>
                   {activeSuggestions.map(s => (
-                    <button key={s.label} type="button" className="sugg-btn" onClick={() => setFormData(p => ({...p, noiDung: s.label, soTien: s.amount ? new Intl.NumberFormat('vi-VN').format(s.amount) : p.soTien}))} style={{fontSize: '12px', padding: '2px 8px', borderRadius: '10px', border: '1px solid #ddd', cursor: 'pointer'}}>
+                    <button 
+                      key={s.label} 
+                      type="button" 
+                      className="sugg-btn" 
+                      onClick={() => setFormData(p => ({
+                        ...p, 
+                        noiDung: s.label, 
+                        soTien: s.amount ? new Intl.NumberFormat('vi-VN').format(s.amount) : p.soTien
+                      }))}
+                    >
                       {s.label}
                     </button>
                   ))}
