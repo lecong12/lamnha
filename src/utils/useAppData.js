@@ -67,10 +67,11 @@ export const useAppData = (isLoggedIn) => {
             const cleanGD = resGD.map((row, index) => {
                 const c = {};
                 Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
+                const actualId = c.id || row.id || row.ID || row._RowNumber;
                 return {
-                    id: row._RowNumber || `gd_${index}`,
+                    id: actualId,
                     appSheetId: row._RowNumber,
-                    keyId: c.id || row.id || row.ID, // Đảm bảo lấy được key ID
+                    keyId: actualId,
                     ngay: c.ngay ? new Date(c.ngay) : new Date(),
                     soTien: Number(String(c.soTien || 0).replace(/\D/g, "")),
                     loaiThuChi: c.loaiThuChi || "Chi",

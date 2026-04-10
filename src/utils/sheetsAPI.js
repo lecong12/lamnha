@@ -163,7 +163,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     if (tableName === "GhiChu") {
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber, // Không dùng ID làm RowNumber nếu không phải số
-        "ID": payload.id || payload.keyId,
+        "id": payload.id || payload.keyId,
         "Ngày": dateStr,
         "Nội dung": payload.noiDung
       };
@@ -173,7 +173,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber,
-        "ID": rowId,
+        "id": rowId,
         "Ngày": dateStr,
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung || "",
@@ -250,16 +250,18 @@ export const addRowToSheet = async (tableName, payload, appId) => {
 
     if (tableName === "GhiChu") {
       formattedPayload = {
-        "ID": payload.id || `GC_${Date.now()}`,
+        "id": payload.id || `GC_${Date.now()}`,
         "Ngày": dateStr,
         "Nội dung": payload.noiDung
       };
     } else if (isGiaoDich) {
       // Đảm bảo số tiền luôn là số nguyên
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
+      // Tạo ID thuần số để khớp với công thức MAX + 1 và định dạng Number của AppSheet
+      const numericId = payload.id || payload.keyId || Date.now();
 
       formattedPayload = {
-        "ID": payload.id || payload.keyId || `GD_${Date.now()}`,
+        "id": numericId,
         "Ngày": dateStr,
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung || "",
@@ -326,9 +328,9 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
     // Đảm bảo gửi đúng cột khóa (Key Column) cho từng bảng
     let deleteRow = {};
     if (tableName === "GhiChu") {
-      deleteRow = { "ID": payloadId };
+      deleteRow = { "id": payloadId };
     } else if (tableName === "GiaoDich") {
-      deleteRow = { "ID": payloadId };
+      deleteRow = { "id": payloadId };
     } else {
       // Mặc định cho các bảng khác, gửi cả ID và id để tăng khả năng tương thích
       deleteRow = { "ID": payloadId, "id": payloadId };
