@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiSave, FiCamera, FiImage, FiLoader, FiFileText } from "react-icons/fi";
 import { extractInfoWithAI } from "../utils/aiService";
-import { toInputString } from "../utils/dateUtils";
+import { toInputString, getTodayInputString } from "../utils/dateUtils";
 import "./EditModal.css";
 
 // Danh sách hạng mục ngân sách
@@ -52,10 +52,10 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const [isPdfPreview, setIsPdfPreview] = useState(false);
 
   useEffect(() => {
-    // Hỗ trợ cả tên biến cũ và tên cột Tiếng Việt từ AppSheet
     if (item && (item.id || item._id || item.appSheetId)) {
+      // SỬA TẠI ĐÂY: Ép ngày về chuỗi YYYY-MM-DD ngay từ đầu
       const rawDate = item.ngay || item["Ngày"];
-      const dateStr = toInputString(rawDate) || toInputString(new Date());
+      const dateStr = toInputString(rawDate);
 
       const rawAmount = item.soTien || item["Số tiền"];
 
@@ -72,7 +72,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
       setIsPdfPreview(imgUrl?.toLowerCase().endsWith('.pdf') || false);
     } else {
       setFormData({
-        ngay: new Date().toISOString().split('T')[0],
+        ngay: getTodayInputString(), // Dùng hàm lấy ngày hôm nay chuẩn chuỗi
         noiDung: "",
         doiTuongThuChi: "",
         nguoiCapNhat: "Ba",
@@ -142,6 +142,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
     try {
       const data = await extractInfoWithAI(ocrSource);
       if (data && !data.error) {
+        // SỬA TẠI ĐÂY: Dùng toInputString để chuẩn hóa ngày AI đọc được
         const formattedDate = data.ngay ? toInputString(data.ngay) : formData.ngay;
 
         const cleanAmount = data.soTien ? String(data.soTien).replace(/\D/g, "") : "";
@@ -172,13 +173,12 @@ function EditModal({ item, onClose, onSave, showToast }) {
     }
 
     const finalData = {
-      ...item, // Giữ lại metadata quan trọng như appSheetId
+      ...item,
       ...formData,
       soTien: parsedSoTien,
-      ngay: formData.ngay,
+      ngay: formData.ngay, // Lúc này đã là YYYY-MM-DD
     };
 
-    console.log("Submit Form Data:", finalData);
     onSave(finalData); 
   };
 
@@ -199,7 +199,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
                 {isPdfPreview ? (
                   <div className="pdf-preview-placeholder"><FiFileText size={40} /><span>File PDF</span></div>
                 ) : (
-                  <img src={preview} alt="Chứng từ" />
+                  <img src={preview} alt="Chứng từ nghiệm thu" />
                 )}
                 {uploading && <div className="upload-overlay"><FiLoader className="spin" /></div>}
                 <button type="button" className="remove-image-btn" onClick={(e) => { e.stopPropagation(); setFormData(prev => ({...prev, hinhAnh: ""})); setPreview(""); }}>
