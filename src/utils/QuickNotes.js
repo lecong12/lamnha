@@ -15,8 +15,8 @@ function QuickNotes({ showToast }) {
   const loadNotes = async () => {
     setLoading(true);
     try {
-      // Giả định bảng tên là "GhiChu" trong AppSheet
-      const res = await fetchTableData("GhiChu", APP_ID);
+      // Đảm bảo tên bảng khớp 100% với AppSheet (VD: "GhiChu" hoặc "Ghi Chu")
+      const res = await fetchTableData("GhiChu", APP_ID); 
       if (res.success) {
         // Chuẩn hóa dữ liệu đầu vào: Map các tên cột Tiếng Việt/AppSheet sang tên biến code
         const mappedNotes = (res.data || []).map(item => ({
