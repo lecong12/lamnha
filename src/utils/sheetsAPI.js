@@ -304,13 +304,14 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     // Nếu bạn muốn AppSheet tự tạo ID (UNIQUEID), hãy cấu hình trong AppSheet Editor Initial Value.
     // Ở đây ta vẫn gửi một ID duy nhất để đảm bảo API không bị từ chối.
     const finalKey = formatRowId(payload.id || payload.keyId || `GC_${Date.now()}`);
-    const idCols = getAppSheetColumnNames(tableName, 'id', ['id', 'ID', 'TT', 'STT', 'Mã']);
-    formattedPayload[idCols[0]] = finalKey;
+    const idCols = getAppSheetColumnNames(tableName, 'id', ['id', 'ID', 'TT', 'STT', 'Mã', 'ma']);
+    // Gửi Key vào tất cả các cột tiềm năng để đảm bảo trúng đích Key Column của AppSheet
+    idCols.forEach(col => { formattedPayload[col] = finalKey; });
     
     // 2. Map Ngày (luôn ép về YYYY-MM-DD để gửi API)
     const formattedDate = toInputString(payload.ngay || payload["Ngày"]);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
-        formattedPayload[colName] = formattedDate;
+        if (formattedDate) formattedPayload[colName] = formattedDate;
     });
 
     // 3. Map Nội dung/Dữ liệu đặc thù
@@ -356,6 +357,9 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         delete formattedPayload[key];
       }
     });
+
+    // Log để debug khi cần
+    console.log(`Đang gửi Action:Add tới bảng ${tableName}:`, formattedPayload);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
