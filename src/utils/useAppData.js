@@ -129,6 +129,7 @@ export const useAppData = (isLoggedIn) => {
         const result = await updateStageInSheet(updatedStage, APP_ID);
 
         if (!result.success) {
+            console.error("Lỗi cập nhật tiến độ:", result.message);
             setTienDo(originalTienDo); // Revert on failure
         }
         return result;

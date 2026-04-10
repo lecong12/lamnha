@@ -121,10 +121,10 @@ export const fetchStages = async (appId) => {
         status: row[statusKey] || row.status || "Chưa bắt đầu",
         ngayBatDau: toSafeDate(row[startKey] || row.ngayBatDau), 
         ngayKetThuc: toSafeDate(row[endKey] || row.ngayKetThuc),
-        // Hỗ trợ lưu trữ và hiển thị tối đa 6 ảnh (ngăn cách bởi dấu phẩy trong AppSheet)
+        // Chuyển chuỗi URL (ngăn cách bởi dấu phẩy) thành mảng, làm sạch từng link để hiển thị
         anhNghiemThu: typeof row[finalImgKey] === 'string' 
           ? row[finalImgKey].split(',').map(url => getCleanLink(url.trim())).filter(Boolean).slice(0, 6)
-          : (row[finalImgKey] ? [getCleanLink(row[finalImgKey])] : []),
+          : (row[finalImgKey] ? [getCleanLink(String(row[finalImgKey]))] : []),
       };
     })
     .sort((a, b) => {
@@ -157,15 +157,21 @@ export const updateStageInSheet = async (stage, appId) => {
     // Sử dụng tên cột Trạng thái đã tìm thấy lúc Fetch
     const statusColumnName = stage.statusColumn || 'status';
 
+    // Làm sạch và chuẩn hóa danh sách ảnh trước khi gửi để đảm bảo không dính rác JSON hoặc URL sai định dạng
+    const cleanedImages = Array.isArray(stage.anhNghiemThu) 
+      ? stage.anhNghiemThu.map(url => getCleanLink(url)).filter(Boolean).join(',') 
+      : (getCleanLink(stage.anhNghiemThu) || "");
+
     const editData = [{
-      "_RowNumber": stage.appSheetId, // Gửi kèm RowNumber để hỗ trợ tìm kiếm
       [keyColumnName]: String(stage.keyId), // Dùng đúng tên cột Key tìm được (id, ID, TT...)
       [statusColumnName]: stage.status,
-      // Chuyển mảng ảnh thành chuỗi ngăn cách bởi dấu phẩy để lưu vào Sheet
-      [imgColumnName]: Array.isArray(stage.anhNghiemThu) 
-        ? stage.anhNghiemThu.join(',') 
-        : (stage.anhNghiemThu || ""),
+      [imgColumnName]: cleanedImages,
     }];
+
+    // Chỉ gửi kèm _RowNumber nếu cột Key không phải là ID chính để tăng độ chính xác khi xác định dòng
+    if (stage.appSheetId && keyColumnName !== 'id' && keyColumnName !== 'ID') {
+      editData[0]["_RowNumber"] = stage.appSheetId;
+    }
 
     // Log dữ liệu gửi đi để kiểm tra xem có link ảnh chưa
     console.log("Đang gửi cập nhật tiến độ lên AppSheet:", JSON.stringify(editData, null, 2));
@@ -187,7 +193,7 @@ export const updateStageInSheet = async (stage, appId) => {
       body: JSON.stringify({ 
         Action: "Edit", 
         Properties: {
-          Locale: "en-US", // Thống nhất dùng en-US cho API
+          Locale: "en-GB", // Thống nhất en-GB (DD/MM) để khớp với Find action ở fetchStages
           Timezone: "Asia/Ho_Chi_Minh",
         }, 
         Rows: editData 
@@ -207,7 +213,8 @@ export const updateStageInSheet = async (stage, appId) => {
         responseData = JSON.parse(responseText);
         // Kiểm tra xem AppSheet có thực sự cập nhật dòng nào không (nếu API có trả về Rows)
         if (responseData.Rows && responseData.Rows.length === 0) {
-          console.warn(`Cảnh báo: AppSheet trả về danh sách rỗng. Có thể sai Key '${keyColumnName}' hoặc '_RowNumber'.`);
+          console.error(`Lỗi cập nhật: AppSheet không tìm thấy dòng với Key '${stage.keyId}'.`);
+          return { success: false, message: "Không tìm thấy dòng để cập nhật trên AppSheet." };
         }
       } catch (error) {
         console.warn("Lỗi parse JSON từ AppSheet (nhưng request có thể đã thành công):", error);
