@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiCamera, FiLoader, FiSave, FiX } from 'react-icons/fi';
+import { FiCamera, FiLoader, FiSave, FiX, FiTrash2 } from 'react-icons/fi';
 
 // Cấu hình Cloudinary
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
@@ -15,7 +15,13 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
 
   const handleFileSelect = (e, stageId) => {
     const file = e.target.files[0];
-    if (!file) return;
+    const stage = stages.find(s => s.id === stageId);
+    const currentCount = Array.isArray(stage?.anhNghiemThu) ? stage.anhNghiemThu.length : 0;
+
+    if (!file || currentCount >= 6) {
+      if (currentCount >= 6) alert("Đã đạt giới hạn 6 ảnh cho giai đoạn này.");
+      return;
+    }
     if (!file.type.startsWith("image/")) {
       alert("Vui lòng chỉ chọn file ảnh.");
       return;
@@ -42,29 +48,13 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
     const { file } = pendingFiles[stageId] || {};
     if (!file) return;
 
-    const notify = (message, type = "info") => {
-      if (showToast) showToast(message, type);
-      else alert(message);
-    };
-
     try {
       setUploadingStageId(stageId);
       const data = new FormData();
       data.append("file", file);
       data.append("upload_preset", UPLOAD_PRESET);
-      // data.append("resource_type", "image"); // Mặc định là image, không cần gửi auto
-      notify("Đang upload ảnh...", "info");
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { 
-        method: "POST", 
-        body: data, 
-        signal: controller.signal 
-      });
-      clearTimeout(timeoutId);
-
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: data });
       const text = await res.text();
       if (!res.ok) {
         throw new Error(text || `Lỗi HTTP ${res.status}`);
@@ -73,10 +63,14 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
       const fileData = text ? JSON.parse(text) : {};
 
       if (fileData.secure_url) {
-        // Gửi đúng tên cột "Ảnh nghiệm thu" lên AppSheet
-        const result = await onUpdateStage(stageId, { "Ảnh nghiệm thu": fileData.secure_url });
+        const stage = stages.find(s => s.id === stageId);
+        const currentImages = Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu : [];
+        // Thêm ảnh mới vào mảng hiện có và giới hạn 6
+        const newImages = [...currentImages, fileData.secure_url].slice(0, 6);
+        
+        const result = await onUpdateStage(stageId, { [stage.imgColumn || "Ảnh nghiệm thu"]: newImages.join(',') });
         if (result && result.success) {
-          notify("Lưu thành công!", "success");
+          showToast?.("Đã thêm ảnh thành công!", "success");
           handleCancelUpload(stageId);
         } else {
           throw new Error(result.message || "Không thể lưu link ảnh.");
@@ -85,14 +79,20 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
         throw new Error(fileData.error?.message || "Lỗi upload Cloudinary.");
       }
     } catch (error) {
-      let msg = "Lỗi upload: " + error.message;
-      if (error.name === 'AbortError') {
-        msg = "Upload thất bại: Quá thời gian chờ (Timeout).";
-      }
-      notify(msg, "error");
+      showToast?.("Lỗi upload: " + error.message, "error");
     } finally {
       setUploadingStageId(null);
     }
+  };
+
+  const handleDeleteImage = async (stageId, index) => {
+    if (!window.confirm("Xóa ảnh này?")) return;
+    const stage = stages.find(s => s.id === stageId);
+    const currentImages = Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu : [];
+    const newImages = currentImages.filter((_, i) => i !== index);
+    
+    const result = await onUpdateStage(stageId, { [stage.imgColumn || "Ảnh nghiệm thu"]: newImages.join(',') });
+    if (result?.success) showToast?.("Đã xóa ảnh", "success");
   };
 
   return (

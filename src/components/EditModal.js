@@ -58,7 +58,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
     nguoiCapNhat: "", // Bổ sung trường người cập nhật
     soTien: "",
     hinhAnh: "", // Thêm trường hình ảnh
-    ghiChu: "", // Bổ sung trường ghi chú
   });
   const [uploading, setUploading] = useState(false);
   const [ocrScanning, setOcrScanning] = useState(false);
@@ -77,7 +76,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
         // Format số tiền khi load dữ liệu (VD: 1000000 => 1.000.000)
         soTien: item.soTien ? new Intl.NumberFormat('vi-VN').format(item.soTien) : "",
         hinhAnh: item.hinhAnh || "",
-        ghiChu: item.ghiChu || "",
       });
       setPreview(item.hinhAnh || "");
       setIsPdfPreview(item.hinhAnh ? item.hinhAnh.toLowerCase().endsWith('.pdf') : false);
@@ -192,7 +190,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
     showToast("AI đang phân tích hóa đơn...", "info");
 
     try {
-      const data = await extractInfoWithAI(ocrSource, 'invoice');
+      const data = await extractInfoWithAI(ocrSource);
       
       if (data && !data.error) {
         const shopInfo = data.ten || "";
@@ -244,7 +242,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
       ...formData,
       ngay: new Date(formData.ngay),
       soTien: isNaN(parsedSoTien) ? 0 : parsedSoTien,
-      ghiChu: formData.ghiChu || ""
     };
 
     onSave(finalData);
@@ -407,18 +404,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Hàng 4: Ghi chú */}
-            <div className="form-group full-width">
-              <label>Ghi chú / Lưu ý thêm</label>
-              <textarea
-                name="ghiChu"
-                value={formData.ghiChu}
-                onChange={handleChange}
-                placeholder="Nhập ghi chú nếu có (Vd: Hàng trả sau, đã thanh toán...)"
-                rows="2"
-              />
             </div>
 
             {/* Hidden Input cho Link Ảnh */}
