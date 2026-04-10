@@ -10,7 +10,12 @@ export const extractInfoWithAI = async (source) => {
       body: JSON.stringify({ imageUrl: source })
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    if (!text || !text.trim()) {
+      throw new Error("Không nhận được phản hồi từ AI server.");
+    }
+
+    const data = JSON.parse(text);
     if (data.error) throw new Error(data.error);
     return data;
   } catch (error) {
