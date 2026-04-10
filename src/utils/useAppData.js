@@ -120,11 +120,11 @@ export const useAppData = (isLoggedIn) => {
         const stageToUpdate = tienDo.find(s => s.id === stageId);
         if (!stageToUpdate) return { success: false, message: "Không tìm thấy giai đoạn" };
 
-        // Xử lý đặc biệt cho ảnh: Nếu UI gửi 'hinhAnh', ta đưa nó vào mảng 'anhNghiemThu'
+        // Đảm bảo nếu có hinhAnh mới từ upload, nó sẽ được ưu tiên
         let finalUpdates = { ...updates };
-        if (updates.hinhAnh && (!updates.anhNghiemThu || updates.anhNghiemThu.length === 0)) {
-            // Nếu là ảnh mới từ upload, đưa vào mảng để đồng bộ với stagesAPI
-            finalUpdates.anhNghiemThu = [updates.hinhAnh];
+        if (updates.hinhAnh) {
+            // Cập nhật cả mảng để đồng bộ hiển thị ngay trên UI
+            finalUpdates.anhNghiemThu = [updates.hinhAnh]; 
         }
 
         const updatedStage = { ...stageToUpdate, ...finalUpdates };

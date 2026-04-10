@@ -53,7 +53,7 @@ export const getCleanLink = (rawLink) => {
     }
 
     // 4. Cắt bỏ các ký tự rác ở cuối (như %22, dấu ngoặc, hoặc text dư thừa sau phần mở rộng file)
-    const match = cleanUrl.match(/\.(pdf|jpg|jpeg|png|webp)/i);
+    const match = cleanUrl.match(/\.(pdf|jpg|jpeg|png|webp|heic|heif)/i);
     if (match) {
       const extensionIndex = cleanUrl.indexOf(match[0]);
       return cleanUrl.substring(0, extensionIndex + match[0].length);

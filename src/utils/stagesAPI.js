@@ -157,14 +157,18 @@ export const updateStageInSheet = async (stage, appId) => {
     // Sử dụng tên cột Trạng thái đã tìm thấy lúc Fetch
     const statusColumnName = stage.statusColumn || 'status';
 
-    // Xác định nguồn ảnh: Ưu tiên mảng anhNghiemThu, nếu rỗng thì thử lấy từ hinhAnh (từ Modal upload)
-    let rawImages = stage.anhNghiemThu;
-    if ((!rawImages || rawImages.length === 0) && stage.hinhAnh) {
+    // Xác định nguồn ảnh: Ưu tiên hinhAnh (link mới nhất từ upload) nếu có
+    let rawImages = [];
+    if (stage.hinhAnh) {
+      // Nếu có hinhAnh mới, ta dùng nó (có thể gộp với ảnh cũ nếu cần, ở đây ta ưu tiên ảnh mới nhất)
       rawImages = [stage.hinhAnh];
+    } else if (Array.isArray(stage.anhNghiemThu) && stage.anhNghiemThu.length > 0) {
+      // Nếu không có upload mới, dùng danh sách ảnh cũ
+      rawImages = stage.anhNghiemThu;
     }
 
     // Làm sạch và chuẩn hóa danh sách ảnh trước khi gửi để đảm bảo không dính rác JSON hoặc URL sai định dạng
-    const cleanedImages = Array.isArray(rawImages) 
+    const cleanedImages = rawImages.length > 0
       ? rawImages.map(url => getCleanLink(url)).filter(Boolean).join(',') 
       : (getCleanLink(rawImages) || "");
 
