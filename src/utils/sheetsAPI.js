@@ -31,10 +31,14 @@ export const getCleanLink = (rawLink) => {
   let current = String(rawLink).trim();
 
   try {
-    // 1. Giải mã JSON lồng nhau (AppSheet đôi khi bọc link trong JSON {"Url": "...", "LinkText": "..."})
-    while (current.startsWith('{') || current.includes('{"Url"')) {
+    // 1. Giải mã JSON lồng nhau với cơ chế bảo vệ vòng lặp
+    let iterations = 0;
+    while ((current.startsWith('{') || current.includes('{"Url"')) && iterations < 5) {
+      const last = current;
       const parsed = JSON.parse(current);
       current = (parsed.Url || parsed.LinkText || current).trim();
+      if (current === last) break; 
+      iterations++;
     }
   } catch (e) {
     // Nếu không parse được JSON, cứ tiếp tục để tìm marker Cloudinary bên dưới

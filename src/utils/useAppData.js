@@ -124,7 +124,8 @@ export const useAppData = (isLoggedIn) => {
         if (updates.hinhAnh) {
             // Cập nhật mảng hiển thị ngay lập tức trên UI (gộp ảnh mới vào ảnh cũ)
             const currentImages = Array.isArray(stageToUpdate.anhNghiemThu) ? stageToUpdate.anhNghiemThu : [];
-            finalUpdates.anhNghiemThu = [...currentImages, updates.hinhAnh].slice(0, 6);
+            const cleanNewImg = updates.hinhAnh;
+            finalUpdates.anhNghiemThu = [...currentImages, cleanNewImg].slice(0, 6);
         }
 
         // Cập nhật Local State trước (Optimistic)
