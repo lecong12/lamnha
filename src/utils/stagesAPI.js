@@ -50,7 +50,7 @@ export const fetchStages = async (appId) => {
         "ApplicationAccessKey": APPSHEET_ACCESS_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ Action: "Find", Properties: { Locale: "en-US" }, Rows: [] }),
+      body: JSON.stringify({ Action: "Find", Properties: { Locale: "vi-VN", Timezone: "Asia/Ho_Chi_Minh" }, Rows: [] }),
     });
 
     if (!response.ok) {

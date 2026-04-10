@@ -1,5 +1,21 @@
 // AppSheet API Configuration
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
+
+// Helper: Đảm bảo ngày tháng luôn có định dạng YYYY-MM-DD an toàn cho AppSheet API
+const formatAppSheetDate = (val) => {
+  if (!val) return new Date().toISOString().split('T')[0]; // Mặc định là hôm nay nếu thiếu
+  if (val instanceof Date) return val.toISOString().split('T')[0];
+  
+  const s = String(val).trim();
+  if (!s) return new Date().toISOString().split('T')[0];
+  
+  if (s.includes('T')) return s.split('T')[0];
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+  
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? new Date().toISOString().split('T')[0] : d.toISOString().split('T')[0];
+};
+
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
 const normalizeKey = (key) => {
   const k = key.toLowerCase().trim();
@@ -134,18 +150,19 @@ export const fetchFileData = async (tableName, appId) => {
 export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
     // AppSheet cần ID để biết dòng nào cần sửa
-    if (!payload.id) {
+    if (!payload.id && !payload.keyId) {
         throw new Error("Thiếu 'id' để cập nhật dòng.");
     }
 
     // Khôi phục logic mapping ổn định: Chuyển từ camelCase sang tên cột thực tế của Sheet
     let formattedPayload = { ...payload };
+    const dateStr = formatAppSheetDate(payload.ngay);
     
     if (tableName === "GhiChu") {
       formattedPayload = {
-        "_RowNumber": payload._RowNumber || payload.id,
-        "ID": payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        "_RowNumber": payload.appSheetId || payload._RowNumber, // Không dùng ID làm RowNumber nếu không phải số
+        "ID": payload.id || payload.keyId,
+        "Ngày": dateStr,
         "Nội dung": payload.noiDung
       };
     } else if (tableName === "GiaoDich" || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH) {
@@ -153,17 +170,22 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
 
       formattedPayload = {
-        "_RowNumber": payload.appSheetId || payload._RowNumber || payload.id,
+        "_RowNumber": payload.appSheetId || payload._RowNumber,
         "ID": payload.keyId || payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        "Ngày": dateStr,
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
         "Số tiền": cleanAmount,
         "Hạng mục": payload.doiTuongThuChi,
-        "Hình ảnh": payload.hinhAnh,
+        "Hình ảnh": payload.hinhAnh || "",
         "Người cập nhật": payload.nguoiCapNhat,
-        "Ghi chú": payload.ghiChu
+        "Ghi chú": payload.ghiChu || ""
       };
+    }
+
+    // Xóa _RowNumber nếu nó không phải là số hợp lệ (tránh lỗi 400 cho system column)
+    if (formattedPayload._RowNumber && isNaN(formattedPayload._RowNumber)) {
+      delete formattedPayload._RowNumber;
     }
 
     // Thêm Timeout để tránh lỗi khi upload ảnh nặng
@@ -221,11 +243,12 @@ export const addRowToSheet = async (tableName, payload, appId) => {
   try {
     // Mapping cho bảng GhiChu để đảm bảo dữ liệu vào đúng cột tiếng Việt
     let formattedPayload = { ...payload };
+    const dateStr = formatAppSheetDate(payload.ngay);
 
     if (tableName === "GhiChu") {
       formattedPayload = {
-        "ID": payload.id,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        "ID": payload.id || `GC_${Date.now()}`,
+        "Ngày": dateStr,
         "Nội dung": payload.noiDung
       };
     } else if (tableName === "GiaoDich" || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH) {
@@ -233,15 +256,15 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
 
       formattedPayload = {
-        "ID": payload.id || payload.keyId,
-        "Ngày": payload.ngay instanceof Date ? payload.ngay.toISOString().split('T')[0] : String(payload.ngay || "").split('T')[0],
+        "ID": payload.id || payload.keyId || `GD_${Date.now()}`,
+        "Ngày": dateStr,
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
         "Số tiền": cleanAmount,
         "Hạng mục": payload.doiTuongThuChi,
-        "Hình ảnh": payload.hinhAnh,
+        "Hình ảnh": payload.hinhAnh || "",
         "Người cập nhật": payload.nguoiCapNhat,
-        "Ghi chú": payload.ghiChu
+        "Ghi chú": payload.ghiChu || ""
       };
     }
 
