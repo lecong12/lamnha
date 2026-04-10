@@ -43,7 +43,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 // API trích xuất thông tin bằng AI
 app.post('/api/gemini-extract', async (req, res) => {
   try {
-    const { imageUrl, type } = req.body; // type: 'card' hoặc 'invoice'
+    const { imageUrl } = req.body;
 
     if (!apiKey) {
       return res.status(500).json({ error: 'GEMINI_API_KEY chưa được cấu hình trên server.' });
@@ -83,27 +83,15 @@ app.post('/api/gemini-extract', async (req, res) => {
       else if (urlLower.includes(".webp")) mimeType = "image/webp";
     }
     
-    let prompt = "";
-    if (type === 'card') {
-      prompt = `Hãy đóng vai một máy quét OCR chuyên nghiệp. Phân tích ảnh danh thiếp (business card) hoặc biển hiệu cửa hàng (signage) Việt Nam này và trả về JSON:
-      {
-        "ten": "Tên công ty/cửa hàng/đơn vị (thường là chữ to nhất)",
-        "sdt": "Số điện thoại liên hệ (Chỉ lấy các chữ số, bắt đầu bằng số 0, dài 10-11 ký tự)",
-        "diaChi": "Địa chỉ đầy đủ",
-        "mst": "Mã số thuế"
-      }
-      Lưu ý: Tìm kỹ các từ khóa 'ĐT', 'Tel', 'Hotline', 'Zalo'. Nếu không thấy thông tin nào, hãy để \"\".`;
-    } else {
-      prompt = `Trích xuất thông tin từ hóa đơn/phiếu thu vật tư xây dựng này. Chỉ lấy thông tin của BÊN BÁN:
-      {
-        "ten": "Tên cửa hàng/doanh nghiệp bán",
-        "sdt": "Số điện thoại người bán (bắt đầu bằng 0)",
-        "ngay": "Ngày mua hàng (Định dạng YYYY-MM-DD)",
-        "soTien": 0,
-        "noiDung": "Tóm tắt vật tư (Ví dụ: 50 bao xi măng Hà Tiên, 2 khối cát)"
-      }
-      Lưu ý: soTien phải là số nguyên (ví dụ: 500000). KHÔNG lấy thông tin người mua.`;
+    const prompt = `Trích xuất thông tin từ hóa đơn/phiếu thu vật tư xây dựng này. Chỉ lấy thông tin của BÊN BÁN:
+    {
+      "ten": "Tên cửa hàng/doanh nghiệp bán",
+      "sdt": "Số điện thoại người bán (bắt đầu bằng 0)",
+      "ngay": "Ngày mua hàng (Định dạng YYYY-MM-DD)",
+      "soTien": 0,
+      "noiDung": "Tóm tắt vật tư (Ví dụ: 50 bao xi măng Hà Tiên, 2 khối cát)"
     }
+    Lưu ý: soTien phải là số nguyên (ví dụ: 500000). KHÔNG lấy thông tin người mua.`;
 
     const result = await model.generateContent([
       {

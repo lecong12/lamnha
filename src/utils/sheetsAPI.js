@@ -150,13 +150,15 @@ export const fetchFileData = async (tableName, appId) => {
 export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
     // AppSheet cần ID để biết dòng nào cần sửa
-    if (!payload.id && !payload.keyId) {
+    const rowId = payload.keyId || payload.id;
+    if (!rowId) {
         throw new Error("Thiếu 'id' để cập nhật dòng.");
     }
 
     // Khôi phục logic mapping ổn định: Chuyển từ camelCase sang tên cột thực tế của Sheet
     let formattedPayload = { ...payload };
     const dateStr = formatAppSheetDate(payload.ngay);
+    const isGiaoDich = tableName.toLowerCase().includes("giaodich") || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH;
     
     if (tableName === "GhiChu") {
       formattedPayload = {
@@ -165,13 +167,13 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         "Ngày": dateStr,
         "Nội dung": payload.noiDung
       };
-    } else if (tableName === "GiaoDich" || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH) {
+    } else if (isGiaoDich) {
       // Đảm bảo số tiền luôn là số nguyên, không được là NaN
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
 
       formattedPayload = {
         "_RowNumber": payload.appSheetId || payload._RowNumber,
-        "ID": payload.keyId || payload.id,
+        "ID": rowId,
         "Ngày": dateStr,
         "Loại Thu Chi": payload.loaiThuChi,
         "Nội dung": payload.noiDung,
@@ -202,7 +204,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "vi-VN", // Dùng vi-VN khi ghi để tương thích số liệu/ngày tháng tiếng Việt
+          Locale: "en-US", // Dùng en-US để dứt điểm lỗi định dạng ngày YYYY-MM-DD
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -244,6 +246,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     // Mapping cho bảng GhiChu để đảm bảo dữ liệu vào đúng cột tiếng Việt
     let formattedPayload = { ...payload };
     const dateStr = formatAppSheetDate(payload.ngay);
+    const isGiaoDich = tableName.toLowerCase().includes("giaodich") || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH;
 
     if (tableName === "GhiChu") {
       formattedPayload = {
@@ -251,7 +254,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         "Ngày": dateStr,
         "Nội dung": payload.noiDung
       };
-    } else if (tableName === "GiaoDich" || tableName === process.env.REACT_APP_APPSHEET_TABLE_GIAODICH) {
+    } else if (isGiaoDich) {
       // Đảm bảo số tiền luôn là số nguyên
       const cleanAmount = parseInt(String(payload.soTien || 0).replace(/\D/g, "")) || 0;
 
@@ -281,7 +284,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-US",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload], // Gửi payload đã chuẩn hóa
