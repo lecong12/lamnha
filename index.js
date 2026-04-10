@@ -64,24 +64,17 @@ app.post('/api/gemini-extract', async (req, res) => {
     let imageData;
     let mimeType = "image/jpeg";
 
-    // Xử lý nếu imageUrl là chuỗi Base64 từ BusinessScanner gửi lên
-    if (imageUrl.startsWith("data:")) {
-      const base64Data = imageUrl.split(",")[1];
-      imageData = base64Data;
-      mimeType = imageUrl.split(";")[0].split(":")[1];
-    } else {
-      // Nếu là URL (Cloudinary), tải về an toàn hơn
-      const imageResp = await fetch(imageUrl);
-      if (!imageResp.ok) throw new Error("Không thể tải ảnh từ Cloudinary");
-      
-      const arrayBuffer = await imageResp.arrayBuffer();
-      imageData = Buffer.from(arrayBuffer).toString("base64");
+    // Tải ảnh từ Cloudinary
+    const imageResp = await fetch(imageUrl);
+    if (!imageResp.ok) throw new Error("Không thể tải ảnh từ Cloudinary");
+    
+    const arrayBuffer = await imageResp.arrayBuffer();
+    imageData = Buffer.from(arrayBuffer).toString("base64");
 
-      const urlLower = imageUrl.toLowerCase();
-      if (urlLower.includes(".png")) mimeType = "image/png";
-      else if (urlLower.includes(".pdf")) mimeType = "application/pdf";
-      else if (urlLower.includes(".webp")) mimeType = "image/webp";
-    }
+    const urlLower = imageUrl.toLowerCase();
+    if (urlLower.includes(".png")) mimeType = "image/png";
+    else if (urlLower.includes(".pdf")) mimeType = "application/pdf";
+    else if (urlLower.includes(".webp")) mimeType = "image/webp";
     
     const prompt = `Trích xuất thông tin từ hóa đơn/phiếu thu vật tư xây dựng này. Chỉ lấy thông tin của BÊN BÁN:
     {

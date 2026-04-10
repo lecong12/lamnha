@@ -180,8 +180,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         "Số tiền": cleanAmount,
         "Hạng mục": payload.doiTuongThuChi,
         "Hình ảnh": payload.hinhAnh || "",
-        "Người cập nhật": payload.nguoiCapNhat,
-        "Ghi chú": payload.ghiChu || ""
+        "Người cập nhật": payload.nguoiCapNhat
       };
     }
 
@@ -266,8 +265,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         "Số tiền": cleanAmount,
         "Hạng mục": payload.doiTuongThuChi,
         "Hình ảnh": payload.hinhAnh || "",
-        "Người cập nhật": payload.nguoiCapNhat,
-        "Ghi chú": payload.ghiChu || ""
+        "Người cập nhật": payload.nguoiCapNhat
       };
     }
 
