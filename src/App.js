@@ -74,17 +74,12 @@ function App() {
 
   const handleSaveEdit = async (updatedItem) => {
     try {
-      const isEdit = !!updatedItem.id;
-      const apiPayload = {
-        "id": isEdit ? (updatedItem.keyId || updatedItem.id) : Date.now(),
-        "Ngày": updatedItem.ngay instanceof Date ? updatedItem.ngay.toISOString().split("T")[0] : updatedItem.ngay,
-        "Hạng mục": updatedItem.doiTuongThuChi,
-        "Nội dung": updatedItem.noiDung,
-        "Số tiền": String(updatedItem.soTien || "0"),
-        "Người cập nhật": updatedItem.nguoiCapNhat || "",
-        "Chứng từ": updatedItem.hinhAnh || "",
-      };
-      const result = isEdit ? await updateRowInSheet("GiaoDich", apiPayload, APP_ID) : await addRowToSheet("GiaoDich", apiPayload, APP_ID);
+      // Đơn giản hóa: Gửi trực tiếp object updatedItem, sheetsAPI sẽ tự mapping đúng cột
+      const isEdit = !!(updatedItem.id || updatedItem.keyId || updatedItem.appSheetId);
+      const result = isEdit 
+        ? await updateRowInSheet("GiaoDich", updatedItem, APP_ID) 
+        : await addRowToSheet("GiaoDich", updatedItem, APP_ID);
+
       if (result.success) {
         showToast("Lưu thành công!", "success");
         setEditingItem(null);
