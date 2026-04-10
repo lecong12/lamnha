@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiCamera, FiLoader, FiSave, FiX, FiTrash2 } from 'react-icons/fi';
+import { FiCamera, FiLoader, FiSave, FiX } from 'react-icons/fi';
 
 // Cấu hình Cloudinary
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
@@ -83,16 +83,6 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
     } finally {
       setUploadingStageId(null);
     }
-  };
-
-  const handleDeleteImage = async (stageId, index) => {
-    if (!window.confirm("Xóa ảnh này?")) return;
-    const stage = stages.find(s => s.id === stageId);
-    const currentImages = Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu : [];
-    const newImages = currentImages.filter((_, i) => i !== index);
-    
-    const result = await onUpdateStage(stageId, { [stage.imgColumn || "Ảnh nghiệm thu"]: newImages.join(',') });
-    if (result?.success) showToast?.("Đã xóa ảnh", "success");
   };
 
   return (

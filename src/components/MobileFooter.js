@@ -1,5 +1,5 @@
 import React from "react";
-import { FiHome, FiList, FiGrid, FiCamera } from "react-icons/fi";
+import { FiHome, FiList, FiGrid } from "react-icons/fi";
 import "./MobileFooter.css";
 
 function MobileFooter({ activeTab, onTabChange }) {

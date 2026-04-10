@@ -13,8 +13,7 @@ import {
   FiFileText,
   FiBriefcase,
   FiMap,
-  FiTrendingUp, // Icon biểu đồ mới cho Tổng quan
-  FiCamera
+  FiTrendingUp // Icon biểu đồ mới cho Tổng quan
 } from 'react-icons/fi';
 import './Sidebar.css';
 
