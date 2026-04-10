@@ -26,7 +26,7 @@ const normalizeKey = (key) => {
 };
 
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
-const getCleanLink = (rawLink) => {
+export const getCleanLink = (rawLink) => {
   if (!rawLink) return "";
   let current = String(rawLink).trim();
 
@@ -248,7 +248,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
 
     if (tableName === "GhiChu") {
       formattedPayload = {
-        "id": payload.id || `GC_${Date.now()}`,
+        "ID": payload.id || `GC_${Date.now()}`,
         "Ngày": dateStr,
         "Nội dung": payload.noiDung
       };
@@ -259,7 +259,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       const numericId = payload.id || payload.keyId || Date.now();
 
       formattedPayload = {
-        "id": numericId,
+        "ID": numericId,
         "Ngày": dateStr,
         "Nội dung": payload.noiDung || "",
         "Số tiền": cleanAmount,

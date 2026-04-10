@@ -1,4 +1,5 @@
 import { toSafeDate as baseToSafeDate } from './dateUtils';
+import { getCleanLink } from './sheetsAPI';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 const STAGES_TABLE_NAME = process.env.REACT_APP_APPSHEET_TABLE_TIENDO || "TienDo"; // Tên bảng chứa dữ liệu tiến độ
 
@@ -122,8 +123,8 @@ export const fetchStages = async (appId) => {
         ngayKetThuc: toSafeDate(row[endKey] || row.ngayKetThuc),
         // Hỗ trợ lưu trữ và hiển thị tối đa 6 ảnh (ngăn cách bởi dấu phẩy trong AppSheet)
         anhNghiemThu: typeof row[finalImgKey] === 'string' 
-          ? row[finalImgKey].split(',').map(url => url.trim()).filter(Boolean).slice(0, 6)
-          : (row[finalImgKey] ? [row[finalImgKey]] : []),
+          ? row[finalImgKey].split(',').map(url => getCleanLink(url.trim())).filter(Boolean).slice(0, 6)
+          : (row[finalImgKey] ? [getCleanLink(row[finalImgKey])] : []),
       };
     })
     .sort((a, b) => {

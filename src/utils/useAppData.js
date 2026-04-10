@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchStages } from "./stagesAPI";
-import { fetchTableData, updateRowInSheet } from "./sheetsAPI";
+import { fetchStages, updateStageInSheet } from "./stagesAPI";
+import { fetchTableData, updateRowInSheet, addRowToSheet } from "./sheetsAPI";
 
 const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
 const ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
@@ -54,8 +54,8 @@ export const useAppData = (isLoggedIn) => {
         try {
             // Tải dữ liệu song song
             const [resGDResult, resNSResult, resTDResult] = await Promise.all([
-                fetchTableData(TABLE_GIAODICH, APP_ID, ACCESS_KEY),
-                fetchTableData(TABLE_NGANSACH, APP_ID, ACCESS_KEY),
+                fetchTableData(TABLE_GIAODICH, APP_ID),
+                fetchTableData(TABLE_NGANSACH, APP_ID),
                 fetchStages(APP_ID) // Dùng API riêng cho Tiến độ để lấy đúng cột
             ]);
 
@@ -123,16 +123,10 @@ export const useAppData = (isLoggedIn) => {
         const updatedStage = { ...stageToUpdate, ...updates };
         const newTienDo = tienDo.map((s) => s.id === stageId ? updatedStage : s);
         setTienDo(newTienDo);
-        
-        // Chuẩn bị payload gửi lên AppSheet
-        const payload = {
-            id: stageToUpdate.keyId, // Sử dụng keyId để xác định dòng cần sửa
-            ...updates // Gửi trực tiếp các trường cần cập nhật
-        };
 
-        // Gọi API updateRowInSheet mới (Dynamic)
-        // Sử dụng TABLE_TIENDO (mặc định "TienDo")
-        const result = await updateRowInSheet("TienDo", payload, APP_ID);
+        // Sử dụng hàm update chuyên biệt cho Tiến độ để đảm bảo xử lý đúng mảng ảnh và tên cột
+        // updatedStage đã chứa đầy đủ metadata (keyColumn, imgColumn...) từ bước fetchStages
+        const result = await updateStageInSheet(updatedStage, APP_ID);
 
         if (!result.success) {
             setTienDo(originalTienDo); // Revert on failure
@@ -148,8 +142,9 @@ export const useAppData = (isLoggedIn) => {
         setNganSach(prev => prev.map(i => i.id === item.id ? updatedItem : i));
 
         const payload = {
+            id: item.keyId, // Cần ID để updateRowInSheet xác định dòng
             "Hạng mục": item.keyId,
-            "Dự kiến": newDuKien
+            "Dự kiến (VNĐ)": newDuKien // Khớp với tên cột trong budgetAPI.js
         };
 
         const result = await updateRowInSheet(TABLE_NGANSACH, payload, APP_ID);
@@ -160,5 +155,32 @@ export const useAppData = (isLoggedIn) => {
         return result;
     };
 
-    return { data, setData, nganSach, tienDo, loading, error, fetchAllData, handleUpdateStage, handleUpdateBudget };
+    /**
+     * Xử lý lưu giao dịch (Tự động nhận diện Thêm mới hoặc Cập nhật)
+     */
+    const handleSaveTransaction = async (transactionData) => {
+        setLoading(true);
+        try {
+            let result;
+            // Nếu có appSheetId (_RowNumber) thì là bản ghi cũ -> Cập nhật
+            const isExisting = !!transactionData.appSheetId;
+
+            if (isExisting) {
+                result = await updateRowInSheet(TABLE_GIAODICH, transactionData, APP_ID);
+            } else {
+                // Thêm mới: Tạo ID tạm và mặc định loại là "Chi"
+                const newPayload = { ...transactionData, id: `GD_${Date.now()}`, loaiThuChi: "Chi" };
+                result = await addRowToSheet(TABLE_GIAODICH, newPayload, APP_ID);
+            }
+
+            if (result.success) {
+                await fetchAllData(); // Tải lại toàn bộ dữ liệu để cập nhật UI
+            }
+            return result;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { data, setData, nganSach, tienDo, loading, error, fetchAllData, handleUpdateStage, handleUpdateBudget, handleSaveTransaction };
 };
