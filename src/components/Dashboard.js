@@ -44,11 +44,15 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   // 2. Xác định ngày khởi công chính xác
   // Ưu tiên tìm hạng mục có chữ "Khởi công" để lấy đúng ngày 13/04
   const validStages = stages.filter(s => s.ngayBatDau);
+  // Lọc bỏ các dòng không có tên hoặc ngày bị lỗi parse (null)
+  const validStages = stages.filter(s => s.name && s.ngayBatDau);
   const startStage = validStages.find(s => s.name?.toLowerCase().includes("khởi công")) || validStages[0];
   const firstDate = startStage?.ngayBatDau || null;
   
   // Debug: Kiểm tra giá trị ngày thực tế mà code nhận được
   if (firstDate) console.log("DEBUG - Ngày khởi công:", toDisplayString(firstDate));
+  // Log giá trị để kiểm soát tuyệt đối
+  if (firstDate) console.log(`[Dashboard] Ngày gốc: ${startStage.name} | Năm: ${firstDate.getFullYear()} | Tháng: ${firstDate.getMonth() + 1}`);
 
   // Chuẩn hóa về 0h sáng ngày hôm nay để tính toán chính xác số ngày đã trôi qua
   const today = new Date();

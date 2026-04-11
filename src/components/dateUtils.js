@@ -15,9 +15,12 @@ export const toSafeDate = (value) => {
     const day = parseInt(vnMatch[1], 10);
     const month = parseInt(vnMatch[2], 10);
     const year = parseInt(vnMatch[3], 10);
-    // KIỂM TRA CHẶT CHẼ: Nếu tháng > 12 hoặc ngày > 31, đây là định dạng sai, không được tự suy diễn
-    if (month > 12 || day > 31) return null; 
-    return new Date(year, month - 1, day, 0, 0, 0);
+    
+    const d = new Date(year, month - 1, day, 0, 0, 0);
+    // Chặn lỗi tràn tháng (ví dụ tháng 13 nhảy sang năm sau)
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+    
+    return d;
   }
 
   // 2. Định dạng ISO: YYYY-MM-DD

@@ -12,9 +12,15 @@ export const toSafeDate = (value) => {
   // 1. Định dạng VN: DD/MM/YYYY - ƯU TIÊN TUYỆT ĐỐI
   const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
   if (vnMatch) {
-    const d = new Date(parseInt(vnMatch[3], 10), parseInt(vnMatch[2], 10) - 1, parseInt(vnMatch[1], 10), 0, 0, 0);
-    // Chỉ chấp nhận năm thực tế (2020 - 2030), loại bỏ các năm suy diễn như 2027 do lỗi kéo cell
-    if (d.getFullYear() >= 2020 && d.getFullYear() <= 2030) return d;
+    const day = parseInt(vnMatch[1], 10);
+    const month = parseInt(vnMatch[2], 10);
+    const year = parseInt(vnMatch[3], 10);
+    
+    const d = new Date(year, month - 1, day, 0, 0, 0);
+    // KIỂM TRA CHẶT CHẼ: Nếu tháng hoặc ngày sau khi tạo Date không khớp với input (do overflow) thì hủy
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+    
+    if (year >= 2020 && year <= 2035) return d;
     return null;
   }
 
