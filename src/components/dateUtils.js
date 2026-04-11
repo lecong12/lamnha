@@ -12,7 +12,12 @@ export const toSafeDate = (value) => {
   // 1. Định dạng VN: DD/MM/YYYY
   const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
   if (vnMatch) {
-    return new Date(parseInt(vnMatch[3]), parseInt(vnMatch[2]) - 1, parseInt(vnMatch[1]), 0, 0, 0);
+    const day = parseInt(vnMatch[1], 10);
+    const month = parseInt(vnMatch[2], 10);
+    const year = parseInt(vnMatch[3], 10);
+    // KIỂM TRA CHẶT CHẼ: Nếu tháng > 12 hoặc ngày > 31, đây là định dạng sai, không được tự suy diễn
+    if (month > 12 || day > 31) return null; 
+    return new Date(year, month - 1, day, 0, 0, 0);
   }
 
   // 2. Định dạng ISO: YYYY-MM-DD

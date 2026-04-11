@@ -9,10 +9,13 @@ export const toSafeDate = (value) => {
   // Làm sạch chuỗi: lấy phần ngày, loại bỏ giờ và ký tự rác
   let str = String(value).trim().split(/[ T]/)[0].replace(/[\\"]/g, "");
 
-  // 1. Định dạng VN/GB: DD/MM/YYYY (Ưu tiên vì chúng ta dùng Locale en-GB)
+  // 1. Định dạng VN: DD/MM/YYYY - ƯU TIÊN TUYỆT ĐỐI
   const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
   if (vnMatch) {
-    return new Date(parseInt(vnMatch[3], 10), parseInt(vnMatch[2], 10) - 1, parseInt(vnMatch[1], 10), 0, 0, 0);
+    const d = new Date(parseInt(vnMatch[3], 10), parseInt(vnMatch[2], 10) - 1, parseInt(vnMatch[1], 10), 0, 0, 0);
+    // Chỉ chấp nhận năm thực tế (2020 - 2030), loại bỏ các năm suy diễn như 2027 do lỗi kéo cell
+    if (d.getFullYear() >= 2020 && d.getFullYear() <= 2030) return d;
+    return null;
   }
 
   // 2. Định dạng ISO: YYYY-MM-DD

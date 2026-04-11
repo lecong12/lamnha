@@ -42,10 +42,13 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   }) || stages.slice().reverse().find(s => s.status?.toLowerCase().trim() === 'hoàn thành') || stages[0];
 
   // 2. Xác định ngày khởi công chính xác
-  // Lọc lấy các giai đoạn có tên và ngày hợp lệ
-  const validStages = stages.filter(s => s.name && s.ngayBatDau);
+  // Ưu tiên tìm hạng mục có chữ "Khởi công" để lấy đúng ngày 13/04
+  const validStages = stages.filter(s => s.ngayBatDau);
   const startStage = validStages.find(s => s.name?.toLowerCase().includes("khởi công")) || validStages[0];
   const firstDate = startStage?.ngayBatDau || null;
+  
+  // Debug: Kiểm tra giá trị ngày thực tế mà code nhận được
+  if (firstDate) console.log("DEBUG - Ngày khởi công:", toDisplayString(firstDate));
 
   // Chuẩn hóa về 0h sáng ngày hôm nay để tính toán chính xác số ngày đã trôi qua
   const today = new Date();
