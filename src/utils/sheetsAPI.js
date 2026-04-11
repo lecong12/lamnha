@@ -57,15 +57,6 @@ const getAppSheetColumnNames = (tableName, normalizedKey, defaultNames) => {
     return [defaultNames];
 };
 
-// Helper mới để làm sạch payload trước khi gửi: loại bỏ các key trung gian
-const cleanPayloadForAppSheet = (payload) => {
-  const reservedInternal = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'nguoiCapNhat', 'loaiThuChi', 'appSheetId', '_RowNumber', 'category', 'url'];
-  const cleaned = { ...payload };
-  reservedInternal.forEach(k => delete cleaned[k]);
-  return cleaned;
-};
-
-
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
 const getCleanLink = (rawLink) => {
   if (!rawLink) return "";
