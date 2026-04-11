@@ -41,13 +41,14 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     if (sortedStages.length === 0) return [];
 
-    // BƯỚC 2: Tìm ngày bắt đầu dự án (Chỉ lấy các ngày hợp lệ trong khoảng 2020-2030)
-    const startTimes = sortedStages
-      .map(s => toSafeDate(s.ngayBatDau)?.getTime())
-      .filter(t => t && t > 1577836800000 && t < 1893456000000); 
+    // BƯỚC 2: Xác định ngày bắt đầu dự án 
+    // Ưu tiên lấy ngày của dòng đầu tiên trong bảng tính thay vì tìm Min toàn bộ (để tránh sai lệch do nhập liệu)
+    const firstStageDate = toSafeDate(sortedStages[0]?.ngayBatDau)?.getTime();
     
-    // Nếu không có ngày nào hợp lệ, dùng ngày hiện tại làm mốc
-    const minTime = startTimes.length > 0 ? Math.min(...startTimes) : Date.now();
+    // Nếu dòng đầu không có ngày, mới tìm ngày nhỏ nhất trong các ngày hợp lệ
+    const validTimes = sortedStages.map(s => toSafeDate(s.ngayBatDau)?.getTime()).filter(t => t > 0);
+    const minTime = firstStageDate || (validTimes.length > 0 ? Math.min(...validTimes) : Date.now());
+
     const dMin = new Date(minTime);
     // Chuẩn hóa về 0h00 sáng để tính toán khoảng cách ngày chính xác
     const projectStartDate = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate(), 0, 0, 0);

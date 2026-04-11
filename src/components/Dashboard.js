@@ -40,9 +40,9 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
     return status === 'đang thi công' || status === 'thi công' || status === 'đang thực hiện';
   }) || stages.slice().reverse().find(s => s.status?.toLowerCase().trim() === 'hoàn thành') || stages[0];
 
-  // 2. Tính toán ngày thi công (từ ngày bắt đầu mục đầu tiên)
-  const startDates = stages.map(s => s.ngayBatDau).filter(Boolean);
-  const firstDate = startDates.length > 0 ? new Date(Math.min(...startDates.map(d => d.getTime()))) : null;
+  // 2. Xác định ngày khởi công (Lấy từ hạng mục đầu tiên trong danh sách đã sắp xếp)
+  // Ưu tiên ngày của dòng đầu tiên để tránh sai lệch nếu có hạng mục khác nhập sai ngày
+  const firstDate = (stages.length > 0 && stages[0].ngayBatDau) ? stages[0].ngayBatDau : null;
   const daysElapsed = firstDate ? Math.floor((new Date() - firstDate) / (1000 * 60 * 60 * 24)) + 1 : 0;
 
   // 3. Tính toán Ngân sách
