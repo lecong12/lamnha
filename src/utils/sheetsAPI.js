@@ -44,11 +44,25 @@ const columnMapping = {
 // Helper để lấy tên cột AppSheet thực tế hoặc danh sách fallback
 const getAppSheetColumnNames = (tableName, normalizedKey, defaultNames) => {
     const mapping = columnMapping[tableName] || {};
-    if (mapping[normalizedKey]) {
-        return [mapping[normalizedKey]]; // If mapped, return the exact mapped name in an array
+    // Nếu đã có mapping từ fetchTableData, CHỈ trả về tên cột đó
+    if (mapping[normalizedKey]) return [mapping[normalizedKey]];
+
+    // Nếu chưa có mapping (Fetch chưa chạy), chỉ lấy 1 cái tên hợp lý nhất từ fallback
+    // Không nên gửi cả mảng tên cột vì AppSheet sẽ từ chối nếu cột không tồn tại
+    if (Array.isArray(defaultNames)) {
+        // Nếu là ID, thử tìm cái nào ngắn nhất hoặc 'ID'
+        if (normalizedKey === 'id') return [defaultNames[0]]; 
+        return [defaultNames[0]];
     }
-    // If not mapped, return all provided default names as fallbacks
-    return Array.isArray(defaultNames) ? defaultNames : [defaultNames];
+    return [defaultNames];
+};
+
+// Helper mới để làm sạch payload trước khi gửi: loại bỏ các key trung gian
+const cleanPayloadForAppSheet = (payload) => {
+  const reservedInternal = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'nguoiCapNhat', 'loaiThuChi', 'appSheetId', '_RowNumber', 'category', 'url'];
+  const cleaned = { ...payload };
+  reservedInternal.forEach(k => delete cleaned[k]);
+  return cleaned;
 };
 
 
@@ -204,12 +218,11 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     }
 
     // 2. Map Ngày
-    const formattedDate = toInputString(payload.ngay);
-    if (formattedDate) {
-      getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay', 'Date']).forEach(col => {
-        formattedPayload[col] = formattedDate;
-      });
-    }
+    const d = payload.ngay;
+    const formattedDate = (d instanceof Date) ? toInputString(d) : toInputString(new Date(d));
+    getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay', 'Date']).forEach(col => {
+      formattedPayload[col] = formattedDate;
+    });
 
     // 3. Map Nội dung & Số tiền
     const noiDungVal = payload.noiDung || "";
@@ -243,18 +256,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       });
     }
 
-    // Giữ lại các cột khác từ payload nếu chúng không trùng với các key logic đã xử lý
-    Object.keys(payload).forEach(key => {
-      const normKey = normalizeKey(key);
-      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'nguoiCapNhat', 'appSheetId'];
-      if (!reserved.includes(normKey) && formattedPayload[key] === undefined) {
-        formattedPayload[key] = payload[key];
-      }
-    });
-
-    Object.keys(formattedPayload).forEach(key => 
-      (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') && delete formattedPayload[key]
-    );
+    // Làm sạch: Chỉ giữ lại các cột đã map thành công
+    Object.keys(formattedPayload).forEach(key => (formattedPayload[key] === undefined || key === 'undefined') && delete formattedPayload[key]);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 giây
@@ -312,12 +315,13 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     let formattedPayload = {};
     
     // 1. Map ID/Key (Dùng fallback rộng để trúng Key Column)
-    const finalKey = formatRowId(payload.id || payload.keyId || `GC_${Date.now()}`);
+    const finalKey = payload.id || payload.keyId || `${tableName === "GhiChu" ? "GC" : "GD"}_${Date.now()}`;
     const idCols = getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã GD', 'Mã']);
     idCols.forEach(col => { formattedPayload[col] = finalKey; });
     
     // 2. Map Ngày
-    const formattedDate = toInputString(payload.ngay || new Date());
+    const d = payload.ngay || new Date();
+    const formattedDate = (d instanceof Date) ? toInputString(d) : toInputString(new Date(d));
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay', 'Date']).forEach(col => {
       formattedPayload[col] = formattedDate;
     });
@@ -354,24 +358,11 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       });
     }
     
-    // 4. Merge các trường khác
-    Object.keys(payload).forEach(key => {
-      const normKey = normalizeKey(key);
-      const reserved = ['id', 'keyId', 'ngay', 'noiDung', 'soTien', 'doiTuongThuChi', 'hinhAnh', 'loaiThuChi'];
-      if (!reserved.includes(normKey) && formattedPayload[key] === undefined) {
-        formattedPayload[key] = payload[key];
-      }
-    });
-
-    // Làm sạch dữ liệu rác
-    Object.keys(formattedPayload).forEach(key => {
-      if (formattedPayload[key] === undefined || formattedPayload[key] === null || key === 'undefined') {
-        delete formattedPayload[key];
-      }
-    });
+    // Làm sạch: Loại bỏ các cột không được định nghĩa rõ ràng
+    Object.keys(formattedPayload).forEach(key => (formattedPayload[key] === undefined || key === 'undefined') && delete formattedPayload[key]);
 
     // Log để debug khi cần
-    console.log(`Đang gửi Action:Add tới bảng ${tableName}:`, formattedPayload);
+    console.log(`[AppSheet API] Sending Add to ${tableName}:`, JSON.stringify(formattedPayload));
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
