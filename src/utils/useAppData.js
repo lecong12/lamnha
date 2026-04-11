@@ -115,34 +115,39 @@ export const useAppData = (isLoggedIn) => {
         fetchAllData();
     }, [fetchAllData]);
 
-    const handleUpdateStage = async (stageId, updates) => {
-        const originalTienDo = [...tienDo];
-        const stageToUpdate = tienDo.find(s => s.id === stageId);
-        if (!stageToUpdate) return { success: false, message: "Không tìm thấy giai đoạn" };
+    const handleUpdateStage = useCallback(async (stageId, updates) => {
+        const stage = tienDo.find(s => String(s.id) === String(stageId));
+        if (!stage) return { success: false, message: "Không tìm thấy giai đoạn" };
 
-        let finalUpdates = { ...updates };
+        // 1. Tính toán danh sách ảnh mới (Thêm mới từ hinhAnh hoặc dùng mảng anhNghiemThu nếu là xóa/sắp xếp)
+        let nextImages = updates.anhNghiemThu 
+            ? [...updates.anhNghiemThu] 
+            : [...(stage.anhNghiemThu || [])];
+        
         if (updates.hinhAnh) {
-            // Cập nhật mảng hiển thị ngay lập tức trên UI (gộp ảnh mới vào ảnh cũ)
-            const currentImages = Array.isArray(stageToUpdate.anhNghiemThu) ? stageToUpdate.anhNghiemThu : [];
-            const cleanNewImg = updates.hinhAnh;
-            finalUpdates.anhNghiemThu = [...currentImages, cleanNewImg].slice(0, 6);
+            const newUrl = String(updates.hinhAnh).trim();
+            if (newUrl && !nextImages.includes(newUrl)) {
+                nextImages.push(newUrl);
+            }
         }
 
-        // Cập nhật Local State trước (Optimistic)
-        const updatedStage = { ...stageToUpdate, ...finalUpdates };
-        const newTienDo = tienDo.map((s) => s.id === stageId ? updatedStage : s);
-        setTienDo(newTienDo);
+        // Lọc trùng, bỏ rỗng và giới hạn 6 ảnh
+        nextImages = [...new Set(nextImages)].filter(img => img && String(img).length > 10).slice(0, 6);
 
-        // Sử dụng hàm update chuyên biệt cho Tiến độ để đảm bảo xử lý đúng mảng ảnh và tên cột
-        // updatedStage đã chứa đầy đủ metadata (keyColumn, imgColumn...) từ bước fetchStages
+        // 2. Tạo object cập nhật hoàn chỉnh
+        const updatedStage = { ...stage, ...updates, anhNghiemThu: nextImages };
+
+        // 3. Cập nhật State ngay lập tức (Optimistic Update)
+        setTienDo(prev => prev.map(s => String(s.id) === String(stageId) ? updatedStage : s));
+
+        // 4. Gửi lên AppSheet
         const result = await updateStageInSheet(updatedStage, APP_ID);
-
         if (!result.success) {
-            console.error("Lỗi cập nhật tiến độ:", result.message);
-            setTienDo(originalTienDo); // Revert on failure
+            // Hoàn tác nếu lỗi
+            setTienDo(prev => prev.map(s => String(s.id) === String(stageId) ? stage : s));
         }
         return result;
-    };
+    }, [tienDo]);
 
     const handleUpdateBudget = async (item, newDuKien) => {
         const originalNganSach = [...nganSach];

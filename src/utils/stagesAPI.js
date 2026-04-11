@@ -121,10 +121,12 @@ export const fetchStages = async (appId) => {
         status: row[statusKey] || row.status || "Chưa bắt đầu",
         ngayBatDau: toSafeDate(row[startKey] || row.ngayBatDau), 
         ngayKetThuc: toSafeDate(row[endKey] || row.ngayKetThuc),
-        // Chuyển chuỗi URL (ngăn cách bởi dấu phẩy) thành mảng, làm sạch từng link để hiển thị
-        anhNghiemThu: typeof row[finalImgKey] === 'string' 
-          ? row[finalImgKey].split(',').map(url => getCleanLink(url.trim())).filter(Boolean).slice(0, 6)
-          : (row[finalImgKey] ? [getCleanLink(String(row[finalImgKey]))] : []),
+        // Tách link bằng dấu phẩy hoặc chấm phẩy, làm sạch và lọc link hợp lệ
+        anhNghiemThu: (row[finalImgKey] ? String(row[finalImgKey]) : "")
+          .split(/[;,]/)
+          .map(url => getCleanLink(url.trim()))
+          .filter(url => url && url.startsWith('http'))
+          .slice(0, 6),
       };
     })
     .sort((a, b) => {
@@ -157,17 +159,12 @@ export const updateStageInSheet = async (stage, appId) => {
     // Sử dụng tên cột Trạng thái đã tìm thấy lúc Fetch
     const statusColumnName = stage.statusColumn || 'status';
 
-    // Logic xử lý ảnh: Kết hợp ảnh cũ đã có và ảnh mới vừa upload (hinhAnh)
-    // Lấy danh sách hiện tại (đã được parse thành mảng ở bước fetch)
-    let images = Array.isArray(stage.anhNghiemThu) ? [...stage.anhNghiemThu] : [];
-    
-    // Nếu có ảnh mới từ Cloudinary, thêm vào danh sách
-    if (stage.hinhAnh && typeof stage.hinhAnh === 'string') {
-      images.push(stage.hinhAnh);
-    }
-
-    // Làm sạch các link (loại bỏ domain rác) và giới hạn tối đa 6 ảnh để tránh cell quá nặng
-    const cleanedImages = images.map(url => getCleanLink(url)).filter(Boolean).slice(0, 6).join(',');
+    // --- LOGIC GỘP ẢNH ỔN ĐỊNH ---
+    // Tin tưởng hoàn toàn vào mảng anhNghiemThu đã được handleUpdateStage xử lý
+    const imagesToSave = Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu : [];
+    const cleanedImages = imagesToSave
+      .filter(img => img && typeof img === 'string' && img.startsWith('http'))
+      .join(',');
 
     const editData = [{
       [keyColumnName]: String(stage.keyId), // Dùng đúng tên cột Key tìm được (id, ID, TT...)
