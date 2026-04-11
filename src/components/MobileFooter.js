@@ -1,13 +1,11 @@
 import React from "react";
-import { FiHome, FiList, FiCamera, FiFileText } from "react-icons/fi";
+import { FiHome, FiList } from "react-icons/fi";
 import "./MobileFooter.css";
 
 function MobileFooter({ activeTab, onTabChange }) {
   const tabs = [
     { id: "dashboard", icon: FiHome, label: "Tổng quan" },
     { id: "list", icon: FiList, label: "Danh sách" },
-    { id: "scanner", icon: FiCamera, label: "Quét Card" },
-    { id: "notes", icon: FiFileText, label: "Ghi chú" },
   ];
 
   const openZalo = () => {
