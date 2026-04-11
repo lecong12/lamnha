@@ -54,6 +54,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
   useEffect(() => {
     if (item && (item.id || item._id || item.appSheetId)) {
       const rawDate = item.ngay || item["Ngày"];
+      // toInputString sẽ chuyển từ DD/MM/YYYY (Sheets) sang YYYY-MM-DD (Input)
       const dateStr = toInputString(rawDate) || getTodayInputString();
       const rawAmount = item.soTien || item["Số tiền"];
 
@@ -109,7 +110,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
         if (!isPdf) await handleOCR(fileData.secure_url);
       }
     } catch (error) {
-      showToast?.("Lỗi tải ảnh lên", "error");
+      showToast?.("Lỗi tải ảnh", "error");
     } finally {
       setUploading(false);
     }
@@ -119,7 +120,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
     const ocrSource = url || formData.hinhAnh;
     if (!ocrSource || ocrSource.startsWith('blob:')) return;
     setOcrScanning(true);
-    showToast?.("AI đang phân tích...", "info");
+    showToast?.("AI đang đọc hóa đơn...", "info");
     try {
       const data = await extractInfoWithAI(ocrSource);
       if (data && !data.error) {
@@ -131,10 +132,10 @@ function EditModal({ item, onClose, onSave, showToast }) {
           soTien: cleanAmount ? new Intl.NumberFormat('vi-VN').format(cleanAmount) : prev.soTien,
           noiDung: [data.ten, data.sdt, data.noiDung].filter(Boolean).join(" - ")
         }));
-        showToast?.("AI nhận diện xong!", "success");
+        showToast?.("AI hoàn tất!", "success");
       }
     } catch (error) {
-      showToast?.("AI không đọc được ảnh.", "error");
+      showToast?.("AI gặp lỗi.", "error");
     } finally {
       setOcrScanning(false);
     }
@@ -143,32 +144,31 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 1. Làm sạch số tiền
     const cleanSoTien = formData.soTien.toString().replace(/\./g, "");
     const parsedSoTien = parseInt(cleanSoTien) || 0;
 
     if (!formData.doiTuongThuChi || !formData.noiDung.trim()) {
-      showToast?.("Vui lòng nhập đủ thông tin", "warning");
+      showToast?.("Vui lòng điền đủ thông tin", "warning");
       return;
     }
 
-    // 2. SỬA LỖI QUAN TRỌNG: Chuẩn hóa lại ngày tháng cho AppSheet
-    // Từ YYYY-MM-DD sang MM/DD/YYYY
-    let finalDate = formData.ngay;
+    // --- SỬA LỖI XUNG ĐỘT NGÀY THÁNG ---
+    // Chuyển từ YYYY-MM-DD sang DD/MM/YYYY để khớp với "ƯU TIÊN TUYỆT ĐỐI" của toSafeDate
+    let formattedDateToSend = formData.ngay; 
     if (formData.ngay.includes("-")) {
       const [y, m, d] = formData.ngay.split("-");
-      finalDate = `${m}/${d}/${y}`; 
+      formattedDateToSend = `${d}/${m}/${y}`; 
     }
 
     const finalData = {
       ...item,
       ...formData,
       soTien: parsedSoTien,
-      ngay: finalDate, // Gửi định dạng mà AppSheet hiểu
+      ngay: formattedDateToSend, // Gửi DD/MM/YYYY cho AppSheet
       loaiThuChi: formData.loaiThuChi || item?.loaiThuChi || "Chi"
     };
 
-    console.log("Dữ liệu gửi lên AppSheet:", finalData);
+    console.log("Submit Form Data:", finalData);
     onSave(finalData); 
   };
 
