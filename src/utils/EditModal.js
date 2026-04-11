@@ -1,18 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiSave, FiCamera, FiImage, FiLoader, FiFileText } from "react-icons/fi";
 import { extractInfoWithAI } from "../utils/aiService";
-import { toInputString } from "../utils/dateUtils";
 import "./EditModal.css";
 
-// Danh sách hạng mục ngân sách
+// Danh sách hạng mục ngân sách, đồng bộ với Sheet 'NganSach'
 const BUDGET_CATEGORIES = [
-  'Chuẩn bị', 'Thiết kế', 'Giám sát', 'Phần thô', 
-  'Nhân công', 'Hoàn thiện', 'Điện nước', 'Nội thất', 
-  'Phát sinh', 'Khác'
+  'Chuẩn bị',
+  'Thiết kế',
+  'Giám sát',
+  'Phần thô', 
+  'Nhân công', 
+  'Hoàn thiện', 
+  'Điện nước', 
+  'Nội thất', 
+  'Phát sinh',
+  'Khác'
 ];
 
-const UPDATER_OPTIONS = ['Ba', 'Mẹ'];
+const UPDATER_OPTIONS = [
+  'Ba',
+  'Mẹ'
+  ];
 
+// Danh sách gợi ý nội dung theo hạng mục
 const SUGGESTION_MAP = {
   'Nhân công': [
     { label: 'Công thợ nề', amount: 600000 },
@@ -32,8 +42,12 @@ const SUGGESTION_MAP = {
   ]
 };
 
+// Cấu hình Cloudinary (Lấy từ biến môi trường)
+// Loại bỏ dấu ngoặc kép nếu người dùng lỡ nhập trong file .env (ví dụ: "myname" -> myname)
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
 const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '');
+
+console.log("Cloudinary Config Loaded:", { cloudName: CLOUD_NAME ? "OK" : "MISSING", preset: UPLOAD_PRESET ? "OK" : "MISSING" });
 
 function EditModal({ item, onClose, onSave, showToast }) {
   const fileInputRef = useRef(null);
@@ -41,123 +55,164 @@ function EditModal({ item, onClose, onSave, showToast }) {
     ngay: "",
     noiDung: "",
     doiTuongThuChi: "",
-    nguoiCapNhat: "Ba",
+    nguoiCapNhat: "", // Bổ sung trường người cập nhật
     soTien: "",
-    hinhAnh: "",
-    loaiThuChi: "Chi",
+    hinhAnh: "", // Thêm trường hình ảnh
   });
-  
   const [uploading, setUploading] = useState(false);
   const [ocrScanning, setOcrScanning] = useState(false);
-  const [preview, setPreview] = useState("");
-  const [isPdfPreview, setIsPdfPreview] = useState(false);
+  const [preview, setPreview] = useState(""); // State để hiển thị ảnh ngay lập tức
+  const [isPdfPreview, setIsPdfPreview] = useState(false); // Lưu trạng thái loại file
 
   useEffect(() => {
-    // Hỗ trợ cả tên biến cũ và tên cột Tiếng Việt từ AppSheet
-    if (item && (item.id || item._id || item.appSheetId)) {
-      const rawDate = item.ngay || item["Ngày"];
-      const dateStr = toInputString(rawDate) || toInputString(new Date());
-
-      const rawAmount = item.soTien || item["Số tiền"];
-
+    if (item) {
+      // Nếu là item mới (chưa có ngày), dùng ngày hiện tại
+      const dateVal = item.ngay ? new Date(item.ngay) : new Date();
       setFormData({
-        ngay: dateStr,
-        noiDung: item.noiDung || item["Nội dung"] || "",
-        doiTuongThuChi: item.doiTuongThuChi || item["Hạng mục"] || "",
-        nguoiCapNhat: item.nguoiCapNhat || item["Người cập nhật"] || "Ba",
-        soTien: (rawAmount !== undefined && rawAmount !== null) ? new Intl.NumberFormat('vi-VN').format(rawAmount) : "",
-        hinhAnh: item.hinhAnh || item["Chứng từ"] || "",
-        loaiThuChi: item.loaiThuChi || "Chi",
+        ngay: dateVal.toISOString().split('T')[0],
+        noiDung: item.noiDung || "",
+        doiTuongThuChi: item.doiTuongThuChi || "",
+        nguoiCapNhat: item.nguoiCapNhat || "Ba", // Mặc định là Ba nếu chưa có
+        // Format số tiền khi load dữ liệu (VD: 1000000 => 1.000.000)
+        soTien: item.soTien ? new Intl.NumberFormat('vi-VN').format(item.soTien) : "",
+        hinhAnh: item.hinhAnh || "",
       });
-      const imgUrl = item.hinhAnh || item["Chứng từ"] || "";
-      setPreview(imgUrl);
-      setIsPdfPreview(imgUrl?.toLowerCase().endsWith('.pdf') || false);
-    } else {
-      setFormData({
-        ngay: new Date().toISOString().split('T')[0],
-        noiDung: "",
-        doiTuongThuChi: "",
-        nguoiCapNhat: "Ba",
-        soTien: "",
-        hinhAnh: "",
-        loaiThuChi: "Chi",
-      });
-      setPreview("");
-      setIsPdfPreview(false);
+      setPreview(item.hinhAnh || "");
+      setIsPdfPreview(item.hinhAnh ? item.hinhAnh.toLowerCase().endsWith('.pdf') : false);
     }
   }, [item]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
     if (name === "soTien") {
+      // Xóa tất cả ký tự không phải số
       const rawValue = value.replace(/\D/g, "");
+      // Thêm dấu chấm phân cách hàng nghìn
       const formattedValue = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-      setFormData(prev => ({ ...prev, [name]: formattedValue }));
+      setFormData((prev) => ({ ...prev, [name]: formattedValue }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
+  // Xử lý upload ảnh lên Cloudinary
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Kiểm tra định dạng file ảnh hoặc PDF
     if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-      alert("Chỉ chọn ảnh hoặc PDF."); return;
+      alert("Vui lòng chỉ chọn file ảnh hoặc PDF.");
+      return;
+    }
+
+    // Kiểm tra dung lượng file (Giới hạn 10MB của gói Free Cloudinary)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File ảnh quá lớn ( > 10MB). Vui lòng chọn ảnh nhỏ hơn để upload.");
+      return;
+    }
+
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+      console.error("Thiếu cấu hình Cloudinary:", { CLOUD_NAME, UPLOAD_PRESET });
+      alert(`Lỗi cấu hình Cloudinary!\n\n- Cloud Name: ${CLOUD_NAME || "TRỐNG"}\n- Upload Preset: ${UPLOAD_PRESET || "TRỐNG"}\n\nCách khắc phục:\n1. Kiểm tra file .env có dòng: REACT_APP_CLOUDINARY_UPLOAD_PRESET=...\n2. Nếu chạy Local: Tắt server rồi npm start lại.\n3. Nếu trên Vercel: Vào Settings -> Environment Variables thêm biến, sau đó Redeploy.`);
+      return;
     }
 
     try {
       setUploading(true);
+      
+      // Tạo preview cục bộ ngay lập tức
       const localUrl = URL.createObjectURL(file);
-      setPreview(localUrl);
       const isPdf = file.type === "application/pdf";
+      
+      setPreview(localUrl); // HIỂN THỊ ẢNH THẬT NGAY LẬP TỨC
       setIsPdfPreview(isPdf);
+
+      const resourceType = isPdf ? "raw" : "image";
 
       const data = new FormData();
       data.append("file", file);
       data.append("upload_preset", UPLOAD_PRESET);
-      const resourceType = isPdf ? "raw" : "image";
+      data.append("resource_type", resourceType); 
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { 
-        method: "POST", 
-        body: data 
-      });
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: data });
       
-      const fileData = await res.json();
+      // Kiểm tra phản hồi trước khi parse JSON để tránh lỗi "Unexpected end of JSON input"
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || `Lỗi Cloudinary (${res.status})`);
+      }
+
+      let fileData;
+      try { fileData = text ? JSON.parse(text) : {}; } 
+      catch (e) { throw new Error("Phản hồi từ server không phải JSON."); }
+
       if (fileData.secure_url) {
-        setFormData(prev => ({ ...prev, hinhAnh: fileData.secure_url }));
+        console.log("Upload thành công:", fileData.secure_url);
+        setFormData((prev) => ({ ...prev, hinhAnh: fileData.secure_url }));
+        
+        // Tự động trích xuất bằng AI sau khi upload thành công
         if (!isPdf) handleOCR(fileData.secure_url);
+      } else {
+        throw new Error(fileData.error?.message || `Lỗi HTTP: ${res.status}`);
       }
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Lỗi upload: " + error.message);
+      if (error.name === 'AbortError') {
+        alert("Upload thất bại: Mạng quá chậm hoặc mất kết nối.");
+      } else {
+        alert("Lỗi upload: " + error.message);
+      }
+      if (!formData.hinhAnh) {
+        setPreview(""); // Reset nếu lỗi và chưa có ảnh cũ
+        setIsPdfPreview(false);
+      }
     } finally {
       setUploading(false);
     }
   };
 
+  // Xử lý trích xuất bằng AI Service
   const handleOCR = async (url) => {
     const ocrSource = url || formData.hinhAnh;
-    if (!ocrSource || ocrSource.startsWith('blob:')) return;
+    if (!ocrSource) {
+      alert("Vui lòng tải ảnh lên trước khi quét.");
+      return;
+    }
+    
+    if (ocrSource.startsWith('blob:')) {
+      showToast("Đang chờ ảnh upload xong...", "info");
+      return;
+    }
 
     setOcrScanning(true);
-    showToast?.("AI đang phân tích...", "info");
+    showToast("AI đang phân tích hóa đơn...", "info");
 
     try {
-      const data = await extractInfoWithAI(ocrSource, 'invoice');
+      const data = await extractInfoWithAI(ocrSource);
+      
       if (data && !data.error) {
-        const formattedDate = data.ngay ? toInputString(data.ngay) : formData.ngay;
+        const shopInfo = data.ten || "";
+        const phoneInfo = data.sdt ? `(SĐT: ${data.sdt})` : "";
+        const detailText = data.noiDung || "";
+        const combinedNoiDung = [shopInfo, phoneInfo, detailText].filter(Boolean).join(" - ");
 
+        // Xử lý số tiền: Nếu AI trả về chuỗi có dấu chấm/phẩy thì làm sạch trước khi format
         const cleanAmount = data.soTien ? String(data.soTien).replace(/\D/g, "") : "";
+
         setFormData(prev => ({
           ...prev,
-          ngay: formattedDate,
+          ngay: data.ngay || prev.ngay,
           soTien: cleanAmount ? new Intl.NumberFormat('vi-VN').format(cleanAmount) : prev.soTien,
-          noiDung: [data.ten, data.sdt, data.noiDung].filter(Boolean).join(" - ")
+          noiDung: combinedNoiDung
         }));
-        showToast?.("AI nhận diện xong!", "success");
+        showToast("AI đã nhận diện thành công!", "success");
       }
     } catch (error) {
-      showToast?.("AI không đọc được ảnh.", "error");
+      console.error("OCR Error:", error);
+      // Hiển thị lỗi cụ thể để dễ debug
+      showToast(error.message || "AI không đọc được ảnh này.", "error");
     } finally {
       setOcrScanning(false);
     }
@@ -166,105 +221,207 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    const cleanSoTien = formData.soTien.toString().replace(/\./g, "");
-    const parsedSoTien = parseInt(cleanSoTien) || 0;
+    // 1. Validation: Kiểm tra Hạng mục
+    if (!formData.doiTuongThuChi) {
+      alert("Vui lòng chọn Hạng mục chi tiêu!");
+      return;
+    }
 
-    if (!formData.doiTuongThuChi || !formData.noiDung.trim() || parsedSoTien <= 0) {
-      showToast?.("Vui lòng nhập đủ thông tin và số tiền > 0", "warning");
+    // Xử lý số tiền an toàn hơn
+    const rawSoTien = formData.soTien ? formData.soTien.toString().replace(/[^0-9]/g, "") : "0";
+    const parsedSoTien = parseFloat(rawSoTien);
+
+    // 2. Validation: Kiểm tra Số tiền
+    if (parsedSoTien <= 0) {
+      alert("Vui lòng nhập Số tiền hợp lệ (lớn hơn 0)!");
       return;
     }
 
     const finalData = {
-      ...item, // Giữ lại metadata quan trọng như appSheetId
+      ...item,
       ...formData,
-      soTien: parsedSoTien,
-      ngay: formData.ngay,
-      loaiThuChi: "Chi"
+      ngay: new Date(formData.ngay),
+      soTien: isNaN(parsedSoTien) ? 0 : parsedSoTien,
     };
 
-    console.log("Submit Form Data:", finalData);
-    onSave(finalData); 
+    onSave(finalData);
   };
 
+  // Hàm focus chọn toàn bộ text khi click vào ô số tiền
+  const handleFocus = (e) => {
+    e.target.select();
+  };
+
+  // Lấy danh sách gợi ý dựa trên hạng mục đang chọn
   const activeSuggestions = SUGGESTION_MAP[formData.doiTuongThuChi] || [];
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{(item?.id || item?._id || item?.appSheetId) ? "Sửa giao dịch" : "Thêm giao dịch"}</h2>
-          <button className="close-btn" onClick={onClose}><FiX /></button>
+          <h2>{item && (item.id || item.appSheetId) ? "Chỉnh sửa giao dịch" : "Thêm mới giao dịch"}</h2>
+          <button className="close-btn" onClick={onClose}>
+            <FiX />
+          </button>
         </div>
         
+        {/* Khu vực Upload & Preview Ảnh */}
         <div className="image-upload-section">
           <div className="image-preview">
             {preview ? (
-              <div className="preview-container" onClick={() => !uploading && fileInputRef.current.click()}>
+              <div style={{ width: '100%', textAlign: 'center' }} className="preview-wrapper">
                 {isPdfPreview ? (
-                  <div className="pdf-preview-placeholder"><FiFileText size={40} /><span>File PDF</span></div>
+                  <a href={preview} target="_blank" rel="noreferrer" className="pdf-preview-placeholder">
+                    <FiFileText size={40} />
+                    <span>File PDF Chứng từ</span>
+                  </a>
                 ) : (
-                  <img src={preview} alt="Chứng từ" />
+                  <div className="preview-container" onClick={() => !uploading && fileInputRef.current.click()}>
+                    <img src={preview} alt="Chứng từ" />
+                    {uploading && <div className="upload-overlay" style={{ background: 'rgba(0,0,0,0.4)', color: '#fff' }}><FiLoader className="spin" /><span>Đang lưu...</span></div>}
+                    <button 
+                      type="button" 
+                      className="remove-image-btn" 
+                      onClick={(e) => { e.stopPropagation(); setFormData(prev => ({...prev, hinhAnh: ""})); setPreview(""); setIsPdfPreview(false); }}
+                    >
+                      <FiX />
+                    </button>
+                  </div>
                 )}
-                {uploading && <div className="upload-overlay"><FiLoader className="spin" /></div>}
-                <button type="button" className="remove-image-btn" onClick={(e) => { e.stopPropagation(); setFormData(prev => ({...prev, hinhAnh: ""})); setPreview(""); }}>
-                  <FiX />
-                </button>
+                {formData.hinhAnh && !formData.hinhAnh.startsWith('blob:') && (
+                  <div style={{ fontSize: '10px', color: '#16a34a', marginTop: '4px', wordBreak: 'break-all' }}>
+                    ✓ Đã đồng bộ link Cloudinary
+                  </div>
+                )}
               </div>
             ) : (
               <div className="upload-placeholder" onClick={() => fileInputRef.current.click()}>
                 {uploading ? <FiLoader className="spin" /> : <FiCamera size={32} />}
-                <span>{uploading ? "Đang tải..." : "Thêm ảnh/PDF"}</span>
+                <span>{uploading ? "Đang tải lên..." : "Thêm Ảnh/PDF Chứng từ"}</span>
               </div>
             )}
           </div>
-          <input ref={fileInputRef} type="file" accept="image/*,application/pdf" onChange={handleFileUpload} style={{ display: 'none' }} />
+          <input 
+            ref={fileInputRef}
+            type="file" 
+            accept="image/*,application/pdf" 
+            key={formData.hinhAnh || "new"} // Reset input khi ảnh thay đổi để cho phép chọn lại file cũ nếu cần
+            onChange={handleFileUpload} 
+            style={{ display: 'none' }} 
+          />
         </div>
 
         <form onSubmit={handleSubmit} className="edit-form">
           <div className="form-grid">
+            {/* Hàng 1: Ngày và Số tiền */}
             <div className="form-group">
-              <label>Ngày</label>
-              <input type="date" name="ngay" value={formData.ngay} onChange={handleChange} required />
+              <label>Ngày giao dịch</label>
+              <input
+                type="date"
+                name="ngay"
+                value={formData.ngay}
+                onChange={handleChange}
+                required
+              />
             </div>
             <div className="form-group">
               <label>Số tiền (VNĐ)</label>
-              <input type="text" inputMode="numeric" name="soTien" value={formData.soTien} onChange={handleChange} onFocus={(e) => e.target.select()} required placeholder="0" />
+              <input
+                type="text"
+                inputMode="numeric"
+                name="soTien"
+                value={formData.soTien}
+                onChange={handleChange}
+                onFocus={handleFocus}
+                required
+                placeholder="0"
+              />
             </div>
+
+            {/* Hàng 2: Hạng mục và Người cập nhật */}
             <div className="form-group">
               <label>Hạng mục</label>
-              <select name="doiTuongThuChi" value={formData.doiTuongThuChi} onChange={handleChange} required>
-                <option value="">-- Chọn --</option>
-                {BUDGET_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              <select
+                name="doiTuongThuChi"
+                value={formData.doiTuongThuChi}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Chọn hạng mục</option>
+                {BUDGET_CATEGORIES.map((stage) => (
+                  <option key={stage} value={stage}>
+                    {stage}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="form-group">
               <label>Người cập nhật</label>
-              <select name="nguoiCapNhat" value={formData.nguoiCapNhat} onChange={handleChange}>
-                {UPDATER_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+              <select
+                name="nguoiCapNhat"
+                value={formData.nguoiCapNhat}
+                onChange={handleChange}
+              >
+                {UPDATER_OPTIONS.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
               </select>
             </div>
+
+            {/* Hàng 3: Nội dung */}
             <div className="form-group full-width">
-              <label>Nội dung chi tiết</label>
-              <input type="text" name="noiDung" value={formData.noiDung} onChange={handleChange} required placeholder="Gạch, cát, xi măng..." />
+              <label>Nội dung chi tiết (Vật tư/Nhân công)</label>
+              <input
+                type="text"
+                name="noiDung"
+                value={formData.noiDung}
+                onChange={handleChange}
+                required
+                placeholder='VD: Xi măng, Cát, Công thợ...'
+              />
+              {/* Hiển thị gợi ý nếu có */}
               {activeSuggestions.length > 0 && (
-                <div className="suggestion-list" style={{marginTop: '8px', display: 'flex', gap: '5px', flexWrap: 'wrap'}}>
-                  {activeSuggestions.map(s => (
-                    <button key={s.label} type="button" className="sugg-btn" onClick={() => setFormData(p => ({...p, noiDung: s.label, soTien: s.amount ? new Intl.NumberFormat('vi-VN').format(s.amount) : p.soTien}))} style={{fontSize: '12px', padding: '2px 8px', borderRadius: '10px', border: '1px solid #ddd', cursor: 'pointer'}}>
-                      {s.label}
+                <div style={{ marginTop: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {activeSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion.label}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ 
+                        ...prev, 
+                        noiDung: suggestion.label,
+                        // Nếu gợi ý có số tiền mặc định thì điền luôn, format định dạng 1.000.000
+                        soTien: suggestion.amount ? new Intl.NumberFormat('vi-VN').format(suggestion.amount) : prev.soTien
+                      }))}
+                      style={{
+                        background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '20px',
+                        padding: '4px 10px', fontSize: '0.8rem', color: '#1e40af', cursor: 'pointer'
+                      }}
+                      title="Chọn nhanh nội dung này"
+                    >
+                      {suggestion.label}
+                      {suggestion.amount ? ` (${new Intl.NumberFormat('vi-VN').format(suggestion.amount)})` : ''}
                     </button>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Hidden Input cho Link Ảnh */}
+            <input type="hidden" name="hinhAnh" value={formData.hinhAnh} />
           </div>
 
           <div className="modal-actions">
-            <button type="button" className="btn-ocr" onClick={() => handleOCR()} disabled={ocrScanning || uploading}>
-              {ocrScanning ? <FiLoader className="spin" /> : <FiImage />} OCR
+            <button type="button" className="btn-ocr" onClick={handleOCR} disabled={ocrScanning || uploading}>
+              {ocrScanning ? <FiLoader className="spin" /> : <FiImage />} 
+              {ocrScanning ? " Đang xử lý..." : " Quét OCR"}
             </button>
             <div className="spacer"></div>
-            <button type="button" className="btn-cancel" onClick={onClose}>Hủy</button>
-            <button type="submit" className="btn-save" disabled={uploading}><FiSave /> Lưu</button>
+            <button type="button" className="btn-cancel" onClick={onClose}>
+              Hủy
+            </button>
+            <button type="submit" className="btn-save" disabled={uploading}>
+              <FiSave /> Lưu
+            </button>
           </div>
         </form>
       </div>
