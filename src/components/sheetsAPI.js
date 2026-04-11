@@ -1,5 +1,5 @@
 // AppSheet API Configuration
-import { toInputString } from './dateUtils';
+import { toInputString, toDisplayString } from './dateUtils';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
@@ -199,7 +199,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    const formattedDate = toInputString(payload.ngay);
+    // CHỐT: Sử dụng toDisplayString để gửi định dạng DD/MM/YYYY lên AppSheet (Locale vi-VN)
+    const formattedDate = toDisplayString(payload.ngay);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });
@@ -295,7 +296,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
         formattedPayload[colName] = finalKey;
     });
 
-    const formattedDate = toInputString(payload.ngay);
+    // CHỐT: Sử dụng toDisplayString để gửi định dạng DD/MM/YYYY lên AppSheet (Locale vi-VN)
+    const formattedDate = toDisplayString(payload.ngay);
     getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay']).forEach(colName => {
         formattedPayload[colName] = formattedDate;
     });

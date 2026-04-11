@@ -189,7 +189,7 @@ export const updateStageInSheet = async (stage, appId) => {
       body: JSON.stringify({ 
         Action: "Edit", 
         Properties: {
-          Locale: "en-US", // Thống nhất dùng en-US cho API
+          Locale: "vi-VN", // Chuyển sang vi-VN để đồng bộ DD/MM/YYYY
           Timezone: "Asia/Ho_Chi_Minh",
         }, 
         Rows: editData 

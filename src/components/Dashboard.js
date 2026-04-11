@@ -1,5 +1,6 @@
 import React from "react";
 import { FiTrendingDown, FiActivity, FiCalendar, FiFileText, FiCamera, FiAlertCircle } from "react-icons/fi";
+import { toDisplayString } from "../utils/dateUtils";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart,
   Bar,
@@ -43,7 +44,10 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   // 2. Xác định ngày khởi công (Lấy từ hạng mục đầu tiên trong danh sách đã sắp xếp)
   // Ưu tiên ngày của dòng đầu tiên để tránh sai lệch nếu có hạng mục khác nhập sai ngày
   const firstDate = (stages.length > 0 && stages[0].ngayBatDau) ? stages[0].ngayBatDau : null;
-  const daysElapsed = firstDate ? Math.floor((new Date() - firstDate) / (1000 * 60 * 60 * 24)) + 1 : 0;
+  // Chuẩn hóa về 0h sáng ngày hôm nay để tính toán chính xác số ngày đã trôi qua
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysElapsed = firstDate ? Math.floor((today - firstDate) / (1000 * 60 * 60 * 24)) + 1 : 0;
 
   // 3. Tính toán Ngân sách
   const totalPlanned = budget.reduce((sum, item) => sum + safeNumber(item.duKien), 0);
@@ -173,8 +177,8 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           </div>
           <div className="stat-info">
             <span className="stat-label">Thời gian thi công</span>
-            <span className="stat-value" style={{ color: isDarkMode ? "#ffffff" : "inherit" }}>Ngày thứ {daysElapsed}</span>
-            <small style={{ color: 'var(--text-muted)' }}>Khởi công: {firstDate?.toLocaleDateString('vi-VN') || "---"}</small>
+            <span className="stat-value" style={{ color: isDarkMode ? "#ffffff" : "inherit" }}>{daysElapsed >= 1 ? `Ngày thứ ${daysElapsed}` : 'Sắp khởi công'}</span>
+            <small style={{ color: 'var(--text-muted)' }}>Khởi công: {toDisplayString(firstDate)}</small>
           </div>
         </div>
 
