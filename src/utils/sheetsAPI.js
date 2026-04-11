@@ -109,7 +109,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-GB", // Dùng en-GB để nhận ngày dạng DD/MM/YYYY, tránh nhầm lẫn tháng/ngày
+          Locale: "vi-VN", // Thống nhất dùng vi-VN để đồng bộ với định dạng Google Sheet (DD/MM/YYYY)
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -190,7 +190,8 @@ export const fetchFileData = async (tableName, appId) => {
  */
 export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
-    const targetTable = String(tableName).trim().toLowerCase();
+    const rawTable = String(tableName).trim();
+    const targetTable = rawTable.toLowerCase().replace(/\s+/g, "");
     let formattedPayload = {};
     
     // 1. Đồng bộ Key dứt điểm (Bắt buộc để Edit)
@@ -216,7 +217,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       formattedPayload[col] = noiDungVal;
     });
 
-    if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
+    if (targetTable === "giaodich" || rawTable === TABLE_GIAODICH_ENV) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
       
@@ -225,7 +226,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       });
       
       const catVal = payload.doiTuongThuChi || payload.hangMuc || "";
-      getAppSheetColumnNames(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi', 'Category']).forEach(col => {
+      getAppSheetColumnNames(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi', 'Category', 'Phân loại']).forEach(col => {
         formattedPayload[col] = catVal;
       });
       
@@ -306,7 +307,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
  */
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
-    const targetTable = String(tableName).trim().toLowerCase();
+    const rawTable = String(tableName).trim();
+    const targetTable = rawTable.toLowerCase().replace(/\s+/g, "");
     let formattedPayload = {};
     
     // 1. Map ID/Key (Dùng fallback rộng để trúng Key Column)
@@ -326,7 +328,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       formattedPayload[col] = noiDungVal;
     });
 
-    if (targetTable === "giaodich" || tableName === TABLE_GIAODICH_ENV) {
+    if (targetTable === "giaodich" || rawTable === TABLE_GIAODICH_ENV) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
       
