@@ -13,7 +13,6 @@ import FilterBar from "./components/FilterBar";
 import Login from "./components/Login";
 import EditModal from "./components/EditModal";
 import ConfirmModal from "./components/ConfirmModal"; 
-import BusinessScanner from "./components/BusinessScanner"; 
 import { useAppData } from "./utils/useAppData"; 
 import Toast from "./components/Toast"; 
 import { updateRowInSheet, addRowToSheet, deleteRowFromSheet } from "./utils/sheetsAPI";
@@ -63,23 +62,6 @@ function App() {
   } = useAppData(isLoggedIn);
 
   const showToast = (message, type = "success") => setToast({ message, type });
-
-  const handleGeminiResult = (result, mode) => {
-    if (mode === 'BILL') {
-      setEditingItem({
-        ngay: result.ngay || new Date().toISOString().split("T")[0],
-        soTien: result.soTien || 0,
-        loaiThuChi: "Chi",
-        noiDung: result.noiDung || "",
-        doiTuongThuChi: result.ten || "",
-        nguoiCapNhat: "Gemini AI Scanner",
-        hinhAnh: result.image_url || ""
-      });
-    } else {
-      const info = [result.ten, result.sdt].filter(Boolean).join(" - ");
-      showToast(`Đã trích xuất: ${info || "Không tìm thấy thông tin"}`, info ? "success" : "warning");
-    }
-  };
 
   const handleAddNew = () => {
     setEditingItem({
@@ -196,7 +178,6 @@ function App() {
 
     switch (activeTab) {
       case 'dashboard': return <Dashboard stats={stats} data={filteredData} extraData={extraData} isDarkMode={isDarkMode} />;
-      case 'scanner': return <BusinessScanner showToast={showToast} onScanSuccess={handleGeminiResult} />; 
       case 'list': return (
         <>
           <FilterBar filters={filters} filterOptions={filterOptions} onFilterChange={(k, v) => setFilters(p => ({ ...p, [k]: v }))} onReset={() => setFilters({ loaiThuChi: "", nguoiCapNhat: "", doiTuongThuChi: "", startDate: "", endDate: "", searchText: "" })} onAdd={handleAddNew} />
