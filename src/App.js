@@ -17,6 +17,7 @@ import { useAppData } from "./utils/useAppData";
 import Toast from "./components/Toast"; 
 import { updateRowInSheet, addRowToSheet, deleteRowFromSheet } from "./utils/sheetsAPI";
 import Sidebar from "./components/Sidebar"; 
+import { getTodayInputString } from "./utils/dateUtils";
 import "./App.css";
 import "./DarkMode.css";
 
@@ -65,7 +66,7 @@ function App() {
 
   const handleAddNew = () => {
     setEditingItem({
-      ngay: new Date().toISOString().split("T")[0], 
+      ngay: getTodayInputString(), 
       soTien: 0, 
       loaiThuChi: "Chi", 
       noiDung: "",

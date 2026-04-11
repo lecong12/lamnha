@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiSave, FiCamera, FiImage, FiLoader, FiFileText } from "react-icons/fi";
 import { extractInfoWithAI } from "../utils/aiService";
-import { toInputString } from "../utils/dateUtils";
+import { toInputString, getTodayInputString } from "../utils/dateUtils";
 import "./EditModal.css";
 
 // Danh sách hạng mục ngân sách
@@ -32,13 +32,13 @@ const SUGGESTION_MAP = {
   ]
 };
 
-const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
-const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '');
+const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '').trim();
+const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").replace(/['"]/g, '').trim();
 
 function EditModal({ item, onClose, onSave, showToast }) {
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
-    ngay: "",
+    ngay: getTodayInputString(),
     noiDung: "",
     doiTuongThuChi: "",
     nguoiCapNhat: "Ba",
@@ -56,7 +56,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
     // Hỗ trợ cả tên biến cũ và tên cột Tiếng Việt từ AppSheet
     if (item && (item.id || item._id || item.appSheetId)) {
       const rawDate = item.ngay || item["Ngày"];
-      const dateStr = toInputString(rawDate) || toInputString(new Date());
+      const dateStr = toInputString(rawDate) || getTodayInputString();
 
       const rawAmount = item.soTien || item["Số tiền"];
 
@@ -74,7 +74,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
       setIsPdfPreview(imgUrl?.toLowerCase().endsWith('.pdf') || false);
     } else {
       setFormData({
-        ngay: new Date().toISOString().split('T')[0],
+        ngay: getTodayInputString(),
         noiDung: "",
         doiTuongThuChi: "",
         nguoiCapNhat: "Ba",
@@ -125,7 +125,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
       const fileData = await res.json();
       if (fileData.secure_url) {
         setFormData(prev => ({ ...prev, hinhAnh: fileData.secure_url }));
-        if (!isPdf) handleOCR(fileData.secure_url);
+        if (!isPdf) await handleOCR(fileData.secure_url);
       }
     } catch (error) {
       console.error("Upload error:", error);
@@ -143,23 +143,9 @@ function EditModal({ item, onClose, onSave, showToast }) {
     showToast?.("AI đang phân tích...", "info");
 
     try {
-      const data = await extractInfoWithAI(ocrSource, 'invoice');
+      const data = await extractInfoWithAI(ocrSource);
       if (data && !data.error) {
-        let formattedDate = formData.ngay;
-        if (data.ngay && typeof data.ngay === 'string') {
-          if (data.ngay.includes('-')) {
-            formattedDate = data.ngay; // Đã là ISO
-          } else if (data.ngay.includes('/')) {
-            const parts = data.ngay.split('/');
-            if (parts.length === 3) {
-              const d = parts[0].padStart(2, '0');
-              const m = parts[1].padStart(2, '0');
-              const y = parts[2];
-              formattedDate = `${y}-${m}-${d}`;
-            }
-          }
-        }
-
+        const formattedDate = data.ngay ? toInputString(data.ngay) : formData.ngay;
         const cleanAmount = data.soTien ? String(data.soTien).replace(/\D/g, "") : "";
         setFormData(prev => ({
           ...prev,
@@ -182,7 +168,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
     const cleanSoTien = formData.soTien.toString().replace(/\./g, "");
     const parsedSoTien = parseInt(cleanSoTien) || 0;
 
-    if (!formData.doiTuongThuChi || !formData.noiDung.trim() || parsedSoTien <= 0) {
+    if (!formData.doiTuongThuChi || !formData.noiDung.trim()) {
       showToast?.("Vui lòng nhập đủ thông tin và số tiền > 0", "warning");
       return;
     }
@@ -192,7 +178,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
       ...formData,
       soTien: parsedSoTien,
       ngay: formData.ngay,
-      loaiThuChi: "Chi"
+      loaiThuChi: formData.loaiThuChi || item?.loaiThuChi || "Chi"
     };
 
     console.log("Submit Form Data:", finalData);
@@ -224,7 +210,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
                 </button>
               </div>
             ) : (
-              <div className="upload-placeholder" onClick={() => fileInputRef.current.click()}>
+              <div className="upload-placeholder" onClick={() => !uploading && fileInputRef.current.click()}>
                 {uploading ? <FiLoader className="spin" /> : <FiCamera size={32} />}
                 <span>{uploading ? "Đang tải..." : "Thêm ảnh/PDF"}</span>
               </div>
@@ -277,7 +263,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
             </button>
             <div className="spacer"></div>
             <button type="button" className="btn-cancel" onClick={onClose}>Hủy</button>
-            <button type="submit" className="btn-save" disabled={uploading}><FiSave /> Lưu</button>
+            <button type="submit" className="btn-save" disabled={uploading || ocrScanning}><FiSave /> Lưu</button>
           </div>
         </form>
       </div>
