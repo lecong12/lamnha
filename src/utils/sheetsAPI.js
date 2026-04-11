@@ -15,18 +15,18 @@ export const normalizeKey = (str) => {
     const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
     if (knownKeys.includes(str)) return str;
 
-    const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d").replace(/[\s_]+/g, "").trim();
+    const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d").trim();
+    const sClean = s.replace(/[\s_]+/g, "");
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
-    if (['id', 'tt', 'stt', 'ma', 'magd', 'key'].includes(s) || s.startsWith('id')) return 'id';
+    if (['id', 'tt', 'stt', 'ma', 'magd', 'key'].includes(sClean) || sClean.startsWith('id')) return 'id';
     if (s.includes('ngay bat dau')) return 'ngayBatDau';
     if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
     if (s.includes('ngay') || s.includes('date') || s.includes('thoigian')) return 'ngay';
-    if (s === 'noidung' || s.includes('noidung') || s.includes('ghichu') || s.includes('description')) return 'noiDung';
-    if (s.includes('sotien') || s.includes('amount') || s.includes('giatri')) return 'soTien';
-    if (s.includes('loaithuchi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
-    if (s.includes('hangmuc') || s.includes('doituong') || s.includes('mucchi')) return 'doiTuongThuChi';
-    if (s.includes('phanloai') || s.includes('category')) return 'category';
+    if (s === 'noi dung' || s.includes('noidung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
+    if (sClean.includes('sotien') || s.includes('amount') || s.includes('giatri')) return 'soTien';
+    if (sClean.includes('loaithuchi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
+    if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi') || s.includes('phan loai') || s.includes('category')) return 'doiTuongThuChi';
     // Chỉ map các từ khóa thực sự là đường dẫn về 'url'
     if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket') || s.includes('ban ve') || s.includes('hop dong')) return 'url';
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
@@ -268,7 +268,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "en-US", // Thống nhất dùng en-US để truyền tải ngày ISO YYYY-MM-DD
+          Locale: "vi-VN",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -335,7 +335,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       });
 
       const catVal = payload.doiTuongThuChi || payload.hangMuc || "";
-      getAppSheetColumnNames(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi', 'Category']).forEach(col => {
+      getAppSheetColumnNames(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi', 'Category', 'Phân loại']).forEach(col => {
         formattedPayload[col] = catVal;
       });
 
@@ -384,7 +384,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "en-US",
+          Locale: "vi-VN",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -439,7 +439,7 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
       },
       body: JSON.stringify({
         Action: "Delete",
-        Properties: { Locale: "en-US" }, // Thống nhất dùng en-US
+        Properties: { Locale: "vi-VN" },
         Rows: [deleteRow], 
       }),
     });
