@@ -25,7 +25,7 @@ export const fetchStages = async (appId) => {
       body: JSON.stringify({ 
         Action: "Find", 
         Properties: { 
-          Locale: "en-GB", // Nhận ngày dạng DD/MM/YYYY để khớp với parser VN
+          Locale: "vi-VN", // Thống nhất dùng vi-VN để tránh đảo Ngày/Tháng
           Timezone: "Asia/Ho_Chi_Minh"
         },
         Rows: [] 

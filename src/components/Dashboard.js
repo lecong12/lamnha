@@ -41,9 +41,11 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
     return status === 'đang thi công' || status === 'thi công' || status === 'đang thực hiện';
   }) || stages.slice().reverse().find(s => s.status?.toLowerCase().trim() === 'hoàn thành') || stages[0];
 
-  // 2. Xác định ngày khởi công (Lấy từ hạng mục đầu tiên trong danh sách đã sắp xếp)
-  // Ưu tiên ngày của dòng đầu tiên để tránh sai lệch nếu có hạng mục khác nhập sai ngày
-  const firstDate = (stages.length > 0 && stages[0].ngayBatDau) ? stages[0].ngayBatDau : null;
+  // 2. Xác định ngày khởi công
+  // Ưu tiên tìm hạng mục có tên "Khởi công", nếu không có mới lấy dòng đầu tiên
+  const startStage = stages.find(s => s.name?.toLowerCase().includes("khởi công")) || stages[0];
+  const firstDate = startStage?.ngayBatDau || null;
+
   // Chuẩn hóa về 0h sáng ngày hôm nay để tính toán chính xác số ngày đã trôi qua
   const today = new Date();
   today.setHours(0, 0, 0, 0);

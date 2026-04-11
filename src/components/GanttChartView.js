@@ -42,8 +42,9 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
     if (sortedStages.length === 0) return [];
 
     // BƯỚC 2: Xác định ngày bắt đầu dự án 
-    // Ưu tiên lấy ngày của dòng đầu tiên trong bảng tính thay vì tìm Min toàn bộ (để tránh sai lệch do nhập liệu)
-    const firstStageDate = toSafeDate(sortedStages[0]?.ngayBatDau)?.getTime();
+    // Ưu tiên lấy ngày của hạng mục "Khởi công"
+    const startStage = sortedStages.find(s => s.name?.toLowerCase().includes("khởi công")) || sortedStages[0];
+    const firstStageDate = toSafeDate(startStage?.ngayBatDau)?.getTime();
     
     // Nếu dòng đầu không có ngày, mới tìm ngày nhỏ nhất trong các ngày hợp lệ
     const validTimes = sortedStages.map(s => toSafeDate(s.ngayBatDau)?.getTime()).filter(t => t > 0);
