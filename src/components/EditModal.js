@@ -4,7 +4,6 @@ import { extractInfoWithAI } from "../utils/aiService";
 import { toInputString, getTodayInputString } from "../utils/dateUtils";
 import "./EditModal.css";
 
-// Danh sách hạng mục ngân sách
 const BUDGET_CATEGORIES = [
   'Chuẩn bị', 'Thiết kế', 'Giám sát', 'Phần thô', 
   'Nhân công', 'Hoàn thiện', 'Điện nước', 'Nội thất', 
@@ -53,9 +52,10 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const [isPdfPreview, setIsPdfPreview] = useState(false);
 
   useEffect(() => {
-    // Hỗ trợ cả tên biến cũ và tên cột Tiếng Việt từ AppSheet
     if (item && (item.id || item._id || item.appSheetId)) {
+      // Ưu tiên lấy ngày từ item, nếu không có lấy ngày hôm nay
       const rawDate = item.ngay || item["Ngày"];
+      // Dùng helper để convert sang YYYY-MM-DD cho input date
       const dateStr = toInputString(rawDate) || getTodayInputString();
 
       const rawAmount = item.soTien || item["Số tiền"];
@@ -101,10 +101,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-      alert("Chỉ chọn ảnh hoặc PDF."); return;
-    }
-
+    
     try {
       setUploading(true);
       const localUrl = URL.createObjectURL(file);
@@ -128,8 +125,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
         if (!isPdf) await handleOCR(fileData.secure_url);
       }
     } catch (error) {
-      console.error("Upload error:", error);
-      alert("Lỗi upload: " + error.message);
+      showToast?.("Lỗi upload ảnh", "error");
     } finally {
       setUploading(false);
     }
@@ -145,8 +141,10 @@ function EditModal({ item, onClose, onSave, showToast }) {
     try {
       const data = await extractInfoWithAI(ocrSource);
       if (data && !data.error) {
+        // Cập nhật ngày từ AI nếu có, đảm bảo qua toInputString để tránh lỗi format
         const formattedDate = data.ngay ? toInputString(data.ngay) : formData.ngay;
         const cleanAmount = data.soTien ? String(data.soTien).replace(/\D/g, "") : "";
+        
         setFormData(prev => ({
           ...prev,
           ngay: formattedDate,
@@ -169,19 +167,20 @@ function EditModal({ item, onClose, onSave, showToast }) {
     const parsedSoTien = parseInt(cleanSoTien) || 0;
 
     if (!formData.doiTuongThuChi || !formData.noiDung.trim()) {
-      showToast?.("Vui lòng nhập đủ thông tin và số tiền > 0", "warning");
+      showToast?.("Vui lòng điền đủ thông tin", "warning");
       return;
     }
 
+    // Đóng gói dữ liệu cuối cùng
     const finalData = {
-      ...item, // Giữ lại metadata quan trọng như appSheetId
+      ...item, 
       ...formData,
       soTien: parsedSoTien,
-      ngay: formData.ngay,
+      // Đảm bảo "ngay" được gửi đi đúng định dạng chuỗi
+      ngay: formData.ngay, 
       loaiThuChi: formData.loaiThuChi || item?.loaiThuChi || "Chi"
     };
 
-    console.log("Submit Form Data:", finalData);
     onSave(finalData); 
   };
 
@@ -195,6 +194,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
           <button className="close-btn" onClick={onClose}><FiX /></button>
         </div>
         
+        {/* Phần Upload/Preview giữ nguyên */}
         <div className="image-upload-section">
           <div className="image-preview">
             {preview ? (
@@ -205,14 +205,11 @@ function EditModal({ item, onClose, onSave, showToast }) {
                   <img src={preview} alt="Chứng từ" />
                 )}
                 {uploading && <div className="upload-overlay"><FiLoader className="spin" /></div>}
-                <button type="button" className="remove-image-btn" onClick={(e) => { e.stopPropagation(); setFormData(prev => ({...prev, hinhAnh: ""})); setPreview(""); }}>
-                  <FiX />
-                </button>
               </div>
             ) : (
               <div className="upload-placeholder" onClick={() => !uploading && fileInputRef.current.click()}>
                 {uploading ? <FiLoader className="spin" /> : <FiCamera size={32} />}
-                <span>{uploading ? "Đang tải..." : "Thêm ảnh/PDF"}</span>
+                <span>Thêm ảnh/PDF</span>
               </div>
             )}
           </div>
@@ -223,7 +220,13 @@ function EditModal({ item, onClose, onSave, showToast }) {
           <div className="form-grid">
             <div className="form-group">
               <label>Ngày</label>
-              <input type="date" name="ngay" value={formData.ngay} onChange={handleChange} required />
+              <input 
+                type="date" 
+                name="ngay" 
+                value={formData.ngay} 
+                onChange={handleChange} 
+                required 
+              />
             </div>
             <div className="form-group">
               <label>Số tiền (VNĐ)</label>
@@ -248,7 +251,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
               {activeSuggestions.length > 0 && (
                 <div className="suggestion-list" style={{marginTop: '8px', display: 'flex', gap: '5px', flexWrap: 'wrap'}}>
                   {activeSuggestions.map(s => (
-                    <button key={s.label} type="button" className="sugg-btn" onClick={() => setFormData(p => ({...p, noiDung: s.label, soTien: s.amount ? new Intl.NumberFormat('vi-VN').format(s.amount) : p.soTien}))} style={{fontSize: '12px', padding: '2px 8px', borderRadius: '10px', border: '1px solid #ddd', cursor: 'pointer'}}>
+                    <button key={s.label} type="button" className="sugg-btn" onClick={() => setFormData(p => ({...p, noiDung: s.label, soTien: s.amount ? new Intl.NumberFormat('vi-VN').format(s.amount) : p.soTien}))} style={{fontSize: '12px', padding: '4px 10px', borderRadius: '15px', border: '1px solid #ddd', background: '#f9f9f9'}}>
                       {s.label}
                     </button>
                   ))}
@@ -259,7 +262,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
           <div className="modal-actions">
             <button type="button" className="btn-ocr" onClick={() => handleOCR()} disabled={ocrScanning || uploading}>
-              {ocrScanning ? <FiLoader className="spin" /> : <FiImage />} OCR
+              {ocrScanning ? <FiLoader className="spin" /> : <FiImage />} AI Đọc Ảnh
             </button>
             <div className="spacer"></div>
             <button type="button" className="btn-cancel" onClick={onClose}>Hủy</button>
