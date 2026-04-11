@@ -41,9 +41,10 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
     return status === 'đang thi công' || status === 'thi công' || status === 'đang thực hiện';
   }) || stages.slice().reverse().find(s => s.status?.toLowerCase().trim() === 'hoàn thành') || stages[0];
 
-  // 2. Xác định ngày khởi công
-  // Ưu tiên tìm hạng mục có tên "Khởi công", nếu không có mới lấy dòng đầu tiên
-  const startStage = stages.find(s => s.name?.toLowerCase().includes("khởi công")) || stages[0];
+  // 2. Xác định ngày khởi công chính xác
+  // Lọc lấy các giai đoạn có tên và ngày hợp lệ
+  const validStages = stages.filter(s => s.name && s.ngayBatDau);
+  const startStage = validStages.find(s => s.name?.toLowerCase().includes("khởi công")) || validStages[0];
   const firstDate = startStage?.ngayBatDau || null;
 
   // Chuẩn hóa về 0h sáng ngày hôm nay để tính toán chính xác số ngày đã trôi qua
@@ -179,7 +180,7 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           </div>
           <div className="stat-info">
             <span className="stat-label">Thời gian thi công</span>
-            <span className="stat-value" style={{ color: isDarkMode ? "#ffffff" : "inherit" }}>{daysElapsed >= 1 ? `Ngày thứ ${daysElapsed}` : 'Sắp khởi công'}</span>
+            <span className="stat-value" style={{ color: isDarkMode ? "#ffffff" : "inherit" }}>{daysElapsed >= 1 ? `Ngày thứ ${daysElapsed}` : (daysElapsed === 0 ? '---' : 'Sắp khởi công')}</span>
             <small style={{ color: 'var(--text-muted)' }}>Khởi công: {toDisplayString(firstDate)}</small>
           </div>
         </div>
