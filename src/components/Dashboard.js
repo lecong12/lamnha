@@ -29,10 +29,6 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   const contracts = extraData.contracts || [];
   const drawings = extraData.drawings || [];
 
-  const textColor = isDarkMode ? "#f3f4f6" : "#1f2937";
-  const axisColor = isDarkMode ? "#9ca3af" : "#6b7280";
-  const tooltipBg = isDarkMode ? "#1f2937" : "#ffffff";
-
   const currentStage = stages.slice().reverse().find(s => {
     const status = s.status?.toLowerCase().trim() || "";
     return status === 'đang thi công' || status === 'thi công' || status === 'đang thực hiện';
