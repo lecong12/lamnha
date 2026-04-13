@@ -115,18 +115,11 @@ function EditModal({ item, onClose, onSave, showToast }) {
     e.preventDefault();
     const cleanAmount = parseInt(formData.soTien.replace(/\./g, "")) || 0;
     
-    // CHUẨN HÓA NGÀY GỬI: Ép về DD/MM/YYYY để AppSheet không từ chối
-    let dateToSend = formData.ngay;
-    if (dateToSend.includes("-")) {
-      const [y, m, d] = dateToSend.split("-");
-      dateToSend = `${d}/${m}/${y}`;
-    }
-
     const finalData = {
       ...item,
       ...formData,
       soTien: cleanAmount,
-      ngay: dateToSend,
+      ngay: formData.ngay,
       loaiThuChi: formData.loaiThuChi || "Chi"
     };
 
