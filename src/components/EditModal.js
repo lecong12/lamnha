@@ -115,12 +115,17 @@ function EditModal({ item, onClose, onSave, showToast }) {
     e.preventDefault();
     const cleanAmount = parseInt(formData.soTien.replace(/\./g, "")) || 0;
     
+    // Tạo object dữ liệu sạch, chỉ giữ lại ID định danh từ item gốc
+    const baseInfo = {};
+    if (item?.appSheetId) baseInfo.appSheetId = item.appSheetId;
+    if (item?.keyId) baseInfo.keyId = item.keyId;
+    if (item?.id && !item.id.startsWith('gd_')) baseInfo.id = item.id;
+
     const finalData = {
-      ...item,
+      ...baseInfo,
       ...formData,
       soTien: cleanAmount,
-      ngay: formData.ngay,
-      loaiThuChi: formData.loaiThuChi || "Chi"
+      loaiThuChi: "Chi"
     };
 
     console.log("Final Data to Save:", finalData);

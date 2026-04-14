@@ -7,6 +7,16 @@ const formatRowId = (id) => {
   if (id === null || id === undefined) return "";
   return String(id); // Giữ nguyên ID dạng chuỗi để bảo toàn prefix và khớp với định dạng Key của AppSheet
 };
+
+// Helper để so sánh tên bảng không dấu, không khoảng trắng
+const normalizeTableName = (str) => {
+  if (!str) return "";
+  return String(str).toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[\s_]+/g, "");
+};
+
 const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 // Helper để chuẩn hóa key từ AppSheet về chuẩn code (ngay, noiDung, id...)
 export const normalizeKey = (str) => {
@@ -195,8 +205,8 @@ export const fetchFileData = async (tableName, appId) => {
  */
 export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
-    const rawTable = String(tableName).trim();
-    const targetTable = rawTable.toLowerCase().replace(/\s+/g, "");
+    const normTableName = normalizeTableName(tableName);
+    const normGiaoDichEnv = normalizeTableName(TABLE_GIAODICH_ENV);
     let formattedPayload = {};
     
     // 1. Đồng bộ Key dứt điểm (Bắt buộc để Edit)
@@ -222,7 +232,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       formattedPayload[col] = noiDungVal;
     });
 
-    if (targetTable === "giaodich" || rawTable === TABLE_GIAODICH_ENV) {
+    if (normTableName === "giaodich" || normTableName === normGiaoDichEnv) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
       
@@ -302,8 +312,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
  */
 export const addRowToSheet = async (tableName, payload, appId) => {
   try {
-    const rawTable = String(tableName).trim();
-    const targetTable = rawTable.toLowerCase().replace(/\s+/g, "");
+    const normTableName = normalizeTableName(tableName);
+    const normGiaoDichEnv = normalizeTableName(TABLE_GIAODICH_ENV);
     let formattedPayload = {};
     
     // 1. Map ID/Key (Dùng fallback rộng để trúng Key Column)
@@ -325,7 +335,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       formattedPayload[col] = noiDungVal;
     });
 
-    if (targetTable === "giaodich" || rawTable === TABLE_GIAODICH_ENV) {
+    if (normTableName === "giaodich" || normTableName === normGiaoDichEnv) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
       

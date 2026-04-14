@@ -1,33 +1,22 @@
 /**
  * Chuyển đổi mọi nguồn dữ liệu thành đối tượng Date nguyên bản (Local Time)
+ * Đảm bảo không bị lệch múi giờ.
  */
 export const toSafeDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   
-  // 1. Làm sạch chuỗi: chuyển chữ thường, xóa "ngày", "tháng", "thg", dấu phẩy
-  let str = String(value)
-    .toLowerCase()
-    .replace(/ngày|tháng|thg/g, "") // Xóa chữ
-    .replace(/,/g, "")             // Xóa dấu phẩy
-    .trim();
+  let str = String(value).trim().split(/[ T]/)[0].replace(/[\\"]/g, "").toLowerCase();
+  if (str === "null" || str === "undefined" || !str) return null;
 
-  // 2. Lấy phần ngày tháng chính (loại bỏ giờ nếu có)
-  str = str.split(/[ T]/)[0];
-
-  // 3. Định dạng VN: DD/MM/YYYY
+  // 1. Định dạng VN/GB: DD/MM/YYYY (Ưu tiên vì chúng ta dùng Locale en-GB)
   const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
   if (vnMatch) {
-    const day = parseInt(vnMatch[1], 10);
-    const month = parseInt(vnMatch[2], 10);
-    const year = parseInt(vnMatch[3], 10);
-    
-    const d = new Date(year, month - 1, day, 0, 0, 0);
-    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
-    return d;
+    const d = new Date(parseInt(vnMatch[3], 10), parseInt(vnMatch[2], 10) - 1, parseInt(vnMatch[1], 10), 0, 0, 0);
+    return isNaN(d.getTime()) ? null : d;
   }
 
-  // 4. Định dạng ISO: YYYY-MM-DD
+  // 2. Định dạng ISO: YYYY-MM-DD
   const isoMatch = str.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
   if (isoMatch) {
     return new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10), 0, 0, 0);
@@ -37,6 +26,9 @@ export const toSafeDate = (value) => {
   return isNaN(fallback.getTime()) ? null : new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate(), 0, 0, 0);
 };
 
+/**
+ * Xuất chuỗi YYYY-MM-DD cho AppSheet & HTML Input
+ */
 export const toInputString = (value) => {
   const d = toSafeDate(value);
   if (!d) return "";
@@ -46,6 +38,9 @@ export const toInputString = (value) => {
   return `${y}-${m}-${day}`;
 };
 
+/**
+ * Xuất chuỗi DD/MM/YYYY để hiển thị cho người dùng
+ */
 export const toDisplayString = (value) => {
   const d = toSafeDate(value);
   if (!d) return "---";
