@@ -29,10 +29,12 @@ export const normalizeKey = (str) => {
     const sClean = s.replace(/[\s_]+/g, "");
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
-    if (['id', 'tt', 'stt', 'ma', 'magd', 'key'].includes(sClean) || sClean.startsWith('id')) return 'id';
-    if (s.includes('ngay bat dau')) return 'ngayBatDau';
-    if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
-    if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
+    if (['id', 'tt', 'stt', 'ma', 'magd', 'key'].includes(sClean)) return 'id';
+    if (sClean === 'ngay' || sClean === 'date' || s === 'ngay') return 'ngay';
+    
+    if (s.includes('bat dau') || s.includes('start')) return 'ngayBatDau';
+    if (s.includes('ket thuc') || s.includes('end')) return 'ngayKetThuc';
+    
     if (s === 'noi dung' || s.includes('noidung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
     if (s.includes('so tien') || s.includes('sotien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
     if (s.includes('loai thu chi') || s.includes('loaithuchi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
@@ -115,7 +117,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-US", // Dùng en-US để AppSheet trả về chuỗi ngày tháng chuẩn ISO hoặc MM/DD/YYYY ổn định
+          Locale: "vi-VN", // Dùng vi-VN khi ĐỌC để nhận đúng định dạng DD/MM/YYYY từ AppSheet
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
