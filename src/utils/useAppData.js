@@ -205,7 +205,7 @@ export const useAppData = (isLoggedIn) => {
                 result = await updateRowInSheet(TABLE_GIAODICH, transactionData, APP_ID);
             } else {
                 // Thêm mới: Tạo ID tạm và ép kiểu Chi
-                const newPayload = { ...transactionData, id: `GD_${Date.now()}`, loaiThuChi: "Chi" };
+                const newPayload = { ...transactionData, id: String(Date.now()), loaiThuChi: "Chi" };
                 result = await addRowToSheet(TABLE_GIAODICH, newPayload, APP_ID);
             }
 

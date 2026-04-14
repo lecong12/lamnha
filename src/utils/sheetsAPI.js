@@ -211,8 +211,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     
     // 1. Đồng bộ Key dứt điểm (Bắt buộc để Edit)
     const finalKey = formatRowId(payload.keyId || payload.id || payload._RowNumber);
-    const idCols = getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã GD', 'Mã']);
-    idCols.forEach(col => { formattedPayload[col] = finalKey; });
+    const idCol = getBestColumnName(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã GD']);
+    formattedPayload[idCol] = finalKey;
 
     if (payload.appSheetId || payload._RowNumber) {
         formattedPayload["_RowNumber"] = payload.appSheetId || payload._RowNumber;
@@ -236,26 +236,14 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
       
-      getAppSheetColumnNames(tableName, 'soTien', ['Số tiền', 'soTien', 'Amount']).forEach(col => {
-        formattedPayload[col] = cleanAmount;
-      });
+      formattedPayload[getBestColumnName(tableName, 'soTien', ['Số tiền', 'soTien'])] = cleanAmount;
       
       const catVal = payload.doiTuongThuChi || payload.hangMuc || "";
-      getAppSheetColumnNames(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi', 'Category', 'Phân loại']).forEach(col => {
-        formattedPayload[col] = catVal;
-      });
+      formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi'])] = catVal;
       
-      getAppSheetColumnNames(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh', 'Chứng từ']).forEach(col => {
-        formattedPayload[col] = payload.hinhAnh || "";
-      });
-
-      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(col => {
-        formattedPayload[col] = payload.nguoiCapNhat || "Ba";
-      });
-
-      getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu/Chi', 'loaiThuChi', 'Type']).forEach(col => {
-        formattedPayload[col] = payload.loaiThuChi || "Chi";
-      });
+      formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh'])] = payload.hinhAnh || "";
+      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat'])] = payload.nguoiCapNhat || "Ba";
+      formattedPayload[getBestColumnName(tableName, 'loaiThuChi', ['Loại Thu/Chi', 'loaiThuChi'])] = payload.loaiThuChi || "Chi";
     }
 
     // Làm sạch: Chỉ giữ lại các cột đã map thành công
