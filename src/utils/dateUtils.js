@@ -19,7 +19,8 @@ export const toSafeDate = (value) => {
   // 2. Định dạng ISO: YYYY-MM-DD
   const isoMatch = str.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})$/);
   if (isoMatch) {
-    return new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10), 0, 0, 0);
+    const d = new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10), 0, 0, 0);
+    return isNaN(d.getTime()) ? null : d;
   }
 
   const fallback = new Date(str);
