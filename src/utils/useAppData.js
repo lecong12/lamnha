@@ -204,8 +204,8 @@ export const useAppData = (isLoggedIn) => {
             if (isExisting) {
                 result = await updateRowInSheet(TABLE_GIAODICH, transactionData, APP_ID);
             } else {
-                // Thêm mới: Tạo ID tạm và ép kiểu Chi
-                const newPayload = { ...transactionData, id: String(Date.now()), loaiThuChi: "Chi" };
+                // Thêm mới: Tạo ID tạm
+                const newPayload = { ...transactionData, id: String(Date.now()) };
                 result = await addRowToSheet(TABLE_GIAODICH, newPayload, APP_ID);
             }
 

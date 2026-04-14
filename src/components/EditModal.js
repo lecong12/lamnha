@@ -126,7 +126,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
       ...baseInfo,
       ...formData,
       soTien: cleanAmount,
-      loaiThuChi: "Chi"
     };
 
     console.log("Final Data to Save:", finalData);
