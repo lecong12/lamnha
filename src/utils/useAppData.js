@@ -57,7 +57,6 @@ export const useAppData = (isLoggedIn) => {
                     keyId: c.id || row.id || row.ID || row._RowNumber,
                     ngay: d, // Đối tượng Date để sắp xếp
                     date: toDisplayString(d), // Chuỗi định dạng VN (DD/MM/YYYY) để hiển thị
-                    loaiThuChi: c.loaiThuChi || "Chi",
                     noiDung: c.noiDung || "",
                     doiTuongThuChi: c.doiTuongThuChi || "",
                     soTien: Number(String(c.soTien || 0).replace(/\D/g, "")),

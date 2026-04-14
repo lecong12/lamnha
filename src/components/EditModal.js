@@ -25,7 +25,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
     nguoiCapNhat: "Ba",
     soTien: "",
     hinhAnh: "",
-    loaiThuChi: "Chi",
   });
   
   const [uploading, setUploading] = useState(false);
@@ -46,7 +45,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
         nguoiCapNhat: item.nguoiCapNhat || item["Người cập nhật"] || "Ba",
         soTien: (rawAmount !== undefined && rawAmount !== null) ? new Intl.NumberFormat('vi-VN').format(rawAmount) : "",
         hinhAnh: item.hinhAnh || item["Chứng từ"] || "",
-        loaiThuChi: item.loaiThuChi || "Chi",
       });
       const imgUrl = item.hinhAnh || item["Chứng từ"] || "";
       setPreview(imgUrl);
