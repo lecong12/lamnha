@@ -373,8 +373,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
 export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
   try {
     // Lấy tên cột khóa thực tế từ mapping đã lưu lúc Fetch
-    const mapping = columnMapping[tableName] || {};
-    const keyCol = mapping['id'] || getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma'])[0]; // Lấy tên cột Key (ID/id/TT/STT...)
+    const keyCol = getBestColumnName(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã', 'Ma']);
 
     const deleteRow = { [keyCol]: formatRowId(payloadId) };
 
