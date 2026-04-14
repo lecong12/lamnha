@@ -1,5 +1,5 @@
 // AppSheet API Configuration
-import { toDisplayString, toSafeDate, toInputString } from './dateUtils';
+import { toSafeDate, toInputString } from './dateUtils';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 
 // Helper để chuẩn hóa ID: loại bỏ tiền tố (GC_, GD_) và chuyển thành số nếu có thể
