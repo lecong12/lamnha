@@ -12,8 +12,14 @@ export const toSafeDate = (value) => {
   // 1. Định dạng VN/GB: DD/MM/YYYY (Ưu tiên vì chúng ta dùng Locale en-GB)
   const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})$/);
   if (vnMatch) {
-    const d = new Date(parseInt(vnMatch[3], 10), parseInt(vnMatch[2], 10) - 1, parseInt(vnMatch[1], 10), 0, 0, 0);
-    return isNaN(d.getTime()) ? null : d;
+    const year = parseInt(vnMatch[3], 10);
+    const month = parseInt(vnMatch[2], 10);
+    const day = parseInt(vnMatch[1], 10);
+    
+    const d = new Date(year, month - 1, day, 0, 0, 0);
+    // Chặn lỗi tràn tháng (ví dụ tháng 14 nhảy sang năm sau)
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+    return d;
   }
 
   // 2. Định dạng ISO: YYYY-MM-DD
