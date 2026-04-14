@@ -115,7 +115,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "vi-VN", // Thống nhất dùng vi-VN để đồng bộ với định dạng Google Sheet (DD/MM/YYYY)
+          Locale: "en-US", // Dùng en-US để AppSheet trả về chuỗi ngày tháng chuẩn ISO hoặc MM/DD/YYYY ổn định
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng

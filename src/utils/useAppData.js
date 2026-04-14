@@ -48,20 +48,19 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                const c = {};
-                Object.keys(row).forEach(k => { c[normalizeKey(k)] = row[k]; });
-                const d = toSafeDate(c.ngay || row["Ngày"]) || new Date();
+                // Dữ liệu từ sheetsAPI đã được normalizeKey rồi, nên row đã có các key: ngay, id, noiDung...
+                const d = toSafeDate(row.ngay) || new Date();
                 return {
-                    id: row._RowNumber || c.id || `gd_${index}`,
+                    id: row.id || row._RowNumber || `gd_${index}`,
                     appSheetId: row._RowNumber,
-                    keyId: c.id || row.id || row.ID || row._RowNumber,
+                    keyId: row.id || row._RowNumber,
                     ngay: d, // Đối tượng Date để sắp xếp
                     date: toDisplayString(d), // Chuỗi định dạng VN (DD/MM/YYYY) để hiển thị
-                    noiDung: c.noiDung || "",
-                    doiTuongThuChi: c.doiTuongThuChi || "",
-                    soTien: Number(String(c.soTien || 0).replace(/\D/g, "")),
-                    hinhAnh: c.hinhAnh || "",
-                    nguoiCapNhat: c.nguoiCapNhat || ""
+                    noiDung: row.noiDung || "",
+                    doiTuongThuChi: row.doiTuongThuChi || "",
+                    soTien: Number(String(row.soTien || 0).replace(/\D/g, "")),
+                    hinhAnh: row.hinhAnh || "",
+                    nguoiCapNhat: row.nguoiCapNhat || ""
                 };
             });
             setData(cleanGD.sort((a, b) => b.ngay - a.ngay));
