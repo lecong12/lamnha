@@ -52,19 +52,10 @@ const columnMapping = {
 };
 
 // Helper để lấy tên cột AppSheet thực tế hoặc danh sách fallback
-const getAppSheetColumnNames = (tableName, normalizedKey, defaultNames) => {
-    const mapping = columnMapping[tableName] || {};
-    // Nếu đã có mapping từ fetchTableData, CHỈ trả về tên cột đó
-    if (mapping[normalizedKey]) return [mapping[normalizedKey]];
-
-    // Nếu chưa có mapping (Fetch chưa chạy), chỉ lấy 1 cái tên hợp lý nhất từ fallback
-    // Không nên gửi cả mảng tên cột vì AppSheet sẽ từ chối nếu cột không tồn tại
-    if (Array.isArray(defaultNames)) {
-        // Nếu là ID, thử tìm cái nào ngắn nhất hoặc 'ID'
-        if (normalizedKey === 'id') return [defaultNames[0]]; 
-        return [defaultNames[0]];
-    }
-    return [defaultNames];
+const getBestColumnName = (tableName, normalizedKey, defaultNames) => {
+  const mapping = columnMapping[tableName] || {};
+  if (mapping[normalizedKey]) return mapping[normalizedKey];
+  return Array.isArray(defaultNames) ? defaultNames[0] : defaultNames;
 };
 
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
@@ -220,17 +211,12 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 
     // 2. Map Ngày
     const dateObj = toSafeDate(payload.ngay);
-    // Với Locale vi-VN, AppSheet yêu cầu định dạng DD/MM/YYYY
     const formattedDate = toDisplayString(dateObj);
-    getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay', 'Date']).forEach(col => {
-      formattedPayload[col] = formattedDate;
-    });
+    formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
     // 3. Map Nội dung & Số tiền
     const noiDungVal = payload.noiDung || "";
-    getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung', 'Ghi chú']).forEach(col => {
-      formattedPayload[col] = noiDungVal;
-    });
+    formattedPayload[getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung'])] = noiDungVal;
 
     if (normTableName === "giaodich" || normTableName === normGiaoDichEnv) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
@@ -306,47 +292,26 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     
     // 1. Map ID/Key (Dùng fallback rộng để trúng Key Column)
     const finalKey = payload.id || payload.keyId || `${tableName === "GhiChu" ? "GC" : "GD"}_${Date.now()}`;
-    const idCols = getAppSheetColumnNames(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã GD', 'Mã']);
-    idCols.forEach(col => { formattedPayload[col] = finalKey; });
+    formattedPayload[getBestColumnName(tableName, 'id', ['ID', 'id', 'TT', 'STT'])] = finalKey;
     
     // 2. Map Ngày
     const dateObj = toSafeDate(payload.ngay || new Date());
-    // Với Locale vi-VN, AppSheet yêu cầu định dạng DD/MM/YYYY
     const formattedDate = toDisplayString(dateObj);
-    getAppSheetColumnNames(tableName, 'ngay', ['Ngày', 'ngay', 'Date']).forEach(col => {
-      formattedPayload[col] = formattedDate;
-    });
+    formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
     // 3. Map Nội dung & Dữ liệu đặc thù
     const noiDungVal = payload.noiDung || "";
-    getAppSheetColumnNames(tableName, 'noiDung', ['Nội dung', 'noiDung', 'Ghi chú']).forEach(col => {
-      formattedPayload[col] = noiDungVal;
-    });
+    formattedPayload[getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung'])] = noiDungVal;
 
     if (normTableName === "giaodich" || normTableName === normGiaoDichEnv) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
-      
-      getAppSheetColumnNames(tableName, 'soTien', ['Số tiền', 'soTien', 'Amount']).forEach(col => {
-        formattedPayload[col] = cleanAmount;
-      });
 
-      const catVal = payload.doiTuongThuChi || payload.hangMuc || "";
-      getAppSheetColumnNames(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi', 'Category', 'Phân loại']).forEach(col => {
-        formattedPayload[col] = catVal;
-      });
-
-      getAppSheetColumnNames(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh', 'Chứng từ']).forEach(col => {
-        formattedPayload[col] = payload.hinhAnh || "";
-      });
-
-      getAppSheetColumnNames(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User']).forEach(col => {
-        formattedPayload[col] = payload.nguoiCapNhat || "Ba";
-      });
-
-      getAppSheetColumnNames(tableName, 'loaiThuChi', ['Loại Thu/Chi', 'loaiThuChi']).forEach(col => {
-        formattedPayload[col] = payload.loaiThuChi || "Chi";
-      });
+      formattedPayload[getBestColumnName(tableName, 'soTien', ['Số tiền', 'soTien'])] = cleanAmount;
+      formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi'])] = payload.doiTuongThuChi || payload.hangMuc || "";
+      formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh'])] = payload.hinhAnh || "";
+      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat'])] = payload.nguoiCapNhat || "Ba";
+      formattedPayload[getBestColumnName(tableName, 'loaiThuChi', ['Loại Thu/Chi', 'loaiThuChi'])] = payload.loaiThuChi || "Chi";
     }
     
     // Làm sạch: Loại bỏ các cột không được định nghĩa rõ ràng
