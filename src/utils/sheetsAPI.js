@@ -32,10 +32,10 @@ export const normalizeKey = (str) => {
     if (['id', 'tt', 'stt', 'ma', 'magd', 'key'].includes(sClean) || sClean.startsWith('id')) return 'id';
     if (s.includes('ngay bat dau')) return 'ngayBatDau';
     if (s.includes('ngay ket thuc')) return 'ngayKetThuc';
-    if (s.includes('ngay') || s.includes('date') || s.includes('thoigian')) return 'ngay';
+    if (s.includes('ngay') || s.includes('date') || s.includes('thoi gian')) return 'ngay';
     if (s === 'noi dung' || s.includes('noidung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
-    if (sClean.includes('sotien') || s.includes('amount') || s.includes('giatri')) return 'soTien';
-    if (sClean.includes('loaithuchi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
+    if (s.includes('so tien') || s.includes('sotien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
+    if (s.includes('loai thu chi') || s.includes('loaithuchi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
     if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi') || s.includes('phan loai') || s.includes('category')) return 'doiTuongThuChi';
     // Chỉ map các từ khóa thực sự là đường dẫn về 'url'
     if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket') || s.includes('ban ve') || s.includes('hop dong')) return 'url';
@@ -202,7 +202,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     
     // 1. Đồng bộ Key dứt điểm (Bắt buộc để Edit)
     const finalKey = formatRowId(payload.keyId || payload.id || payload._RowNumber);
-    const idCol = getBestColumnName(tableName, 'id', ['ID', 'id', 'TT', 'STT', 'Mã GD']);
+    const idCol = getBestColumnName(tableName, 'id', ['ID', 'id', 'Mã GD', 'MaGD', 'TT', 'STT', 'Mã']);
     formattedPayload[idCol] = finalKey;
 
     if (payload.appSheetId || payload._RowNumber) {
@@ -211,7 +211,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 
     // 2. Map Ngày
     const dateObj = toSafeDate(payload.ngay);
-    const formattedDate = toDisplayString(dateObj);
+    const formattedDate = dateObj ? toDisplayString(dateObj) : toDisplayString(new Date());
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
     // 3. Map Nội dung & Số tiền
@@ -222,14 +222,14 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
       
-      formattedPayload[getBestColumnName(tableName, 'soTien', ['Số tiền', 'soTien'])] = cleanAmount;
+      formattedPayload[getBestColumnName(tableName, 'soTien', ['Số tiền', 'Số tiền (VNĐ)', 'soTien', 'Thành tiền'])] = cleanAmount;
       
       const catVal = payload.doiTuongThuChi || payload.hangMuc || "";
-      formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi'])] = catVal;
+      formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'Phân loại', 'doiTuongThuChi'])] = catVal;
       
       formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh'])] = payload.hinhAnh || "";
       formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat'])] = payload.nguoiCapNhat || "Ba";
-      formattedPayload[getBestColumnName(tableName, 'loaiThuChi', ['Loại Thu/Chi', 'loaiThuChi'])] = payload.loaiThuChi || "Chi";
+      formattedPayload[getBestColumnName(tableName, 'loaiThuChi', ['Loại Thu Chi', 'Loại Thu/Chi', 'loaiThuChi'])] = payload.loaiThuChi || "Chi";
     }
 
     // Làm sạch: Chỉ giữ lại các cột đã map thành công
@@ -292,7 +292,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     
     // 1. Map ID/Key (Dùng fallback rộng để trúng Key Column)
     const finalKey = payload.id || payload.keyId || `${tableName === "GhiChu" ? "GC" : "GD"}_${Date.now()}`;
-    formattedPayload[getBestColumnName(tableName, 'id', ['ID', 'id', 'TT', 'STT'])] = finalKey;
+    formattedPayload[getBestColumnName(tableName, 'id', ['ID', 'id', 'Mã GD', 'MaGD', 'TT', 'STT', 'Mã'])] = finalKey;
     
     // 2. Map Ngày
     const dateObj = toSafeDate(payload.ngay || new Date());
@@ -307,11 +307,11 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
 
-      formattedPayload[getBestColumnName(tableName, 'soTien', ['Số tiền', 'soTien'])] = cleanAmount;
-      formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'doiTuongThuChi'])] = payload.doiTuongThuChi || payload.hangMuc || "";
-      formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh'])] = payload.hinhAnh || "";
-      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat'])] = payload.nguoiCapNhat || "Ba";
-      formattedPayload[getBestColumnName(tableName, 'loaiThuChi', ['Loại Thu/Chi', 'loaiThuChi'])] = payload.loaiThuChi || "Chi";
+      formattedPayload[getBestColumnName(tableName, 'soTien', ['Số tiền', 'Số tiền (VNĐ)', 'soTien', 'Thành tiền'])] = cleanAmount;
+      formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'Phân loại', 'doiTuongThuChi'])] = payload.doiTuongThuChi || payload.hangMuc || "";
+      formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh', 'Chứng từ'])] = payload.hinhAnh || "";
+      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'nguoiCapNhat', 'User'])] = payload.nguoiCapNhat || "Ba";
+      formattedPayload[getBestColumnName(tableName, 'loaiThuChi', ['Loại Thu Chi', 'Loại Thu/Chi', 'loaiThuChi'])] = payload.loaiThuChi || "Chi";
     }
     
     // Làm sạch: Loại bỏ các cột không được định nghĩa rõ ràng
