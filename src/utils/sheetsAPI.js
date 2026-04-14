@@ -289,11 +289,11 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const normGiaoDichEnv = normalizeTableName(TABLE_GIAODICH_ENV);
     let formattedPayload = {};
     
-    // 1. Map ID/Key: Đảm bảo ID gửi lên AppSheet luôn là CHUỖI và duy nhất
-    // Nếu ID gửi vào là số nhỏ (như 8), ta coi là không hợp lệ cho dòng mới và tạo timestamp
+    // 1. Map ID/Key: AppSheet yêu cầu Number, nên ta bỏ hoàn toàn tiền tố GD_/GC_
+    // Sử dụng timestamp (Date.now()) làm ID số duy nhất
     const rawId = payload.id || payload.keyId;
     const isInvalidId = !rawId || (!isNaN(rawId) && String(rawId).length < 5);
-    const finalKey = formatRowId(!isInvalidId ? rawId : `${normTableName.includes("ghichu") ? "GC" : "GD"}_${Date.now()}`);
+    const finalKey = !isInvalidId ? rawId : Date.now();
     
     formattedPayload[getBestColumnName(tableName, 'id', ['ID', 'id', 'Mã GD', 'MaGD', 'TT', 'STT', 'Mã'])] = finalKey;
     
