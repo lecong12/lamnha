@@ -290,8 +290,11 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const normGiaoDichEnv = normalizeTableName(TABLE_GIAODICH_ENV);
     let formattedPayload = {};
     
-    // 1. Map ID/Key (Dùng fallback rộng để trúng Key Column)
-    const finalKey = payload.id || payload.keyId || `${tableName === "GhiChu" ? "GC" : "GD"}_${Date.now()}`;
+    // 1. Map ID/Key: Đảm bảo ID là duy nhất và là chuỗi
+    // Nếu payload.id là số nhỏ (như 8), đó có thể là STT cũ, ta nên bỏ qua để tạo ID mới
+    const isInvalidId = !payload.id || (!isNaN(payload.id) && String(payload.id).length < 5);
+    const finalKey = formatRowId(!isInvalidId ? payload.id : `${normTableName.includes("ghichu") ? "GC" : "GD"}_${Date.now()}`);
+    
     formattedPayload[getBestColumnName(tableName, 'id', ['ID', 'id', 'Mã GD', 'MaGD', 'TT', 'STT', 'Mã'])] = finalKey;
     
     // 2. Map Ngày
