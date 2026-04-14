@@ -1,5 +1,5 @@
 // AppSheet API Configuration
-import { toSafeDate, toInputString } from './dateUtils';
+import { toSafeDate, toDisplayString } from './dateUtils';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 
 // Helper để chuẩn hóa ID: loại bỏ tiền tố (GC_, GD_) và chuyển thành số nếu có thể
@@ -213,8 +213,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 
     // 2. Map Ngày
     const dateObj = toSafeDate(payload.ngay);
-    // Gửi định dạng YYYY-MM-DD (ISO) là cách an toàn nhất cho API
-    const formattedDate = dateObj ? toInputString(dateObj) : toInputString(new Date());
+    // Với Locale vi-VN, AppSheet yêu cầu định dạng DD/MM/YYYY
+    const formattedDate = dateObj ? toDisplayString(dateObj) : toDisplayString(new Date());
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
     // 3. Map Nội dung & Số tiền
@@ -250,7 +250,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "en-US", // Dùng en-US khi GHI để AppSheet hiểu chuẩn ISO YYYY-MM-DD
+          Locale: "vi-VN", // Đồng bộ vi-VN để dứt điểm lỗi nhảy ngày sang 2027
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -302,8 +302,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     
     // 2. Map Ngày
     const dateObj = toSafeDate(payload.ngay || new Date());
-    // Gửi định dạng YYYY-MM-DD (ISO)
-    const formattedDate = toInputString(dateObj);
+    // Với Locale vi-VN, AppSheet yêu cầu định dạng DD/MM/YYYY
+    const formattedDate = toDisplayString(dateObj);
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
     // 3. Map Nội dung & Dữ liệu đặc thù
@@ -339,7 +339,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "en-US", // Dùng en-US khi GHI để AppSheet hiểu chuẩn ISO YYYY-MM-DD
+          Locale: "vi-VN", // Đồng bộ vi-VN để dứt điểm lỗi nhảy ngày sang 2027
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
