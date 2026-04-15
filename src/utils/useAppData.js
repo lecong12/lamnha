@@ -49,7 +49,7 @@ export const useAppData = (isLoggedIn) => {
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
                 // Tìm giá trị ngày trong row một cách linh hoạt nhất
-                const rawDate = row.ngay || row.date || row.Ngay || row.Date || row["Ngày"] || row["ngày"];
+                const rawDate = row.ngay || row["Ngày"] || row.date || row.Date;
                 const parsedDate = toSafeDate(rawDate);
                 // Nếu hỏng hoàn toàn mới dùng ngày hiện tại, nhưng phải là đối tượng Date hợp lệ
                 const d = parsedDate || new Date();
@@ -92,11 +92,17 @@ export const useAppData = (isLoggedIn) => {
 
             // 3. Xử lý Tiến Độ
             // Dữ liệu từ fetchStages đã được chuẩn hóa, chỉ cần gán trực tiếp
-            const cleanTD = resTD.map(stage => ({
-                ...stage,
-                displayNgayBatDau: toDisplayString(stage.ngayBatDau),
-                displayNgayKetThuc: toDisplayString(stage.ngayKetThuc)
-            }));
+            const cleanTD = resTD.map(stage => {
+                const dS = toSafeDate(stage.ngayBatDau);
+                const dE = toSafeDate(stage.ngayKetThuc);
+                return {
+                    ...stage,
+                    ngayBatDau: dS,
+                    ngayKetThuc: dE,
+                    displayNgayBatDau: toDisplayString(dS),
+                    displayNgayKetThuc: toDisplayString(dE)
+                };
+            });
             setTienDo(cleanTD);
 
             // 4. Xử lý Hợp Đồng

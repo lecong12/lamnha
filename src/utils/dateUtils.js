@@ -9,22 +9,24 @@ export const toSafeDate = (value) => {
   let str = String(value).trim().split(/[ T]/)[0].replace(/[\\"]/g, "").toLowerCase();
   if (str === "null" || str === "undefined" || !str) return null;
 
-  // 1. Định dạng VN/GB hoặc US: DD/MM/YYYY hoặc MM/DD/YYYY
+  // 1. Định dạng VN/GB: DD/MM/YYYY (Bắt buộc khớp chuẩn này trước)
   const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
   if (vnMatch) {
-    const v1 = parseInt(vnMatch[1], 10);
-    const v2 = parseInt(vnMatch[2], 10);
+    const day = parseInt(vnMatch[1], 10);
+    const month = parseInt(vnMatch[2], 10);
     const year = parseInt(vnMatch[3], 10);
     
-    // Thử DD/MM/YYYY trước (Ưu tiên Việt Nam)
-    const dVN = new Date(year, v2 - 1, v1, 0, 0, 0);
-    if (dVN.getFullYear() === year && dVN.getMonth() === v2 - 1 && dVN.getDate() === v1) return dVN;
+    // Kiểm tra tính hợp lệ của ngày (tránh trường hợp tháng 13...)
+    const d = new Date(year, month - 1, day, 0, 0, 0);
+    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) {
+      return d;
+    }
     
-    // Thử MM/DD/YYYY (Dự phòng cho trường hợp AppSheet trả về chuẩn US)
-    const dUS = new Date(year, v1 - 1, v2, 0, 0, 0);
-    if (dUS.getFullYear() === year && dUS.getMonth() === v1 - 1 && dUS.getDate() === v2) return dUS;
-
-    return null;
+    // Nếu không khớp DD/MM nhưng lại khớp MM/DD (trường hợp hiếm từ API US)
+    const dAlt = new Date(year, day - 1, month, 0, 0, 0);
+    if (dAlt.getFullYear() === year && dAlt.getMonth() === day - 1 && dAlt.getDate() === month) {
+      return dAlt;
+    }
   }
 
   // 2. Định dạng ISO: YYYY-MM-DD
