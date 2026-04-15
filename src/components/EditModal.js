@@ -124,7 +124,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
     const finalData = {
       ...baseInfo,
-      ...formData,
+      ...formData, //formData.ngay đang là YYYY-MM-DD từ input date
       soTien: cleanAmount,
     };
 
