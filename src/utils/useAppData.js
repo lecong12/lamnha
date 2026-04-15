@@ -67,11 +67,11 @@ export const useAppData = (isLoggedIn) => {
                     nguoiCapNhat: row.nguoiCapNhat || ""
                 };
             });
-            // SẮP XẾP AN TOÀN: Tránh lỗi trắng màn hình bằng optional chaining
+            // SẮP XẾP: t2 - t1 để giao dịch mới nhất (thời gian lớn hơn) luôn nằm trên đầu
             setData(cleanGD.sort((a, b) => {
                 const t1 = a.ngay instanceof Date ? a.ngay.getTime() : 0;
                 const t2 = b.ngay instanceof Date ? b.ngay.getTime() : 0;
-                return t1 - t2;
+                return t2 - t1;
             }));
 
             // 2. Xử lý Ngân Sách
