@@ -48,8 +48,9 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                // Nếu toSafeDate thất bại do chuỗi rác, giữ nguyên giá trị để dễ kiểm tra
-                const parsedDate = toSafeDate(row.ngay);
+                // Thử lấy ngày từ nhiều khóa khác nhau để tăng độ chính xác
+                const rawDate = row.ngay || row.date || row.Ngay || row.Date || row["Ngày"];
+                const parsedDate = toSafeDate(rawDate);
                 const d = parsedDate || new Date();
                 
                 return {
