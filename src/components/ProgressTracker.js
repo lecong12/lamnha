@@ -144,14 +144,14 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
                     onClick={() => handleDeleteImage(stage, idx)}
                     style={{
                       position: 'absolute',
-                      top: '-6px',
-                      right: '-6px',
+                      top: '-4px',
+                      right: '-4px',
                       background: '#ef4444',
                       color: 'white',
                       border: '2px solid white',
                       borderRadius: '50%',
-                      width: '18px',
-                      height: '18px',
+                      width: '15px',
+                      height: '15px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -161,7 +161,7 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
                     }}
                     title="Xóa ảnh"
                   >
-                    <FiX size={12} />
+                    <FiX size={9} />
                   </button>
                 </div>
               ))}

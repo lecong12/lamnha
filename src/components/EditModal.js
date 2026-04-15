@@ -35,8 +35,8 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
   useEffect(() => {
     if (item && (item.id || item._id || item.appSheetId)) {
-      const rawDate = item.ngay || item["Ngày"];
-      const dateStr = toInputString(rawDate) || getTodayInputString();
+      // item.ngay đã là đối tượng Date từ useAppData, toInputString sẽ chuyển về YYYY-MM-DD chuẩn
+      const dateStr = toInputString(item.ngay) || getTodayInputString();
       const rawAmount = item.soTien || item["Số tiền"];
 
       setFormData({
