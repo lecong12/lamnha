@@ -112,7 +112,6 @@ function App() {
         soTien: parseInt(String(updatedItem.soTien).replace(/\D/g, "")) || 0,
         nguoiCapNhat: updatedItem.nguoiCapNhat,
         hinhAnh: updatedItem.hinhAnh,
-        loaiThuChi: "Chi" // Mặc định là Chi
       };
 
       const result = isEdit 

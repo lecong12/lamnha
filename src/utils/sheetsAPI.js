@@ -1,5 +1,5 @@
 // AppSheet API Configuration
-import { toSafeDate, toInputString } from './dateUtils';
+import { toSafeDate, toDisplayString } from './dateUtils';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 
 // Helper để chuẩn hóa ID: loại bỏ tiền tố (GC_, GD_) và chuyển thành số nếu có thể
@@ -117,7 +117,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-US", // Dùng en-US để nhận ngày dạng ISO YYYY-MM-DD ổn định nhất
+          Locale: "en-GB", // Đồng bộ en-GB để nhận ngày dạng DD/MM/YYYY khớp với VN
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -212,9 +212,9 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     }
 
     // 2. Map Ngày
-    const dateObj = toSafeDate(payload.ngay);
-    // CHỐT: Luôn gửi YYYY-MM-DD (ISO) để API không bao giờ bị ngược Ngày/Tháng
-    const formattedDate = toInputString(dateObj || payload.ngay || new Date());
+    const dateObj = toSafeDate(payload.ngay) || new Date();
+    // Gửi định dạng DD/MM/YYYY khớp với Locale en-GB để không bao giờ bị đảo ngày
+    const formattedDate = toDisplayString(dateObj);
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
     // 3. Map Nội dung & Số tiền
@@ -250,7 +250,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "en-US", // Đồng bộ en-US để hiểu chuẩn ISO YYYY-MM-DD
+          Locale: "en-GB", // Đồng bộ en-GB dứt điểm lỗi 10/3 -> 3/10
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -301,9 +301,9 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     formattedPayload[getBestColumnName(tableName, 'id', ['ID', 'id', 'Mã GD', 'MaGD', 'TT', 'STT', 'Mã'])] = finalKey;
     
     // 2. Map Ngày
-    const dateObj = toSafeDate(payload.ngay || new Date());
-    // CHỐT: Gửi ISO YYYY-MM-DD
-    const formattedDate = toInputString(dateObj);
+    const dateObj = toSafeDate(payload.ngay) || new Date();
+    // Gửi định dạng DD/MM/YYYY
+    const formattedDate = toDisplayString(dateObj);
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
     // 3. Map Nội dung & Dữ liệu đặc thù
@@ -339,7 +339,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "en-US", // Đồng bộ en-US để hiểu chuẩn ISO YYYY-MM-DD
+          Locale: "en-GB", // Đồng bộ en-GB dứt điểm lỗi 10/3 -> 3/10
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],

@@ -48,13 +48,15 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                // Dữ liệu từ sheetsAPI đã được normalizeKey rồi, nên row đã có các key: ngay, id, noiDung...
-                const d = toSafeDate(row.ngay) || new Date();
+                // Nếu toSafeDate thất bại do chuỗi rác, giữ nguyên giá trị để dễ kiểm tra
+                const parsedDate = toSafeDate(row.ngay);
+                const d = parsedDate || new Date();
+                
                 return {
                     id: row.id || row._RowNumber || `gd_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row._RowNumber,
-                    ngay: d, // Đối tượng Date để sắp xếp
+                    ngay: d, // Đối tượng Date dùng cho tính toán/sắp xếp
                     date: toDisplayString(d), // Chuỗi định dạng VN (DD/MM/YYYY) để hiển thị
                     noiDung: row.noiDung || "",
                     doiTuongThuChi: row.doiTuongThuChi || "",
@@ -63,7 +65,8 @@ export const useAppData = (isLoggedIn) => {
                     nguoiCapNhat: row.nguoiCapNhat || ""
                 };
             });
-            setData(cleanGD.sort((a, b) => b.ngay - a.ngay));
+            // Sắp xếp theo thời gian (getTime) để chính xác tuyệt đối
+            setData(cleanGD.sort((a, b) => a.ngay.getTime() - b.ngay.getTime()));
 
             // 2. Xử lý Ngân Sách
             const cleanNS = resNS.map((row, index) => {
