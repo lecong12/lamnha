@@ -48,13 +48,14 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                // Thử lấy ngày từ nhiều khóa khác nhau để tăng độ chính xác
-                const rawDate = row.ngay || row.date || row.Ngay || row.Date || row["Ngày"];
+                // Tìm giá trị ngày trong row một cách linh hoạt nhất
+                const rawDate = row.ngay || row.date || row.Ngay || row.Date || row["Ngày"] || row["ngày"];
                 const parsedDate = toSafeDate(rawDate);
+                // Nếu hỏng hoàn toàn mới dùng ngày hiện tại, nhưng phải là đối tượng Date hợp lệ
                 const d = parsedDate || new Date();
                 
                 return {
-                    id: row.id || row._RowNumber || `gd_${index}`,
+                    id: row.id || row.ID || row._RowNumber || `gd_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row._RowNumber,
                     ngay: d, // Đối tượng Date dùng cho tính toán/sắp xếp
@@ -66,8 +67,12 @@ export const useAppData = (isLoggedIn) => {
                     nguoiCapNhat: row.nguoiCapNhat || ""
                 };
             });
-            // Sắp xếp theo thời gian (getTime) để chính xác tuyệt đối
-            setData(cleanGD.sort((a, b) => a.ngay.getTime() - b.ngay.getTime()));
+            // SẮP XẾP AN TOÀN: Tránh lỗi trắng màn hình bằng optional chaining
+            setData(cleanGD.sort((a, b) => {
+                const t1 = a.ngay instanceof Date ? a.ngay.getTime() : 0;
+                const t2 = b.ngay instanceof Date ? b.ngay.getTime() : 0;
+                return t1 - t2;
+            }));
 
             // 2. Xử lý Ngân Sách
             const cleanNS = resNS.map((row, index) => {

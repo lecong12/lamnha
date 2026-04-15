@@ -120,7 +120,7 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           <div className="stat-icon"><FiCalendar color="#f59e0b" /></div>
           <div className="stat-info">
             <span className="stat-label">Thời gian thi công</span>
-            <span className="stat-value">{daysElapsed >= 1 ? `Ngày thứ ${daysElapsed}` : 'Sắp khởi công'}</span>
+            <span className="stat-value">{daysElapsed > 0 ? `Ngày thứ ${daysElapsed}` : 'Sắp khởi công'}</span>
             <small>Khởi công: {toDisplayString(firstDate)}</small>
           </div>
         </div>
