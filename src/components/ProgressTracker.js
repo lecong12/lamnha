@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiCamera, FiLoader, FiSave, FiX, FiTrash2 } from 'react-icons/fi';
+import { FiCamera, FiLoader, FiSave, FiX } from 'react-icons/fi';
 
 // Cấu hình Cloudinary
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
@@ -140,11 +140,28 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
                     style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} 
                     onClick={() => setSelectedImage(url)}
                   />
-                  <button 
+                  <button
                     onClick={() => handleDeleteImage(stage, idx)}
-                    style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.8)', color: 'white', border: 'none', borderRadius: '4px', padding: '4px', cursor: 'pointer' }}
+                    style={{
+                      position: 'absolute',
+                      top: '-6px',
+                      right: '-6px',
+                      background: '#ef4444',
+                      color: 'white',
+                      border: '2px solid white',
+                      borderRadius: '50%',
+                      width: '18px',
+                      height: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                      zIndex: 2
+                    }}
+                    title="Xóa ảnh"
                   >
-                    <FiTrash2 size={12} />
+                    <FiX size={12} />
                   </button>
                 </div>
               ))}
