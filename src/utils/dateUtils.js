@@ -9,7 +9,7 @@ export const toSafeDate = (value) => {
   let str = String(value).trim().split(/[ T]/)[0].replace(/[\\"]/g, "").toLowerCase();
   if (str === "null" || str === "undefined" || !str) return null;
 
-  // 1. Ưu tiên tuyệt đối định dạng DD/MM/YYYY (Việt Nam / Anh)
+  // 1. Định dạng VN/GB: DD/MM/YYYY
   const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
   if (vnMatch) {
     const year = parseInt(vnMatch[3], 10);

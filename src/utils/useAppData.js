@@ -102,8 +102,7 @@ export const useAppData = (isLoggedIn) => {
                     keyId: row.id || row.keyId || row._RowNumber,
                     name: row.name || row.ten || row.noiDung || row["Tên hợp đồng"] || row["Tên Hợp đồng"] || `Hợp đồng ${index + 1}`,
                     url: row.url || "",
-                    // Sử dụng toDisplayString để dứt điểm lỗi ngược ngày tháng
-                    date: toDisplayString(row.date || row.ngay),
+                    date: toDisplayString(toSafeDate(row.date || row.ngay)),
                     size: Number(row.size || 0),
                     category: row.category || row.doiTuongThuChi || "Khác"
                 };
@@ -119,8 +118,7 @@ export const useAppData = (isLoggedIn) => {
                     keyId: row.id || row.keyId || row._RowNumber,
                     name: row.name || row.ten || row.noiDung || row["Tên bản vẽ"] || row["Tên Bản vẽ"] || `Bản vẽ ${index + 1}`,
                     url: row.url || "",
-                    // Sử dụng toDisplayString để dứt điểm lỗi ngược ngày tháng
-                    date: toDisplayString(row.date || row.ngay),
+                    date: toDisplayString(toSafeDate(row.date || row.ngay)),
                     size: Number(row.size || 0),
                     category: row.category || row.doiTuongThuChi || "Khác"
                 };

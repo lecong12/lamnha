@@ -25,7 +25,7 @@ export const fetchStages = async (appId) => {
       body: JSON.stringify({ 
         Action: "Find", 
         Properties: { 
-          Locale: "vi-VN", // Thống nhất dùng vi-VN để tránh đảo Ngày/Tháng
+          Locale: "en-GB", // Dùng en-GB để đảm bảo AppSheet trả về DD/MM/YYYY ổn định
           Timezone: "Asia/Ho_Chi_Minh"
         },
         Rows: [] 
@@ -189,7 +189,7 @@ export const updateStageInSheet = async (stage, appId) => {
       body: JSON.stringify({ 
         Action: "Edit", 
         Properties: {
-          Locale: "vi-VN", // Chuyển sang vi-VN để đồng bộ DD/MM/YYYY
+          Locale: "en-GB", // Đồng bộ en-GB dứt điểm lỗi đảo Ngày/Tháng
           Timezone: "Asia/Ho_Chi_Minh",
         }, 
         Rows: editData 

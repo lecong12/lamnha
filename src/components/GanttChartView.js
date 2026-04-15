@@ -14,10 +14,6 @@ const dayDiff = (date1, date2) => {
   return Math.round((t2 - t1) / (86400000));
 };
 
-const formatDateVN = (date) => {
-  return toDisplayString(date);
-};
-
 const GanttTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -70,7 +66,7 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
       if (stage.status === 'Đang thi công') color = '#3b82f6';
       if (stage.status === 'Hoàn thành') color = '#16a34a';
 
-      const dateRange = hasValidDates ? `${formatDateVN(dS)} - ${formatDateVN(dE)}` : "Chưa có ngày";
+      const dateRange = hasValidDates ? `${toDisplayString(dS)} - ${toDisplayString(dE)}` : "Chưa có ngày";
 
       return { 
         id: stage.id, 
