@@ -37,14 +37,11 @@ function GanttChartView({ stages = [], onUpdateStage, isDarkMode }) {
 
     if (sortedStages.length === 0) return [];
 
-    // BƯỚC 2: Xác định ngày bắt đầu dự án 
-    // Ưu tiên lấy ngày của hạng mục "Khởi công"
-    const startStage = sortedStages.find(s => s.name?.toLowerCase().includes("khởi công")) || sortedStages[0];
-    const firstStageDate = toSafeDate(startStage?.ngayBatDau)?.getTime();
-    
-    // Nếu dòng đầu không có ngày, mới tìm ngày nhỏ nhất trong các ngày hợp lệ
-    const validTimes = sortedStages.map(s => toSafeDate(s.ngayBatDau)?.getTime()).filter(t => t > 0);
-    const minTime = firstStageDate || (validTimes.length > 0 ? Math.min(...validTimes) : Date.now());
+    // BƯỚC 2: Tìm ngày nhỏ nhất thực sự để làm mốc "Ngày 0"
+    const validTimes = sortedStages
+      .map(s => toSafeDate(s.ngayBatDau)?.getTime())
+      .filter(t => t && t > 0);
+    const minTime = validTimes.length > 0 ? Math.min(...validTimes) : Date.now();
 
     const dMin = new Date(minTime);
     // Chuẩn hóa về 0h00 sáng để tính toán khoảng cách ngày chính xác
