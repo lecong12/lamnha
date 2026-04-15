@@ -83,7 +83,6 @@ function DataTable({ data, onEdit, onDelete }) {
   };
 
   const pageTotalChi = currentData
-    .filter((item) => item.loaiThuChi === "Chi")
     .reduce((sum, item) => sum + item.soTien, 0);
 
   const chiList = currentData; // Tất cả dữ liệu giờ là chi phí

@@ -58,7 +58,7 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   const completionPercentage = stages.length > 0 ? Math.round((completedStagesCount / stages.length) * 100) : 0;
 
   const groupByDoiTuong = (data || []).reduce((acc, item) => {
-    if (item.loaiThuChi === "Chi" && safeNumber(item.soTien) > 0) {
+    if (safeNumber(item.soTien) > 0) {
       const key = item.doiTuongThuChi || "Khác";
       acc[key] = (acc[key] || 0) + safeNumber(item.soTien);
     }
@@ -70,7 +70,7 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
     .sort((a, b) => b.value - a.value);
 
   const expenseItems = (data || []).reduce((acc, item) => {
-    if (item.loaiThuChi === "Chi" && safeNumber(item.soTien) > 0) {
+    if (safeNumber(item.soTien) > 0) {
       const key = item.noiDung || "Hạng mục khác";
       acc[key] = (acc[key] || 0) + safeNumber(item.soTien);
     }
