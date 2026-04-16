@@ -48,14 +48,14 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                // Ưu tiên lấy từ key 'ngay' đã được normalizeKey xử lý trong fetchTableData
-                const d = toSafeDate(row.ngay || row["Ngày"]) || new Date();
+                // Dữ liệu từ resGD đã qua normalizeKey trong sheetsAPI, nên dùng luôn row.ngay
+                const d = toSafeDate(row.ngay) || new Date();
                 
                 return {
                     id: row.id || row.ID || row._RowNumber || `gd_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row._RowNumber,
-                    ngay: d, // Đối tượng Date dùng cho tính toán/sắp xếp
+                    ngay: d, // Đối tượng Date chuẩn để sắp xếp (sorting)
                     date: toDisplayString(d), // Chuỗi định dạng VN (DD/MM/YYYY) để hiển thị
                     noiDung: row.noiDung || "",
                     doiTuongThuChi: row.doiTuongThuChi || "",

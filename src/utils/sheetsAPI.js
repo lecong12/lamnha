@@ -1,5 +1,5 @@
 // AppSheet API Configuration
-import { toSafeDate, toDisplayString } from './dateUtils';
+import { toSafeDate, toDisplayString, toInputString } from './dateUtils';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 
 // Helper để chuẩn hóa ID: loại bỏ tiền tố (GC_, GD_) và chuyển thành số nếu có thể
@@ -213,8 +213,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
 
     // 2. Map Ngày
     const dateObj = toSafeDate(payload.ngay) || new Date();
-    // Gửi định dạng DD/MM/YYYY khớp với Locale en-GB để không bao giờ bị đảo ngày
-    const formattedDate = toDisplayString(dateObj);
+    // Gửi định dạng ISO YYYY-MM-DD để AppSheet nhận diện chính xác tuyệt đối
+    const formattedDate = toInputString(dateObj);
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
     // 3. Map Nội dung & Số tiền
@@ -302,8 +302,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     
     // 2. Map Ngày
     const dateObj = toSafeDate(payload.ngay) || new Date();
-    // Gửi định dạng DD/MM/YYYY
-    const formattedDate = toDisplayString(dateObj);
+    // Gửi định dạng ISO YYYY-MM-DD
+    const formattedDate = toInputString(dateObj);
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
     // 3. Map Nội dung & Dữ liệu đặc thù

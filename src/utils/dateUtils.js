@@ -10,6 +10,16 @@ export const toSafeDate = (value) => {
   if (!rawStr || ["null", "undefined", "", "---"].includes(rawStr.toLowerCase())) return null;
   const str = rawStr.toLowerCase();
 
+  // 1. Ưu tiên định dạng ISO: YYYY-MM-DD (Chắc chắn nhất)
+  const isoMatch = str.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
+  if (isoMatch) {
+    const year = parseInt(isoMatch[1], 10);
+    const month = parseInt(isoMatch[2], 10);
+    const day = parseInt(isoMatch[3], 10);
+    const d = new Date(year, month - 1, day, 0, 0, 0);
+    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
+  }
+
   // 1. Định dạng VN/GB: DD/MM/YYYY (Bắt buộc khớp chuẩn này trước)
   const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
   if (vnMatch) {
@@ -22,17 +32,6 @@ export const toSafeDate = (value) => {
     if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) {
       return d;
     }
-  }
-
-  // 2. Định dạng ISO: YYYY-MM-DD
-  const isoMatch = str.match(/^(\d{4})[/\-. ](\d{1,2})[/\-. ](\d{1,2})/);
-  if (isoMatch) {
-    const year = parseInt(isoMatch[1], 10);
-    const month = parseInt(isoMatch[2], 10);
-    const day = parseInt(isoMatch[3], 10);
-    const d = new Date(year, month - 1, day, 0, 0, 0);
-    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
-    return d;
   }
 
   // 3. Nếu là định dạng MM/DD/YYYY (Mỹ) - Chỉ xử lý nếu các bước trên thất bại
