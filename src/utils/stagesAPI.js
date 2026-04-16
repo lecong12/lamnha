@@ -118,10 +118,10 @@ export const fetchStages = async (appId) => {
         statusColumn: statusKey, // Lưu lại tên cột Trạng thái để dùng lúc Update
         name: row[nameKey] || row.name || row["Tên công việc"] || row["Hạng mục"] || `Giai đoạn ${index + 1}`, // Fallback nếu không tìm thấy tên
         status: row[statusKey] || row.status || "Chưa bắt đầu",
-        ngayBatDau: toSafeDate(row[startKey] || row.ngayBatDau), 
-        ngayKetThuc: toSafeDate(row[endKey] || row.ngayKetThuc),
+        ngayBatDau: toSafeDate(row[startKey] || row.ngayBatDau || row["Ngày bắt đầu"]), 
+        ngayKetThuc: toSafeDate(row[endKey] || row.ngayKetThuc || row["Ngày kết thúc"]),
         // Chuyển chuỗi URL (ngăn cách bởi dấu phẩy hoặc chấm phẩy) thành mảng sạch
-        anhNghiemThu: (row[finalImgKey] ? String(row[finalImgKey]) : "")
+        anhNghiemThu: (row[finalImgKey] && typeof row[finalImgKey] === 'string' ? row[finalImgKey] : "")
           .split(/[;,]/)
           .map(url => url.trim())
           .filter(url => url && url.startsWith('http'))

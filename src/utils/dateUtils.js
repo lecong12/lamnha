@@ -6,8 +6,11 @@ export const toSafeDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   
-  // 1. Làm sạch chuỗi: bỏ ngoặc kép, lấy phần trước khoảng trắng hoặc chữ T (bỏ thời gian)
-  let cleanStr = String(value).trim().replace(/[\\"]/g, "").split(/[ T]/)[0];
+  // 1. Làm sạch chuỗi
+  let rawStr = String(value).trim().replace(/[\\"]/g, "");
+  // Loại bỏ phần giờ nếu có (ví dụ: 10/04/2026 00:00:00 -> 10/04/2026)
+  let cleanStr = rawStr.split(/[ T]/)[0];
+  
   if (!cleanStr || ["null", "undefined", "", "---"].includes(cleanStr.toLowerCase())) return null;
   const str = cleanStr.toLowerCase();
 
@@ -18,23 +21,30 @@ export const toSafeDate = (value) => {
     const month = parseInt(isoMatch[2], 10);
     const day = parseInt(isoMatch[3], 10);
     const d = new Date(year, month - 1, day, 0, 0, 0);
-    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
+    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) {
+      return d;
+    }
   }
 
   // 3. ÉP BUỘC định dạng VN/GB: DD/MM/YYYY (Nếu có dấu '/' hoặc '.' hoặc '-')
-  const vnMatch = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})/);
+  const vnMatch = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})/);
   if (vnMatch) {
     const day = parseInt(vnMatch[1], 10);
     const month = parseInt(vnMatch[2], 10);
-    const year = parseInt(vnMatch[3], 10);
-    
+    let year = parseInt(vnMatch[3], 10);
+    if (year < 100) year += 2000; // Xử lý năm dạng 2 số (26 -> 2026)
+
     const d = new Date(year, month - 1, day, 0, 0, 0);
     if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) {
       return d;
     }
   }
 
-  // 4. Tuyệt đối không dùng new Date(str) nếu không khớp các định dạng trên để tránh đảo ngày
+  // 4. Fallback cuối cùng cho trường hợp AppSheet trả về MM/DD/YYYY dù đã ép Locale (hiếm gặp)
+  // Chỉ thực hiện nếu các bước trên thất bại hoàn toàn
+  const finalAttempt = new Date(value);
+  if (!isNaN(finalAttempt.getTime())) return finalAttempt;
+
   return null;
 };
 
