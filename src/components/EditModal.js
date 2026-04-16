@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiSave, FiCamera, FiImage, FiLoader, FiFileText } from "react-icons/fi";
 import { extractInfoWithAI } from "../utils/aiService";
-import { toInputString, getTodayInputString } from "../utils/dateUtils";
+import { toInputString, getTodayInputString, toSafeDate } from "../utils/dateUtils";
 import "./EditModal.css";
 
 const BUDGET_CATEGORIES = ['Chuẩn bị', 'Thiết kế', 'Giám sát', 'Phần thô', 'Nhân công', 'Hoàn thiện', 'Điện nước', 'Nội thất', 'Phát sinh', 'Khác'];

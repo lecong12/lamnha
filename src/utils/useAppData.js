@@ -49,8 +49,8 @@ export const useAppData = (isLoggedIn) => {
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
                 // fetchTableData đã normalizeKey nên row.ngay là cột chuẩn nhất
-                const rawDate = row.ngay || row["Ngày"] || row["ngay"];
-                const d = toSafeDate(rawDate) || new Date();
+                const rawDateValue = row.ngay || row["Ngày"];
+                const d = toSafeDate(rawDateValue) || new Date();
                 
                 return {
                     id: row.id || row.ID || row._RowNumber || `gd_${index}`,

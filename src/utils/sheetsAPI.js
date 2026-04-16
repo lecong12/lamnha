@@ -117,7 +117,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-GB", // Ép AppSheet trả về chuỗi DD/MM/YYYY
+          Locale: "en-GB", // Thống nhất en-GB để nhận dữ liệu DD/MM/YYYY
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -393,8 +393,8 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
       },
       body: JSON.stringify({
         Action: "Delete",
-        Properties: { 
-          Locale: "en-GB",
+        Properties: {
+          Locale: "en-GB", // Đồng bộ locale
           Timezone: "Asia/Ho_Chi_Minh" 
         },
         Rows: [deleteRow], 

@@ -7,15 +7,15 @@ export const toSafeDate = (value) => {
   if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   
   // 1. Làm sạch chuỗi
-  let rawStr = String(value).trim().replace(/[\\"]/g, "");
+  const rawStr = String(value).trim().replace(/[\\"]/g, "");
   // Loại bỏ phần giờ nếu có (ví dụ: 10/04/2026 00:00:00 -> 10/04/2026)
-  let cleanStr = rawStr.split(/[ T]/)[0];
+  const cleanStr = rawStr.split(/[ T]/)[0];
   
-  if (!cleanStr || ["null", "undefined", "", "---"].includes(cleanStr.toLowerCase())) return null;
+  if (!cleanStr || ["null", "undefined", "", "---", "invalid"].includes(cleanStr.toLowerCase())) return null;
   const str = cleanStr.toLowerCase();
 
   // 2. Ưu tiên ISO YYYY-MM-DD trước (vì đây là định dạng chuẩn code gửi lên)
-  const isoMatch = str.match(/^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})/);
+  const isoMatch = str.match(/^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})$/);
   if (isoMatch) {
     const year = parseInt(isoMatch[1], 10);
     const month = parseInt(isoMatch[2], 10);
@@ -26,8 +26,8 @@ export const toSafeDate = (value) => {
     }
   }
 
-  // 3. ÉP BUỘC định dạng VN/GB: DD/MM/YYYY (Nếu có dấu '/' hoặc '.' hoặc '-')
-  const vnMatch = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})/);
+  // 3. ÉP BUỘC định dạng VN/GB: DD/MM/YYYY - Ưu tiên tuyệt đối số đầu là Ngày
+  const vnMatch = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
   if (vnMatch) {
     const day = parseInt(vnMatch[1], 10);
     const month = parseInt(vnMatch[2], 10);
@@ -40,11 +40,7 @@ export const toSafeDate = (value) => {
     }
   }
 
-  // 4. Fallback cuối cùng cho trường hợp AppSheet trả về MM/DD/YYYY dù đã ép Locale (hiếm gặp)
-  // Chỉ thực hiện nếu các bước trên thất bại hoàn toàn
-  const finalAttempt = new Date(value);
-  if (!isNaN(finalAttempt.getTime())) return finalAttempt;
-
+  // 4. Không dùng fallback new Date(str) để tránh trình duyệt tự ý đoán định kiểu Mỹ
   return null;
 };
 
