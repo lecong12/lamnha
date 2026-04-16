@@ -48,11 +48,8 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                // Tìm giá trị ngày trong row một cách linh hoạt nhất
-                const rawDate = row.ngay || row["Ngày"] || row.date || row.Date;
-                const parsedDate = toSafeDate(rawDate);
-                // Nếu hỏng hoàn toàn mới dùng ngày hiện tại, nhưng phải là đối tượng Date hợp lệ
-                const d = parsedDate || new Date();
+                // Ưu tiên lấy từ key 'ngay' đã được normalizeKey xử lý trong fetchTableData
+                const d = toSafeDate(row.ngay) || new Date();
                 
                 return {
                     id: row.id || row.ID || row._RowNumber || `gd_${index}`,

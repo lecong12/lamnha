@@ -6,8 +6,9 @@ export const toSafeDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   
-  let str = String(value).trim().split(/[ T]/)[0].replace(/[\\"]/g, "").toLowerCase();
-  if (str === "null" || str === "undefined" || !str) return null;
+  let rawStr = String(value).trim().split(/[ T]/)[0].replace(/[\\"]/g, "");
+  if (!rawStr || ["null", "undefined", ""].includes(rawStr.toLowerCase())) return null;
+  const str = rawStr.toLowerCase();
 
   // 1. Định dạng VN/GB: DD/MM/YYYY (Bắt buộc khớp chuẩn này trước)
   const vnMatch = str.match(/^(\d{1,2})[/\-. ](\d{1,2})[/\-. ](\d{4})/);
@@ -34,7 +35,9 @@ export const toSafeDate = (value) => {
     return d;
   }
 
-  return null;
+  // 3. Fallback cuối cùng cho các chuỗi khác, nhưng kiểm tra tính hợp lệ
+  const finalAttempt = new Date(value);
+  return isNaN(finalAttempt.getTime()) ? null : finalAttempt;
 };
 
 /**
