@@ -6,12 +6,22 @@ export const toSafeDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   
-  let rawStr = String(value).trim().replace(/[\\"]/g, "");
-  if (!rawStr || ["null", "undefined", "", "---"].includes(rawStr.toLowerCase())) return null;
-  const str = rawStr.toLowerCase();
+  // 1. Làm sạch chuỗi: bỏ ngoặc kép, lấy phần trước khoảng trắng hoặc chữ T (bỏ thời gian)
+  let cleanStr = String(value).trim().replace(/[\\"]/g, "").split(/[ T]/)[0];
+  if (!cleanStr || ["null", "undefined", "", "---"].includes(cleanStr.toLowerCase())) return null;
+  const str = cleanStr.toLowerCase();
 
-  // 1. ƯU TIÊN TUYỆT ĐỐI: Định dạng VN/GB: DD/MM/YYYY
-  // Regex này bóc tách chính xác Ngày đứng trước, Tháng đứng sau
+  // 2. Ưu tiên ISO YYYY-MM-DD trước (vì đây là định dạng chuẩn code gửi lên)
+  const isoMatch = str.match(/^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})/);
+  if (isoMatch) {
+    const year = parseInt(isoMatch[1], 10);
+    const month = parseInt(isoMatch[2], 10);
+    const day = parseInt(isoMatch[3], 10);
+    const d = new Date(year, month - 1, day, 0, 0, 0);
+    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
+  }
+
+  // 3. ÉP BUỘC định dạng VN/GB: DD/MM/YYYY (Nếu có dấu '/' hoặc '.' hoặc '-')
   const vnMatch = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})/);
   if (vnMatch) {
     const day = parseInt(vnMatch[1], 10);
@@ -24,19 +34,8 @@ export const toSafeDate = (value) => {
     }
   }
 
-  // 2. Định dạng ISO: YYYY-MM-DD
-  const isoMatch = str.match(/^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})/);
-  if (isoMatch) {
-    const year = parseInt(isoMatch[1], 10);
-    const month = parseInt(isoMatch[2], 10);
-    const day = parseInt(isoMatch[3], 10);
-    const d = new Date(year, month - 1, day, 0, 0, 0);
-    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
-  }
-
-  // 3. Fallback cuối cùng cho các định dạng khác
-  const finalAttempt = new Date(value); 
-  return isNaN(finalAttempt.getTime()) ? null : finalAttempt;
+  // 4. Tuyệt đối không dùng new Date(str) nếu không khớp các định dạng trên để tránh đảo ngày
+  return null;
 };
 
 /**

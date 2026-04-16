@@ -48,8 +48,8 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                // row.ngay đã được normalizeKey xử lý, fetchTableData đã ép Locale en-GB
-                const d = toSafeDate(row.ngay) || new Date();
+                // Lấy ngày từ API, nếu lỗi thì dùng ngày hiện tại làm fallback
+                const d = toSafeDate(row.ngay || row["Ngày"]) || new Date();
                 
                 return {
                     id: row.id || row.ID || row._RowNumber || `gd_${index}`,
