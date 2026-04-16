@@ -48,8 +48,8 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                // Lấy giá trị ngày gốc từ AppSheet, đảm bảo parse theo chuẩn DD/MM/YYYY
-                const d = toSafeDate(row.ngay || row["Ngày"]) || new Date();
+                // row.ngay đã được normalizeKey xử lý, fetchTableData đã ép Locale en-GB
+                const d = toSafeDate(row.ngay) || new Date();
                 
                 return {
                     id: row.id || row.ID || row._RowNumber || `gd_${index}`,
@@ -105,15 +105,13 @@ export const useAppData = (isLoggedIn) => {
             // 4. Xử lý Hợp Đồng
             const resHopDong = resHopDongResult.success ? resHopDongResult.data : [];
             const cleanHopDong = resHopDong.map((row, index) => {
+                const d = toSafeDate(row.date || row.ngay);
                 return {
+                    ...row,
                     id: row._RowNumber || row.id || `hd_${index}`,
-                    appSheetId: row._RowNumber,
-                    keyId: row.id || row.keyId || row._RowNumber,
-                    name: row.name || row.ten || row.noiDung || row["Tên hợp đồng"] || row["Tên Hợp đồng"] || `Hợp đồng ${index + 1}`,
-                    url: row.url || "",
-                    date: toDisplayString(toSafeDate(row.date || row.ngay)),
-                    size: Number(row.size || 0),
-                    category: row.category || row.doiTuongThuChi || "Khác"
+                    name: row.name || row.ten || `Hợp đồng ${index + 1}`,
+                    date: toDisplayString(d),
+                    ngay: d,
                 };
             });
             setContracts(cleanHopDong.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));
