@@ -48,8 +48,8 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                // Dữ liệu từ resGD đã qua normalizeKey trong sheetsAPI, nên dùng luôn row.ngay
-                const d = toSafeDate(row.ngay) || new Date();
+                // Lấy giá trị ngày gốc từ AppSheet, đảm bảo parse theo chuẩn DD/MM/YYYY
+                const d = toSafeDate(row.ngay || row["Ngày"]) || new Date();
                 
                 return {
                     id: row.id || row.ID || row._RowNumber || `gd_${index}`,

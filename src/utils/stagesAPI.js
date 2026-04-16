@@ -189,7 +189,7 @@ export const updateStageInSheet = async (stage, appId) => {
       body: JSON.stringify({ 
         Action: "Edit", 
         Properties: {
-          Locale: "en-GB", // Đồng bộ locale en-GB cho toàn ứng dụng
+          Locale: "en-GB",
           Timezone: "Asia/Ho_Chi_Minh",
         }, 
         Rows: editData 
