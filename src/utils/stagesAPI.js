@@ -25,7 +25,7 @@ export const fetchStages = async (appId) => {
       body: JSON.stringify({ 
         Action: "Find", 
         Properties: { 
-          Locale: "en-GB", // Dùng en-GB để đảm bảo AppSheet trả về DD/MM/YYYY ổn định
+          Locale: "en-GB",
           Timezone: "Asia/Ho_Chi_Minh"
         },
         Rows: [] 
@@ -189,7 +189,7 @@ export const updateStageInSheet = async (stage, appId) => {
       body: JSON.stringify({ 
         Action: "Edit", 
         Properties: {
-          Locale: "en-GB",
+          Locale: "en-GB", // Đồng bộ locale en-GB cho toàn ứng dụng
           Timezone: "Asia/Ho_Chi_Minh",
         }, 
         Rows: editData 

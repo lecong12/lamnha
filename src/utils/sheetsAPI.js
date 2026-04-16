@@ -250,7 +250,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "en-GB", 
+          Locale: "en-GB", // Thống nhất en-GB để tránh đảo Ngày/Tháng
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -339,7 +339,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "en-GB",
+          Locale: "en-GB", // Thống nhất en-GB để tránh đảo Ngày/Tháng
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
