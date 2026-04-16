@@ -7,23 +7,20 @@ export const toSafeDate = (value) => {
   if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   
   // 1. Làm sạch chuỗi tuyệt đối
-  const cleanStr = String(value).trim().replace(/[\\"]/g, "").split(/[ T]/)[0];
+  const cleanStr = String(value).trim().replace(/[\\"]/g, "").split(/[ T]/)[0].replace(/[-.]/g, "/");
   
   if (!cleanStr || ["null", "undefined", "", "---", "invalid"].includes(cleanStr.toLowerCase())) return null;
   const str = cleanStr.toLowerCase();
 
-  // 2. Kiểm tra định dạng ISO YYYY-MM-DD (Dạng chuẩn để lưu trữ)
-  const isoMatch = str.match(/^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})$/);
+  // 2. ƯU TIÊN 1: Định dạng ISO (YYYY/MM/DD) - Thường do AppSheet gửi về
+  const isoMatch = str.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
   if (isoMatch) {
-    const year = parseInt(isoMatch[1], 10);
-    const month = parseInt(isoMatch[2], 10);
-    const day = parseInt(isoMatch[3], 10);
-    const d = new Date(year, month - 1, day, 0, 0, 0);
-    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
+    const [_, y, m, d] = isoMatch;
+    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 0, 0, 0);
   }
 
-  // 3. ÉP BUỘC định dạng VN: DD/MM/YYYY - Ưu tiên tuyệt đối số đầu là NGÀY
-  const vnMatch = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
+  // 3. ƯU TIÊN 2: Định dạng VN (DD/MM/YYYY) - Ép buộc hiểu số đầu là NGÀY
+  const vnMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if (vnMatch) {
     const day = parseInt(vnMatch[1], 10);
     const month = parseInt(vnMatch[2], 10);
@@ -33,7 +30,7 @@ export const toSafeDate = (value) => {
     if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
   }
 
-  // 4. CẤM TUYỆT ĐỐI trình duyệt tự đoán ngày bằng cách loại bỏ fallback new Date(str)
+  // 4. CẤM TUYỆT ĐỐI trình duyệt tự đoán ngày. Nếu không khớp 2 chuẩn trên, trả về null.
   return null;
 };
 
