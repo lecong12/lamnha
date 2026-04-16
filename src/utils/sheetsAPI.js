@@ -117,7 +117,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-GB", 
+          Locale: "en-GB", // Ép AppSheet trả về DD/MM/YYYY
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
