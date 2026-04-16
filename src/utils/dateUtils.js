@@ -6,10 +6,9 @@ export const toSafeDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   
-  // 1. Làm sạch chuỗi
-  const rawStr = String(value).trim().replace(/[\\"]/g, "");
-  // Loại bỏ phần giờ nếu có (ví dụ: 10/04/2026 00:00:00 -> 10/04/2026)
-  const cleanStr = rawStr.split(/[ T]/)[0];
+  // 1. Làm sạch chuỗi triệt để: bỏ ngoặc, bỏ khoảng trắng thừa, bỏ phần giờ
+  const rawStr = String(value).trim().replace(/[\\"]/g, "").replace(/\s+/g, " ");
+  const cleanStr = rawStr.split(" ")[0].split("T")[0];
   
   if (!cleanStr || ["null", "undefined", "", "---", "invalid"].includes(cleanStr.toLowerCase())) return null;
   const str = cleanStr.toLowerCase();
@@ -26,21 +25,19 @@ export const toSafeDate = (value) => {
     }
   }
 
-  // 3. ÉP BUỘC định dạng VN/GB: DD/MM/YYYY - Ưu tiên tuyệt đối số đầu là Ngày
+  // 3. ÉP BUỘC định dạng VN/GB: DD/MM/YYYY
   const vnMatch = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
   if (vnMatch) {
     const day = parseInt(vnMatch[1], 10);
     const month = parseInt(vnMatch[2], 10);
     let year = parseInt(vnMatch[3], 10);
-    if (year < 100) year += 2000; // Xử lý năm dạng 2 số (26 -> 2026)
+    if (year < 100) year += 2000;
 
     const d = new Date(year, month - 1, day, 0, 0, 0);
-    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) {
-      return d;
-    }
+    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
   }
 
-  // 4. Không dùng fallback new Date(str) để tránh trình duyệt tự ý đoán định kiểu Mỹ
+  // 4. Tuyệt đối KHÔNG dùng fallback new Date(str) để tránh trình duyệt tự ý đảo ngày/tháng
   return null;
 };
 

@@ -117,7 +117,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-GB", // Thống nhất en-GB để nhận dữ liệu DD/MM/YYYY
+          Locale: "en-GB", 
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -250,7 +250,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "en-GB", // Thống nhất en-GB để tránh đảo Ngày/Tháng
+          Locale: "en-GB",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
