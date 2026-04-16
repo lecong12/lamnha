@@ -15,7 +15,7 @@ export const toSafeDate = (value) => {
   // 2. ƯU TIÊN 1: Định dạng ISO (YYYY/MM/DD) - Thường do AppSheet gửi về
   const isoMatch = str.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
   if (isoMatch) {
-    const [_, y, m, d] = isoMatch;
+    const [, y, m, d] = isoMatch;
     return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 0, 0, 0);
   }
 
