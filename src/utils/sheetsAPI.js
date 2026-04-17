@@ -339,7 +339,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "en-GB", // Thống nhất en-GB để tránh đảo Ngày/Tháng
+          Locale: "en-US", // Đồng bộ en-US toàn hệ thống để giữ ổn định định dạng ngày
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -394,7 +394,7 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
       body: JSON.stringify({
         Action: "Delete",
         Properties: {
-          Locale: "en-GB", // Đồng bộ locale
+          Locale: "en-US", // Đồng bộ en-US toàn hệ thống
           Timezone: "Asia/Ho_Chi_Minh" 
         },
         Rows: [deleteRow], 
