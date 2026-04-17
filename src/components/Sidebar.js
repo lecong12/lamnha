@@ -20,11 +20,11 @@ const Sidebar = ({ isOpen, toggle, activeTab, onTabChange, onLogout, isDarkMode,
   const menuItems = [
     { id: 'dashboard', icon: <FiTrendingUp size={20} />, label: 'Tổng quan' },
     { id: 'list', icon: <FiList size={20} />, label: 'Giao dịch' },
-    { id: 'budget', icon: <FiDollarSign size={20} />, label: 'Ngân sách' },
     { id: 'progress_tracker', icon: <FiCheckCircle size={20} />, label: 'Tiến độ' },
     { id: 'gantt_chart', icon: <FiBarChart2 size={20} />, label: 'Biểu đồ ' },
     { id: 'drawings', icon: <FiMap size={20} />, label: 'Thiết kế' },
     { id: 'contracts', icon: <FiBriefcase size={20} />, label: 'Hợp đồng ' },
+    { id: 'budget', icon: <FiDollarSign size={20} />, label: 'Ngân sách' },
     { id: 'notes', icon: <FiFileText size={20} />, label: 'Ghi chú' },
     { id: 'zalo', icon: <FiMessageCircle size={20} />, label: 'Group Zalo' },
   ];

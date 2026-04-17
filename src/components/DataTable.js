@@ -131,7 +131,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     Số tiền {sortConfig.key === "soTien" && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
                   <th style={{ textAlign: 'center' }}>Người cập nhật</th>
-                  <th>Chứng từ</th>
+                  <th style={{ textAlign: 'center' }}>Chứng từ</th>
                   <th>Thao tác</th>
                 </tr>
               </thead>
