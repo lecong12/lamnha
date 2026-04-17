@@ -48,14 +48,15 @@ export const useAppData = (isLoggedIn) => {
 
             // 1. Xử lý GiaoDich
             const cleanGD = resGD.map((row, index) => {
-                // fetchTableData đã normalizeKey nên dùng row.ngay
-                const d = toSafeDate(row.ngay || row["Ngày"]);
+                // fetchTableData đã normalizeKey nên row.ngay chứa dữ liệu thô
+                const rawValue = row.ngay || row["Ngày"] || "";
+                const d = toSafeDate(rawValue);
                 
                 return {
                     id: row.id || row.ID || row._RowNumber || `gd_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row._RowNumber,
-                    ngay: d || new Date(2000, 0, 1), // Nếu lỗi ngày, đẩy về năm 2000 để dễ nhận biết thay vì dùng Today gây nhầm lẫn
+                    ngay: d, 
                     date: toDisplayString(d), 
                     noiDung: row.noiDung || "",
                     doiTuongThuChi: row.doiTuongThuChi || "",

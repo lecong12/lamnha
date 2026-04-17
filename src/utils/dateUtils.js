@@ -6,31 +6,36 @@ export const toSafeDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   
-  // 1. Làm sạch chuỗi tuyệt đối
-  const cleanStr = String(value).trim().replace(/[\\"]/g, "").split(/[ T]/)[0].replace(/[-.]/g, "/");
+  // 1. Làm sạch chuỗi tuyệt đối: bỏ ngoặc, lấy phần ngày (bỏ giờ)
+  const rawStr = String(value).trim().replace(/[\\"]/g, "").split(/[ T]/)[0];
   
-  if (!cleanStr || ["null", "undefined", "", "---", "invalid"].includes(cleanStr.toLowerCase())) return null;
-  const str = cleanStr.toLowerCase();
+  if (!rawStr || ["null", "undefined", "", "---", "invalid"].includes(rawStr.toLowerCase())) return null;
+  const str = rawStr.toLowerCase();
 
-  // 2. ƯU TIÊN 1: Định dạng ISO (YYYY/MM/DD) - Thường do AppSheet gửi về
-  const isoMatch = str.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  // 2. TRƯỜNG HỢP 1: Năm đứng đầu (ISO: YYYY-MM-DD)
+  const isoMatch = str.match(/^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})/);
   if (isoMatch) {
-    const [, y, m, d] = isoMatch;
-    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 0, 0, 0);
-  }
-
-  // 3. ƯU TIÊN 2: Định dạng VN (DD/MM/YYYY) - Ép buộc hiểu số đầu là NGÀY
-  const vnMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-  if (vnMatch) {
-    const day = parseInt(vnMatch[1], 10);
-    const month = parseInt(vnMatch[2], 10);
-    let year = parseInt(vnMatch[3], 10);
-    if (year < 100) year += 2000;
+    const year = parseInt(isoMatch[1], 10);
+    const month = parseInt(isoMatch[2], 10);
+    const day = parseInt(isoMatch[3], 10);
     const d = new Date(year, month - 1, day, 0, 0, 0);
     if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
   }
 
-  // 4. CẤM TUYỆT ĐỐI trình duyệt tự đoán ngày. Nếu không khớp 2 chuẩn trên, trả về null.
+  // 3. TRƯỜNG HỢP 2: Năm đứng cuối (VN/GB: DD/MM/YYYY)
+  const vnMatch = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})/);
+  if (vnMatch) {
+    const day = parseInt(vnMatch[1], 10);
+    const month = parseInt(vnMatch[2], 10);
+    const year = parseInt(vnMatch[3], 10);
+    const d = new Date(year, month - 1, day, 0, 0, 0);
+    if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
+  }
+
+  // 4. Fallback cuối cùng cho các chuỗi đặc biệt khác (rất hạn chế dùng)
+  const finalAttempt = new Date(value);
+  if (!isNaN(finalAttempt.getTime())) return finalAttempt;
+
   return null;
 };
 
