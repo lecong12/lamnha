@@ -19,14 +19,14 @@ import './Sidebar.css';
 const Sidebar = ({ isOpen, toggle, activeTab, onTabChange, onLogout, isDarkMode, toggleDarkMode, isMobile }) => {
   const menuItems = [
     { id: 'dashboard', icon: <FiTrendingUp size={20} />, label: 'Tổng quan' },
-    { id: 'list', icon: <FiList size={20} />, label: 'Danh sách Giao dịch' },
-    { id: 'budget', icon: <FiDollarSign size={20} />, label: 'Đối chiếu Ngân sách' },
-    { id: 'progress_tracker', icon: <FiCheckCircle size={20} />, label: 'Theo dõi Tiến độ' },
-    { id: 'gantt_chart', icon: <FiBarChart2 size={20} />, label: 'Biểu đồ Tiến độ' },
-    { id: 'drawings', icon: <FiMap size={20} />, label: 'Bản vẽ Thiết kế' },
-    { id: 'contracts', icon: <FiBriefcase size={20} />, label: 'Hợp đồng Xây dựng' },
-    { id: 'notes', icon: <FiFileText size={20} />, label: 'Ghi chú nhanh' },
-    { id: 'zalo', icon: <FiMessageCircle size={20} />, label: 'Chat Nhóm Zalo' },
+    { id: 'list', icon: <FiList size={20} />, label: 'Giao dịch' },
+    { id: 'budget', icon: <FiDollarSign size={20} />, label: 'Ngân sách' },
+    { id: 'progress_tracker', icon: <FiCheckCircle size={20} />, label: 'Tiến độ' },
+    { id: 'gantt_chart', icon: <FiBarChart2 size={20} />, label: 'Biểu đồ ' },
+    { id: 'drawings', icon: <FiMap size={20} />, label: 'Thiết kế' },
+    { id: 'contracts', icon: <FiBriefcase size={20} />, label: 'Hợp đồng ' },
+    { id: 'notes', icon: <FiFileText size={20} />, label: 'Ghi chú' },
+    { id: 'zalo', icon: <FiMessageCircle size={20} />, label: 'Group Zalo' },
   ];
 
   return (

@@ -32,10 +32,6 @@ export const toSafeDate = (value) => {
     if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
   }
 
-  // 4. Fallback cuối cùng cho các chuỗi đặc biệt khác (rất hạn chế dùng)
-  const finalAttempt = new Date(value);
-  if (!isNaN(finalAttempt.getTime())) return finalAttempt;
-
   return null;
 };
 

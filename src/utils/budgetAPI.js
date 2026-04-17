@@ -17,7 +17,7 @@ export const fetchBudget = async (appId) => {
       body: JSON.stringify({ 
         Action: "Find", 
         Properties: { 
-          Locale: "en-GB",
+          Locale: "vi-VN",
           Timezone: "Asia/Ho_Chi_Minh" 
         },
         Rows: [] 
