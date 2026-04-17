@@ -117,7 +117,7 @@ export const fetchTableData = async (tableName, appId) => {
       body: JSON.stringify({
         Action: "Find",
         Properties: {
-          Locale: "en-GB", // Dùng en-GB để AppSheet trả về DD/MM/YYYY ổn định nhất
+          Locale: "en-US", // Đồng bộ US để nhận MM/DD/YYYY ổn định
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [], // Lấy toàn bộ dòng
@@ -250,7 +250,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Edit",
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-US",
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -339,7 +339,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       body: JSON.stringify({
         Action: "Add",
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-GB", // Thống nhất en-GB để tránh đảo Ngày/Tháng
           Timezone: "Asia/Ho_Chi_Minh",
         },
         Rows: [formattedPayload],
@@ -394,7 +394,7 @@ export const deleteRowFromSheet = async (tableName, payloadId, appId) => {
       body: JSON.stringify({
         Action: "Delete",
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-GB", // Đồng bộ locale
           Timezone: "Asia/Ho_Chi_Minh" 
         },
         Rows: [deleteRow], 

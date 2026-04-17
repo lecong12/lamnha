@@ -25,7 +25,7 @@ export const fetchStages = async (appId) => {
       body: JSON.stringify({ 
         Action: "Find", 
         Properties: { 
-          Locale: "en-GB",
+          Locale: "en-US", 
           Timezone: "Asia/Ho_Chi_Minh"
         },
         Rows: [] 
@@ -189,7 +189,7 @@ export const updateStageInSheet = async (stage, appId) => {
       body: JSON.stringify({ 
         Action: "Edit", 
         Properties: {
-          Locale: "vi-VN",
+          Locale: "en-US",
           Timezone: "Asia/Ho_Chi_Minh",
         }, 
         Rows: editData 

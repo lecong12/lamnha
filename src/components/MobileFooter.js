@@ -13,8 +13,8 @@ function MobileFooter({ activeTab, onTabChange }) {
   };
 
   return (
-    <footer className="mobile-footer" style={{ height: '55px', minHeight: '55px' }}>
-      <nav className="footer-nav" style={{ padding: '0 10px' }}>
+    <footer className="mobile-footer" style={{ height: '50px', minHeight: '50px' }}>
+      <nav className="footer-nav" style={{ padding: '0 5px' }}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -23,20 +23,20 @@ function MobileFooter({ activeTab, onTabChange }) {
               className={`nav-item ${activeTab === tab.id ? "active" : ""}`}
               onClick={() => onTabChange(tab.id)}
             >
-              <Icon className="nav-icon" style={{ fontSize: '18px' }} />
-              <span className="nav-label" style={{ fontSize: '10px', marginTop: '2px' }}>{tab.label}</span>
+              <Icon className="nav-icon" style={{ fontSize: '16px' }} />
+              <span className="nav-label" style={{ fontSize: '9px', marginTop: '1px' }}>{tab.label}</span>
               {activeTab === tab.id && <span className="nav-indicator"></span>}
             </button>
           );
         })}
-        <button className="nav-item zalo-btn" onClick={openZalo} style={{ padding: '4px 0' }}>
+        <button className="nav-item zalo-btn" onClick={openZalo} style={{ padding: '2px 0' }}>
           <img
             src="https://img.icons8.com/?size=100&id=0m71tmRjlxEe&format=png&color=000000"
             alt="Zalo"
             className="zalo-icon" 
-            style={{ width: '20px', height: '20px' }}
+            style={{ width: '18px', height: '18px' }}
           />
-          <span className="nav-label" style={{ fontSize: '10px', marginTop: '2px' }}>Zalo</span>
+          <span className="nav-label" style={{ fontSize: '9px', marginTop: '1px' }}>Zalo</span>
         </button>
       </nav>
     </footer>
