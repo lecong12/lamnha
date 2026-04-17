@@ -22,7 +22,7 @@ const TABLE_GIAODICH_ENV = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "Gia
 export const normalizeKey = (str) => {
     if (!str) return '';
     // Nếu key đã thuộc danh sách chuẩn thì giữ nguyên
-    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst'];
+    const knownKeys = ['hinhAnh', 'nguoiCapNhat', 'doiTuongThuChi', 'soTien', 'noiDung', 'ngay', 'loaiThuChi', 'keyId', 'appSheetId', 'id', 'anhNghiemThu', 'ngayBatDau', 'ngayKetThuc', 'status', 'name', '_RowNumber', 'category', 'url', 'size', 'ten', 'sdt', 'diaChi', 'mst', 'duKien', 'thucTe', 'conLai', 'tinhTrang'];
     if (knownKeys.includes(str)) return str;
 
     const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d").trim();
@@ -35,6 +35,11 @@ export const normalizeKey = (str) => {
     if (s.includes('bat dau') || s.includes('start')) return 'ngayBatDau';
     if (s.includes('ket thuc') || s.includes('end')) return 'ngayKetThuc';
     
+    if (s.includes('du kien') || s.includes('ke hoach')) return 'duKien';
+    if (s.includes('thuc te') || s.includes('thuc chi')) return 'thucTe';
+    if (s.includes('con lai')) return 'conLai';
+    if (s.includes('tinh trang')) return 'tinhTrang';
+
     if (s === 'noi dung' || s.includes('noidung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
     if (s.includes('so tien') || s.includes('sotien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
     if (s.includes('loai thu chi') || s.includes('loaithuchi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';

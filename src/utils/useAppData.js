@@ -83,9 +83,9 @@ export const useAppData = (isLoggedIn) => {
                     id: row._RowNumber || row.id || `ns_${index}`, // Lưu RowNumber để update
                     keyId: c.hangMuc || c.doiTuongThuChi, // Key là Hạng mục
                     hangMuc: c.hangMuc || c.doiTuongThuChi || "Hạng mục",
-                    duKien: Number(String(c.duKien || 0).replace(/\D/g, "")),
-                    thucTe: Number(String(c.thucTe || 0).replace(/\D/g, "")),
-                    conLai: c.conLai,
+                    duKien: Number(String(c.duKien || 0).replace(/[^0-9]/g, "")),
+                    thucTe: Number(String(c.thucTe || 0).replace(/[^0-9]/g, "")),
+                    conLai: Number(String(c.conLai || 0).replace(/[^-0-9]/g, "")),
                     tinhTrang: c.tinhTrang || ""
                 };
             });

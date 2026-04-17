@@ -112,7 +112,10 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           <div className="stat-info">
             <span className="stat-label">Đang thực hiện</span>
             <span className="stat-value">{currentStage?.name?.toString().replace(/^\d+\.\s*/, "") || "---"}</span>
-            <div className="progress-bar-container"><div className="progress-bar" style={{ width: `${completionPercentage}%` }}></div></div>
+            <div className="progress-bar-container">
+              <div className="progress-bar" style={{ width: `${completionPercentage}%` }}></div>
+            </div>
+            <div style={{ fontSize: '11px', marginTop: '4px', color: '#64748b', fontWeight: '500' }}>Hoàn thành: {completionPercentage}%</div>
           </div>
         </div>
 
