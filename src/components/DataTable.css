@@ -454,6 +454,12 @@
     white-space: nowrap;
   }
 
+  /* Loại bỏ dấu - tự động được thêm qua CSS content nếu có */
+  .card-amount.chi::before {
+    content: "" !important;
+    display: none !important;
+  }
+
   .card-amount.thu {
     color: #16a34a;
   }
