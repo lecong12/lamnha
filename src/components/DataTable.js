@@ -130,7 +130,7 @@ function DataTable({ data, onEdit, onDelete }) {
                   >
                     Số tiền {sortConfig.key === "soTien" && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
-                  <th>Người cập nhật</th>
+                  <th style={{ textAlign: 'center' }}>Người cập nhật</th>
                   <th>Chứng từ</th>
                   <th>Thao tác</th>
                 </tr>
@@ -144,7 +144,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     <td className="amount-cell chi" style={{ textAlign: 'right' }}>
                       {formatCurrency(item.soTien)}
                     </td>
-                    <td>{item.nguoiCapNhat || "-"}</td>
+                    <td className="center-cell">{item.nguoiCapNhat || "-"}</td>
                     <td className="center-cell">
                       {item.hinhAnh ? (
                         <a href={item.hinhAnh} target="_blank" rel="noreferrer" className="view-image-link" title="Xem ảnh">
