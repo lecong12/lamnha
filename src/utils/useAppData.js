@@ -50,6 +50,9 @@ export const useAppData = (isLoggedIn) => {
             const cleanGD = resGD.map((row, index) => {
                 // fetchTableData đã normalizeKey nên row.ngay chứa dữ liệu thô
                 const rawValue = row.ngay || row["Ngày"] || "";
+                if (index < 3) {
+                    console.log(`[Debug Date] Dòng ${index + 1} gốc: "${rawValue}"`);
+                }
                 const d = toSafeDate(rawValue);
                 
                 return {
