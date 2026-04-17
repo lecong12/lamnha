@@ -25,7 +25,7 @@ export const fetchStages = async (appId) => {
       body: JSON.stringify({ 
         Action: "Find", 
         Properties: { 
-          Locale: "vi-VN",
+          Locale: "en-GB",
           Timezone: "Asia/Ho_Chi_Minh"
         },
         Rows: [] 
