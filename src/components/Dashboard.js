@@ -175,6 +175,49 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           ) : <div className="no-data">Chưa có dữ liệu</div>}
         </div>
       </div>
+
+      {/* Bảng chi tiết Ngân sách với Cảnh báo âm */}
+      <div className="chart-card" style={{ marginTop: '20px' }}>
+        <h3 className="chart-title">Chi tiết Ngân sách & Cảnh báo</h3>
+        <div className="budget-table-wrapper">
+          <table className="budget-table">
+            <thead>
+              <tr>
+                <th>Hạng mục</th>
+                <th style={{ textAlign: 'right' }}>Dự kiến</th>
+                <th style={{ textAlign: 'right' }}>Thực tế</th>
+                <th style={{ textAlign: 'right' }}>Còn lại</th>
+                <th style={{ textAlign: 'center' }}>Tình trạng</th>
+              </tr>
+            </thead>
+            <tbody>
+              {budget.length > 0 ? budget.map((item, idx) => (
+                <tr key={idx} style={{ backgroundColor: item.conLai < 0 ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
+                  <td>{item.hangMuc}</td>
+                  <td style={{ textAlign: 'right' }}>{formatCurrency(item.duKien)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatCurrency(item.thucTe)}</td>
+                  <td style={{ 
+                    textAlign: 'right', 
+                    color: item.conLai < 0 ? '#dc2626' : 'inherit', 
+                    fontWeight: item.conLai < 0 ? '700' : '500' 
+                  }}>
+                    {formatCurrency(item.conLai)}
+                  </td>
+                  <td className="status-cell">
+                    <span className={`status-badge ${item.conLai < 0 ? 'over' : 'ok'}`}>
+                      {item.conLai < 0 ? 'Vượt định mức' : 'Ổn định'}
+                    </span>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>Chưa có dữ liệu ngân sách</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
