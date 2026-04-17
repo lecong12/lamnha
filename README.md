@@ -1,1 +1,1 @@
-chuyển app...mgggsdgsb hdfhdfmmoj
+chuyển app...onr định
