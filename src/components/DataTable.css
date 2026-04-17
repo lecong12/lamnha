@@ -454,9 +454,10 @@
     white-space: nowrap;
   }
 
-  /* Loại bỏ dấu - tự động được thêm qua CSS content nếu có */
-  .card-amount.chi::before {
-    content: "" !important;
+  /* Triệt tiêu tuyệt đối dấu - được thêm qua CSS content */
+  .card-amount.chi::before,
+  .transaction-card.chi .card-amount::before {
+    content: none !important;
     display: none !important;
   }
 

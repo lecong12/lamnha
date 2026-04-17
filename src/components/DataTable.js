@@ -17,7 +17,7 @@ const formatCurrency = (value) => {
     style: "currency",
     currency: "VND",
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(Math.abs(value));
 };
 
 const formatDate = (date) => {
@@ -211,7 +211,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     </div>
                   </div>
                   <div className="card-amount chi">
-                    -{formatCurrency(item.soTien)}
+                    {formatCurrency(item.soTien)}
                   </div>
                 </div>
 
