@@ -172,11 +172,15 @@ function ConstructionContracts({ showToast, contracts, loading, fetchAllData }) 
               <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
             </div>
             <div className="pdf-body">
-              <iframe 
-                src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewingPdf.url)}&embedded=true`}
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                title="PDF Viewer"
-              />
+              {viewingPdf.url ? (
+                <iframe 
+                  src={viewingPdf.url}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  title="PDF Viewer"
+                />
+              ) : (
+                <div className="no-pdf-error">Không tìm thấy đường dẫn tệp tin.</div>
+              )}
             </div>
           </div>
         </div>
