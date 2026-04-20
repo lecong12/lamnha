@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiTrash2, FiExternalLink, FiFileText, FiLoader } from 'react-icons/fi';
-import { fetchTableData, addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
+import { FiPlus, FiTrash2, FiExternalLink, FiFileText, FiLoader, FiEdit2, FiSave, FiX } from 'react-icons/fi';
+import { fetchTableData, addRowToSheet, deleteRowFromSheet, updateRowInSheet } from '../utils/sheetsAPI';
 import { toSafeDate, toDisplayString, getTodayInputString } from '../utils/dateUtils';
 import './QuickNotes.css';
 
@@ -11,6 +11,7 @@ function QuickNotes({ showToast }) {
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [editingNote, setEditingNote] = useState(null);
 
   // Đưa hàm loadNotes ra ngoài để có thể gọi lại từ nhiều nơi
   const loadNotes = async () => {
@@ -51,23 +52,34 @@ function QuickNotes({ showToast }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const addNote = async () => {
+  const handleSaveNote = async () => {
     if (!newNote.trim()) return;
     
     setAdding(true);
-    const dateStr = getTodayInputString();
-    
-    // Chỉ gửi các key chuẩn, sheetsAPI sẽ tự map sang tên cột Tiếng Việt của bạn
-    const apiPayload = { 
-      ngay: dateStr, 
-      noiDung: newNote.trim()
-    };
 
     try {
-        const res = await addRowToSheet("GhiChu", apiPayload, APP_ID);
+        let res;
+        if (editingNote) {
+            // Cập nhật ghi chú hiện tại
+            const apiPayload = { 
+              ...editingNote,
+              noiDung: newNote.trim()
+            };
+            res = await updateRowInSheet("GhiChu", apiPayload, APP_ID);
+        } else {
+            // Thêm mới
+            const dateStr = getTodayInputString();
+            const apiPayload = { 
+              ngay: dateStr, 
+              noiDung: newNote.trim()
+            };
+            res = await addRowToSheet("GhiChu", apiPayload, APP_ID);
+        }
+
         if (res.success) {
             setNewNote("");
-            if (showToast) showToast("Đã lưu ghi chú", "success");
+            setEditingNote(null);
+            if (showToast) showToast(editingNote ? "Đã cập nhật ghi chú" : "Đã lưu ghi chú", "success");
             // Tải lại dữ liệu thật từ server để đảm bảo đồng bộ 100%
             await loadNotes();
         } else {
@@ -78,6 +90,17 @@ function QuickNotes({ showToast }) {
     } finally {
         setAdding(false);
     }
+  };
+
+  const startEdit = (note) => {
+    setEditingNote(note);
+    setNewNote(note.noiDung);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingNote(null);
+    setNewNote("");
   };
 
   const deleteNote = async (id) => {
@@ -128,9 +151,17 @@ function QuickNotes({ showToast }) {
           rows="3"
           disabled={adding}
         />
-        <button className="add-note-btn" onClick={addNote} disabled={!newNote.trim() || adding}>
-          {adding ? <FiLoader className="spin" /> : <FiPlus />} Thêm
-        </button>
+        <div className="note-input-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+          {editingNote && (
+            <button className="cancel-edit-btn" onClick={cancelEdit} disabled={adding} style={{ background: '#94a3b8', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <FiX /> Hủy
+            </button>
+          )}
+          <button className="add-note-btn" onClick={handleSaveNote} disabled={!newNote.trim() || adding}>
+            {adding ? <FiLoader className="spin" /> : (editingNote ? <FiSave /> : <FiPlus />)} 
+            {editingNote ? " Cập nhật" : " Thêm"}
+          </button>
+        </div>
       </div>
 
       <div className="notes-grid">
@@ -144,7 +175,10 @@ function QuickNotes({ showToast }) {
               <span className="note-date">
                   {displayDate(note.ngay)}
               </span>
-              <button className="delete-note-btn" onClick={() => deleteNote(note.id || note._RowNumber)}><FiTrash2 /></button>
+              <div className="note-card-actions">
+                <button className="edit-note-btn" onClick={() => startEdit(note)} title="Sửa" style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '5px' }}><FiEdit2 /></button>
+                <button className="delete-note-btn" onClick={() => deleteNote(note.id || note._RowNumber)} title="Xóa" style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '5px' }}><FiTrash2 /></button>
+              </div>
             </div>
           </div>
         ))}
