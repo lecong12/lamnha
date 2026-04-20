@@ -67,7 +67,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
             id: `BV_${Date.now()}`, // Tự tạo ID
             name: file.name, // Lấy từ file input
             url: fileData.secure_url, // Lấy từ Cloudinary
-            date: new Date().toLocaleDateString('vi-VN'), // Lấy ngày hiện tại
+            ngay: new Date().toISOString().split('T')[0], // Gửi định dạng YYYY-MM-DD chuẩn
             size: parseFloat((file.size / 1024 / 1024).toFixed(2)), // Gửi dưới dạng số
             category: activeCategory // Lấy từ state
         };

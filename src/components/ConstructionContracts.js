@@ -63,7 +63,7 @@ function ConstructionContracts({ showToast, contracts, loading, fetchAllData }) 
             id: `CT_${Date.now()}`, // Key của dòng
             name: file.name,
             url: fileData.secure_url, // Cột 'url' theo yêu cầu
-            date: new Date().toLocaleDateString('vi-VN'),
+            ngay: new Date().toISOString().split('T')[0], // Gửi định dạng YYYY-MM-DD chuẩn
             size: parseFloat((file.size / 1024 / 1024).toFixed(2)), // Gửi dưới dạng số
             category: activeCategory // Cột 'category' theo yêu cầu
         };

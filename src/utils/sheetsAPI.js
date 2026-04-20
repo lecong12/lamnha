@@ -230,6 +230,33 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     const noiDungVal = payload.noiDung || "";
     formattedPayload[getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung'])] = noiDungVal;
 
+    // 4. Map động toàn bộ các trường còn lại trong payload
+    Object.keys(payload).forEach(key => {
+      const normKey = normalizeKey(key);
+      // Bỏ qua các trường đã xử lý thủ công ở trên
+      if (['id', 'keyId', 'appSheetId', 'ngay', 'date', 'noiDung', '_RowNumber'].includes(normKey)) return;
+      
+      const realCol = getBestColumnName(tableName, normKey, key);
+      if (realCol) {
+        formattedPayload[realCol] = payload[key];
+      }
+    });
+
+    if (normTableName === "giaodich" || normTableName === normGiaoDichEnv) {
+    formattedPayload[getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung'])] = noiDungVal;
+
+    // 4. Map động toàn bộ các trường còn lại trong payload (Quan trọng cho BanVe, HopDong)
+    Object.keys(payload).forEach(key => {
+      const normKey = normalizeKey(key);
+      // Bỏ qua các trường đã xử lý
+      if (['id', 'keyId', 'appSheetId', 'ngay', 'date', 'noiDung'].includes(normKey)) return;
+      
+      const realCol = getBestColumnName(tableName, normKey, key);
+      if (realCol) {
+        formattedPayload[realCol] = payload[key];
+      }
+    });
+
     if (normTableName === "giaodich" || normTableName === normGiaoDichEnv) {
       const rawAmount = payload.soTien !== undefined ? payload.soTien : 0;
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
