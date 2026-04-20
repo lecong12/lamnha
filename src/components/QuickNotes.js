@@ -176,7 +176,7 @@ function QuickNotes({ showToast }) {
                   {displayDate(note.ngay)}
               </span>
               <div className="note-card-actions">
-                <button className="edit-note-btn" onClick={() => startEdit(note)} title="Sửa"><FiEdit size={16} /></button>
+                <button className="edit-note-btn" onClick={() => startEdit(note)} title="Sửa"><FiEdit2 size={16} /></button>
                 <button className="delete-note-btn" onClick={() => deleteNote(note.id || note._RowNumber)} title="Xóa"><FiTrash2 size={16} /></button>
               </div>
             </div>
