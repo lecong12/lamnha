@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 dotenv.config(); // Tải các biến môi trường từ file .env
 
+const crypto = require('crypto');
 const { google } = require('googleapis');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const app = express();
@@ -39,6 +40,57 @@ const sheets = google.sheets({ version: 'v4', auth });
 // Cấu hình Gemini
 const apiKey = process.env.GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
+
+// API xóa tệp trên Cloudinary (An toàn vì chạy ở Server)
+app.post('/api/cloudinary-delete', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: "Thiếu URL tệp" });
+
+    const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+    const apiKeyClou = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!apiSecret || !apiKeyClou) {
+      return res.status(500).json({ error: "Chưa cấu hình API Key/Secret của Cloudinary trên server." });
+    }
+
+    // 1. Phân tích URL để lấy public_id và resource_type
+    // VD: .../raw/upload/v123/file.pdf hoặc .../image/upload/v123/image.jpg
+    const isRaw = url.includes('/raw/upload/');
+    const resourceType = isRaw ? 'raw' : 'image';
+    
+    const parts = url.split('/upload/');
+    if (parts.length < 2) throw new Error("URL không đúng định dạng Cloudinary");
+    
+    // Bỏ qua phần version (v12345678)
+    const publicIdWithExt = parts[1].split('/').slice(1).join('/');
+    // Với 'image', Cloudinary yêu cầu public_id không có extension. Với 'raw', phải có extension.
+    const publicId = isRaw ? publicIdWithExt : publicIdWithExt.split('.').slice(0, -1).join('.');
+
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const signature = crypto
+      .createHash('sha1')
+      .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
+      .digest('hex');
+
+    const formData = new FormData();
+    formData.append("public_id", publicId);
+    formData.append("timestamp", timestamp);
+    formData.append("api_key", apiKeyClou);
+    formData.append("signature", signature);
+
+    const clouRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/destroy`, {
+      method: "POST",
+      body: formData
+    });
+
+    const result = await clouRes.json();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // API trích xuất thông tin bằng AI
 app.post('/api/gemini-extract', async (req, res) => {

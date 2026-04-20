@@ -91,10 +91,30 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa bản vẽ này?")) {
-      const res = await deleteRowFromSheet("BanVe", id, APP_ID);
-      if (res.success) { // Sau khi xóa thành công, gọi fetchAllData để cập nhật dữ liệu từ App.js
-        await fetchAllData();
+    const drawing = drawings.find(d => (d.id || d._RowNumber) === id);
+    if (!drawing) return;
+
+    if (window.confirm(`Bạn có chắc muốn xóa bản vẽ: ${drawing.name}? Tệp tin trên Cloudinary cũng sẽ bị xóa.`)) {
+      try {
+        showToast("Đang thực hiện xóa...", "info");
+
+        // 1. Xóa trên Cloudinary
+        if (drawing.url) {
+          await fetch('/api/cloudinary-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: drawing.url })
+          });
+        }
+
+        // 2. Xóa trên Sheet
+        const res = await deleteRowFromSheet("BanVe", id, APP_ID);
+        if (res.success) {
+          await fetchAllData();
+          showToast("Đã xóa bản vẽ thành công.", "success");
+        }
+      } catch (error) {
+        showToast("Lỗi khi xóa: " + error.message, "error");
       }
     }
   };
