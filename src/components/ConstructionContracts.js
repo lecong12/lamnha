@@ -60,7 +60,7 @@ function ConstructionContracts({ showToast, contracts, loading, fetchAllData }) 
       if (fileData.secure_url) {
         // Chuẩn bị dữ liệu ghi xuống Google Sheets (AppSheet)
         const rowData = {
-            id: Date.now(), // ID dạng số đồng bộ
+            id: `HD_${Date.now()}`, // Thêm tiền tố HD_ nhất quán cho Hợp đồng
             name: file.name,
             url: fileData.secure_url, // Cột 'url' theo yêu cầu
             ngay: new Date().toISOString().split('T')[0], // Gửi định dạng YYYY-MM-DD chuẩn
@@ -101,8 +101,8 @@ function ConstructionContracts({ showToast, contracts, loading, fetchAllData }) 
   const currentList = [...contracts]
     .filter(c => c.category === activeCategory)
     .sort((a, b) => {
-      const valA = Number(a.appSheetId || a._RowNumber || a.id || 0);
-      const valB = Number(b.appSheetId || b._RowNumber || b.id || 0);
+      const valA = Number(a.appSheetId || a._RowNumber || String(a.id).replace(/\D/g, '') || 0);
+      const valB = Number(b.appSheetId || b._RowNumber || String(b.id).replace(/\D/g, '') || 0);
       return valB - valA;
     });
 
