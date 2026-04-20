@@ -1,1 +1,1 @@
-chuyển app...onr định
+chuyển app...ổn định
