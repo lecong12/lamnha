@@ -30,27 +30,27 @@ export const normalizeKey = (str) => {
     
     // Nhận diện linh hoạt dựa trên từ khóa phổ biến
     if (['id', 'tt', 'stt', 'ma', 'magd', 'key'].includes(sClean)) return 'id';
-    if (sClean === 'ngay' || sClean === 'date') return 'ngay';
+    if (sClean === 'ngay' || sClean === 'date' || sClean === 'ngaythang') return 'ngay';
     
     // Ưu tiên nhận diện Tên/Nội dung trước để tránh trùng lặp với URL
-    if (sClean.includes('ten') || sClean.includes('name') || sClean.includes('tieude')) return 'name';
-    if (sClean === 'noidung' || sClean.includes('noidung') || sClean.includes('ghichu') || sClean.includes('description')) return 'noiDung';
+    if (sClean === 'ten' || sClean === 'name' || sClean === 'tieude' || (sClean.includes('ten') && !sClean.includes('file'))) return 'name';
+    if (sClean === 'noidung' || sClean === 'ghichu' || sClean === 'description') return 'noiDung';
 
     if (sClean.includes('batdau') || sClean.includes('start')) return 'ngayBatDau';
     if (sClean.includes('ketthuc') || sClean.includes('end')) return 'ngayKetThuc';
     
-    if (sClean.includes('dukien') || sClean.includes('kehoach')) return 'duKien';
-    if (sClean.includes('thucte') || sClean.includes('thucchi')) return 'thucTe';
+    if (sClean === 'dukien' || sClean === 'kehoach' || sClean === 'dutoan') return 'duKien';
+    if (sClean === 'thucte' || sClean === 'thucchi' || sClean === 'dachi') return 'thucTe';
     if (sClean.includes('conlai')) return 'conLai';
     if (sClean.includes('tinhtrang')) return 'tinhTrang';
 
-    if (sClean.includes('sotien') || sClean.includes('amount') || sClean.includes('giatri')) return 'soTien';
+    if (sClean === 'sotien' || sClean === 'amount' || sClean === 'thanhtien') return 'soTien';
     if (sClean.includes('loaithuchi') || sClean.includes('loai') || sClean.includes('type')) return 'loaiThuChi';
     if (sClean.includes('hangmuc') || sClean.includes('doituong') || sClean.includes('mucchi') || sClean.includes('phanloai') || sClean.includes('category')) return 'doiTuongThuChi';
     
-    // Map link/file về 'url', sử dụng sClean để không bị sót do dấu cách
-    if (sClean === 'url' || sClean === 'link' || sClean === 'file' || sClean.includes('duongdan') || sClean.includes('lienket') || (sClean.includes('banve') && !sClean.includes('ten')) || (sClean.includes('hopdong') && !sClean.includes('ten'))) return 'url';
-    if (sClean.includes('hinhanh') || sClean.includes('minhchung') || sClean.includes('chungtu') || sClean.includes('anh')) return 'hinhAnh';
+    // Ưu tiên map các cột chứa File/Link vào 'url'
+    if (sClean === 'url' || sClean === 'link' || sClean === 'file' || sClean.includes('banve') || sClean.includes('hopdong') || sClean.includes('tailieu')) return 'url';
+    if (sClean.includes('hinhanh') || sClean.includes('minhchung') || sClean.includes('anh') || sClean.includes('chungtu')) return 'hinhAnh';
     if (sClean.includes('nguoi') || sClean.includes('user')) return 'nguoiCapNhat';
     
     return s.replace(/\s+/g, '');
