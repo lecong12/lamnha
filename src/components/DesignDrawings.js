@@ -166,11 +166,17 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
             </div>
             <div className="pdf-body">
               {viewingPdf.url && viewingPdf.url.toLowerCase().endsWith('.pdf') ? (
-                <iframe 
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewingPdf.url)}&embedded=true`}
-                  style={{ width: '100%', height: '100%', border: 'none' }}
-                  title="PDF Viewer"
-                />
+                <object 
+                  data={viewingPdf.url} 
+                  type="application/pdf" 
+                  width="100%" 
+                  height="100%"
+                >
+                  <div className="pdf-fallback">
+                    <p>Trình duyệt không hỗ trợ xem PDF trực tiếp.</p>
+                    <a href={viewingPdf.url} target="_blank" rel="noreferrer" className="btn-open-new">Mở tệp trong tab mới</a>
+                  </div>
+                </object>
               ) : (
                 <img 
                   src={viewingPdf.url} 
