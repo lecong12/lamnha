@@ -172,18 +172,11 @@ function ConstructionContracts({ showToast, contracts, loading, fetchAllData }) 
               <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
             </div>
             <div className="pdf-body">
-              <object 
-                data={viewingPdf.url} 
-                type="application/pdf" 
-                width="100%" 
-                height="100%"
-              >
-                <div className="pdf-fallback">
-                   <FiFileText size={50} color="#94a3b8" />
-                   <p>Không thể hiển thị PDF trực tiếp trong khung này.</p>
-                   <a href={viewingPdf.url} target="_blank" rel="noreferrer" className="btn-open-new">Mở tệp trong tab mới</a>
-                </div>
-              </object>
+              <iframe 
+                src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewingPdf.url)}&embedded=true`}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                title="PDF Viewer"
+              />
             </div>
           </div>
         </div>
