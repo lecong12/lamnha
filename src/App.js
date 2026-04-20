@@ -133,7 +133,7 @@ function App() {
   };
 
   const handleTabChange = (tabId) => {
-    if (tabId === 'zalo') { window.open("https://zalo.me/g/kphczy388", "_blank"); return; }
+    if (tabId === 'zalo') { window.open("https://zalo.me/g/djtbg9s1hexaliont5hh", "_blank"); return; }
     setActiveTab(tabId);
     if (isMobile) setIsSidebarOpen(false);
   };
