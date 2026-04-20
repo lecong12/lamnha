@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiTrash2, FiExternalLink, FiFileText, FiLoader, FiEdit, FiSave, FiX } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiExternalLink, FiFileText, FiLoader, FiEdit2, FiSave, FiX } from 'react-icons/fi';
 import { fetchTableData, addRowToSheet, deleteRowFromSheet, updateRowInSheet } from '../utils/sheetsAPI';
 import { toSafeDate, toDisplayString, getTodayInputString } from '../utils/dateUtils';
 import './QuickNotes.css';
