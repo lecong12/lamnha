@@ -6,6 +6,7 @@ import GanttChartView from "./components/GanttChartView";
 import DesignDrawings from "./components/DesignDrawings";
 import ConstructionContracts from "./components/ConstructionContracts";
 import QuickNotes from "./components/QuickNotes";
+import CameraMonitor from "./components/CameraMonitor";
 import DataTable from "./components/DataTable";
 import MobileFooter from "./components/MobileFooter";
 import Header from "./components/Header";
@@ -190,6 +191,7 @@ function App() {
       case 'drawings': return <DesignDrawings showToast={showToast} drawings={drawings} loading={loading} fetchAllData={fetchAllData} />;
       case 'contracts': return <ConstructionContracts showToast={showToast} contracts={contracts} loading={loading} fetchAllData={fetchAllData} />;
       case 'notes': return <QuickNotes showToast={showToast} />;
+      case 'camera': return <CameraMonitor />;
       default: return <Dashboard stats={stats} data={filteredData} extraData={extraData} isDarkMode={isDarkMode} />;
     }
   };
