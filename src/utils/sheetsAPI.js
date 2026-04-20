@@ -32,6 +32,10 @@ export const normalizeKey = (str) => {
     if (['id', 'tt', 'stt', 'ma', 'magd', 'key'].includes(sClean)) return 'id';
     if (sClean === 'ngay' || sClean === 'date' || s === 'ngay') return 'ngay';
     
+    // Ưu tiên nhận diện Tên/Nội dung trước để tránh trùng lặp với URL
+    if (s.includes('ten') || s.includes('name') || s.includes('tieu de')) return 'name';
+    if (s === 'noi dung' || s.includes('noidung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
+
     if (s.includes('bat dau') || s.includes('start')) return 'ngayBatDau';
     if (s.includes('ket thuc') || s.includes('end')) return 'ngayKetThuc';
     
@@ -40,12 +44,11 @@ export const normalizeKey = (str) => {
     if (s.includes('con lai')) return 'conLai';
     if (s.includes('tinh trang')) return 'tinhTrang';
 
-    if (s === 'noi dung' || s.includes('noidung') || s.includes('ghi chu') || s.includes('description')) return 'noiDung';
     if (s.includes('so tien') || s.includes('sotien') || s.includes('amount') || s.includes('gia tri')) return 'soTien';
     if (s.includes('loai thu chi') || s.includes('loaithuchi') || s.includes('loai') || s.includes('type')) return 'loaiThuChi';
     if (s.includes('hang muc') || s.includes('doi tuong') || s.includes('muc chi') || s.includes('phan loai') || s.includes('category')) return 'doiTuongThuChi';
-    // Chỉ map các từ khóa thực sự là đường dẫn về 'url'
-    if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket') || s.includes('ban ve') || s.includes('hop dong')) return 'url';
+    // Map link/file về 'url', nhưng loại trừ các cột "Tên..." đã được map ở trên
+    if (s === 'url' || s === 'link' || s === 'file' || s.includes('duong dan') || s.includes('lien ket') || (s.includes('ban ve') && !s.includes('ten')) || (s.includes('hop dong') && !s.includes('ten'))) return 'url';
     if (s.includes('hinh anh') || s.includes('minh chung') || s.includes('chung tu') || s.includes('anh')) return 'hinhAnh';
     if (s.includes('nguoi') || s.includes('user')) return 'nguoiCapNhat';
     

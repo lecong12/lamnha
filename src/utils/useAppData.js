@@ -111,9 +111,9 @@ export const useAppData = (isLoggedIn) => {
             const cleanHopDong = resHopDong.map((row, index) => {
                 const d = toSafeDate(row.date || row.ngay);
                 return {
-                    ...row,
+                    ...row, // Đã chứa name, url từ fetchFileData
                     id: row._RowNumber || row.id || `hd_${index}`,
-                    name: row.name || row.ten || `Hợp đồng ${index + 1}`,
+                    name: row.name || `Hợp đồng ${index + 1}`,
                     date: toDisplayString(d),
                     ngay: d,
                 };
@@ -127,8 +127,8 @@ export const useAppData = (isLoggedIn) => {
                     id: row._RowNumber || row.id || `bv_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row.keyId || row._RowNumber,
-                    name: row.name || row.ten || row.noiDung || row["Tên bản vẽ"] || row["Tên Bản vẽ"] || `Bản vẽ ${index + 1}`,
-                    url: row.url || "",
+                    name: row.name || `Bản vẽ ${index + 1}`,
+                    url: row.url || row.hinhAnh || "",
                     date: toDisplayString(toSafeDate(row.date || row.ngay)),
                     size: Number(row.size || 0),
                     category: row.category || row.doiTuongThuChi || "Khác"
