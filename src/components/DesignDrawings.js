@@ -64,7 +64,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
       
       if (fileData.secure_url) {
         const rowData = {
-            id: `BV_${Date.now()}`, // Tự tạo ID
+            id: Date.now(), // ID dạng số để tránh lỗi định dạng cột Sheet
             name: file.name, // Lấy từ file input
             url: fileData.secure_url, // Lấy từ Cloudinary
             ngay: new Date().toISOString().split('T')[0], // Gửi định dạng YYYY-MM-DD chuẩn
@@ -103,8 +103,8 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
     .filter(d => d.category === activeCategory)
     .sort((a, b) => {
       // Sắp xếp theo _RowNumber hoặc timestamp từ ID để tệp mới nhất lên đầu
-      const valA = a._RowNumber || parseInt(a.id?.split('_')[1] || 0);
-      const valB = b._RowNumber || parseInt(b.id?.split('_')[1] || 0);
+      const valA = Number(a.appSheetId || a._RowNumber || a.id || 0);
+      const valB = Number(b.appSheetId || b._RowNumber || b.id || 0);
       return valB - valA;
     });
 

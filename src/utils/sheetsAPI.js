@@ -66,6 +66,9 @@ const columnMapping = {
 const getBestColumnName = (tableName, normalizedKey, defaultNames) => {
   const mapping = columnMapping[tableName] || {};
   if (mapping[normalizedKey]) return mapping[normalizedKey];
+  
+  // Nếu không có mapping (bảng mới hoặc rỗng), chỉ trả về fallback cho các cột lõi
+  if (!['id', 'ngay', 'noiDung'].includes(normalizedKey)) return null;
   return Array.isArray(defaultNames) ? defaultNames[0] : defaultNames;
 };
 
@@ -327,9 +330,11 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const formattedDate = toInputString(dateObj);
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
-    // 3. Map Nội dung & Dữ liệu đặc thù
-    const noiDungVal = payload.noiDung || "";
-    formattedPayload[getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung'])] = noiDungVal;
+    // 3. Map Nội dung (Chỉ gửi nếu bảng có cột này hoặc có dữ liệu)
+    const noiDungCol = getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung']);
+    if (noiDungCol && (payload.noiDung || normTableName === "ghi chu" || normTableName === "giaodich")) {
+      formattedPayload[noiDungCol] = payload.noiDung || "";
+    }
 
     // 4. Map động toàn bộ các trường còn lại trong payload (Quan trọng cho BanVe, HopDong)
     Object.keys(payload).forEach(key => {
