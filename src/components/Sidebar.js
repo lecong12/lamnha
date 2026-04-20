@@ -12,7 +12,8 @@ import {
   FiFileText,
   FiBriefcase,
   FiMap,
-  FiTrendingUp // Icon biểu đồ mới cho Tổng quan
+  FiTrendingUp, // Icon biểu đồ mới cho Tổng quan
+  FiVideo
 } from 'react-icons/fi';
 import './Sidebar.css';
 
@@ -20,6 +21,7 @@ const Sidebar = ({ isOpen, toggle, activeTab, onTabChange, onLogout, isDarkMode,
   const menuItems = [
     { id: 'dashboard', icon: <FiTrendingUp size={20} />, label: 'Tổng quan' },
     { id: 'list', icon: <FiList size={20} />, label: 'Giao dịch' },
+    { id: 'camera', icon: <FiVideo size={20} />, label: 'Camera' },
     { id: 'progress_tracker', icon: <FiCheckCircle size={20} />, label: 'Tiến độ' },
     { id: 'gantt_chart', icon: <FiBarChart2 size={20} />, label: 'Biểu đồ ' },
     { id: 'drawings', icon: <FiMap size={20} />, label: 'Thiết kế' },
