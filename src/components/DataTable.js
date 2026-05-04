@@ -205,8 +205,7 @@ function DataTable({ data, onEdit, onDelete }) {
                       </span>
                       <span className="card-subtitle">
                         <FiCalendar size={12} />
-                        {formatDate(item.ngay)} &bull;{" "}
-                        {formatStageName(item.doiTuongThuChi)}
+                        {formatDate(item.ngay)}
                       </span>
                     </div>
                   </div>
@@ -217,6 +216,11 @@ function DataTable({ data, onEdit, onDelete }) {
 
                 {expandedRow === item.id && (
                   <div className="card-details">
+                    <div className="detail-item">
+                      <FiInfo size={14} />
+                      <span className="detail-label">Hạng mục:</span>
+                      <span className="detail-value">{formatStageName(item.doiTuongThuChi)}</span>
+                    </div>
                     {item.hinhAnh && (
                       <div className="detail-item" style={{ alignItems: 'flex-start' }}>
                         <FiImage size={14} style={{ marginTop: '4px' }} />
