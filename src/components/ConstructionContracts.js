@@ -108,7 +108,7 @@ function ConstructionContracts({ showToast, contracts, loading, fetchAllData }) 
 
   return (
     <div className="contracts-container">
-      <h2 className="page-title"><FiBriefcase /> Quản lý Hợp đồng Xây dựng</h2>
+      <h2 className="page-title"><FiBriefcase /> Hợp đồng Xây dựng</h2>
       
       {/* Tabs phân loại */}
       <div className="category-tabs">
