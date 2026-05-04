@@ -67,9 +67,17 @@ const getBestColumnName = (tableName, normalizedKey, defaultNames) => {
   const mapping = columnMapping[tableName] || {};
   if (mapping[normalizedKey]) return mapping[normalizedKey];
   
-  // Nếu không có mapping (bảng mới hoặc rỗng), chỉ trả về fallback cho các cột lõi
-  if (!['id', 'ngay', 'noiDung'].includes(normalizedKey)) return null;
-  return Array.isArray(defaultNames) ? defaultNames[0] : defaultNames;
+  // Nếu không có mapping, trả về giá trị fallback phù hợp nhất
+  if (Array.isArray(defaultNames)) return defaultNames[0];
+  
+  // Fallback thông minh dựa trên normalizedKey cho các bảng BanVe, HopDong
+  const smartFallbacks = {
+    'url': 'url',
+    'name': 'name',
+    'size': 'size',
+    'category': 'category'
+  };
+  return smartFallbacks[normalizedKey] || defaultNames;
 };
 
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
@@ -229,7 +237,13 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     const formattedDate = toInputString(dateObj);
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
-    // 3. Map Nội dung & Số tiền
+    // 3. Map các trường dữ liệu quan trọng khác (Hỗ trợ BanVe, HopDong)
+    const nameCol = getBestColumnName(tableName, 'name', ['Tên', 'name', 'Tên bản vẽ', 'Tên hợp đồng']);
+    if (nameCol && payload.name) formattedPayload[nameCol] = payload.name;
+
+    const urlCol = getBestColumnName(tableName, 'url', ['url', 'URL', 'Đường dẫn', 'Link']);
+    if (urlCol && payload.url) formattedPayload[urlCol] = payload.url;
+
     const noiDungVal = payload.noiDung || "";
     formattedPayload[getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung'])] = noiDungVal;
 
@@ -330,7 +344,13 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const formattedDate = toInputString(dateObj);
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
-    // 3. Map Nội dung (Chỉ gửi nếu bảng có cột này hoặc có dữ liệu)
+    // 3. Map các trường dữ liệu quan trọng khác (Hỗ trợ BanVe, HopDong)
+    const nameCol = getBestColumnName(tableName, 'name', ['Tên', 'name', 'Tên bản vẽ', 'Tên hợp đồng']);
+    if (nameCol && payload.name) formattedPayload[nameCol] = payload.name;
+
+    const urlCol = getBestColumnName(tableName, 'url', ['url', 'URL', 'Đường dẫn', 'Link']);
+    if (urlCol && payload.url) formattedPayload[urlCol] = payload.url;
+
     const noiDungCol = getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung']);
     if (noiDungCol && (payload.noiDung || normTableName === "ghi chu" || normTableName === "giaodich")) {
       formattedPayload[noiDungCol] = payload.noiDung || "";
