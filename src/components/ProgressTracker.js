@@ -147,11 +147,30 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
     <div className="progress-tracker-section chart-card">
       <h3 className="chart-title">Theo dõi tiến độ thi công</h3>
       <div className="stages-grid" style={{ maxHeight: "80vh", overflowY: "auto", paddingRight: "10px" }}>
-        {/* Sắp xếp: Ưu tiên hạng mục "Đang thi công" lên đầu, sau đó đến mới nhất */}
+        {/* Sắp xếp: Ưu tiên hạng mục "Đang thi công" lên đầu, sau đó đến hạng mục có ảnh (mới nhất lên trên), cuối cùng là các hạng mục còn lại (cũ nhất lên trên) */}
         {[...stages].sort((a, b) => {
-          if (a.status === 'Đang thi công' && b.status !== 'Đang thi công') return -1;
-          if (b.status === 'Đang thi công' && a.status !== 'Đang thi công') return 1;
-          return (b.appSheetId || 0) - (a.appSheetId || 0);
+          const aIsInProgress = a.status === 'Đang thi công';
+          const bIsInProgress = b.status === 'Đang thi công';
+
+          // 1. Ưu tiên "Đang thi công" lên đầu
+          if (aIsInProgress && !bIsInProgress) return -1; // a lên trước b
+          if (!aIsInProgress && bIsInProgress) return 1;  // b lên trước a
+
+          // Nếu cùng trạng thái "Đang thi công" (hoặc cùng không phải "Đang thi công"):
+          const aHasImages = Array.isArray(a.anhNghiemThu) && a.anhNghiemThu.length > 0;
+          const bHasImages = Array.isArray(b.anhNghiemThu) && b.anhNghiemThu.length > 0;
+
+          // 2. Ưu tiên hạng mục có ảnh lên trước
+          if (aHasImages && !bHasImages) return -1; // a lên trước b
+          if (!aHasImages && bHasImages) return 1;  // b lên trước a
+
+          // Nếu cùng trạng thái "Đang thi công" VÀ cùng trạng thái "có ảnh" (hoặc cùng không có ảnh):
+          // 3. Sắp xếp theo appSheetId (mới nhất lên trên nếu có ảnh, cũ nhất lên trên nếu không có ảnh)
+          if (aHasImages && bHasImages) {
+            return (b.appSheetId || 0) - (a.appSheetId || 0); // Mới nhất lên trên
+          } else {
+            return (a.appSheetId || 0) - (b.appSheetId || 0); // Cũ nhất lên trên (duy trì thứ tự ban đầu)
+          }
         }).map((stage) => (
           <div key={stage.id} className="stage-card">
             <span className="stage-name">{stage.name.replace(/^\d+\.\s*/, "")}</span>
