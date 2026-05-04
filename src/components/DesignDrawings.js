@@ -41,12 +41,14 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
 
     try {
       setUploading(true);
+      const resourceType = isPdf ? "raw" : "image"; // Khai báo rõ ràng loại tài nguyên
       const data = new FormData();
       data.append("file", file);
       data.append("upload_preset", UPLOAD_PRESET);
-      data.append("resource_type", "auto"); // Để Cloudinary tự nhận diện
+      data.append("resource_type", resourceType); // Sử dụng loại tài nguyên đã xác định
+      console.log(`[Cloudinary Upload] Uploading as resource_type: ${resourceType} for file: ${file.name}`);
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { // URL cũng phải khớp với loại tài nguyên
         method: "POST",
         body: data
       });
