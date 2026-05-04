@@ -147,7 +147,8 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
     <div className="progress-tracker-section chart-card">
       <h3 className="chart-title">Theo dõi tiến độ thi công</h3>
       <div className="stages-grid" style={{ maxHeight: "80vh", overflowY: "auto", paddingRight: "10px" }}>
-        {stages.map((stage) => (
+        {/* Đảo ngược danh sách stages để hạng mục mới nhất lên trên */}
+        {[...stages].reverse().map((stage) => (
           <div key={stage.id} className="stage-card">
             <span className="stage-name">{stage.name.replace(/^\d+\.\s*/, "")}</span>
             <select
@@ -167,16 +168,19 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
               marginTop: '12px' 
             }}>
               {/* Danh sách ảnh đã lưu */}
-              {Array.isArray(stage.anhNghiemThu) && stage.anhNghiemThu.map((url, idx) => (
-                <div key={idx} style={{ position: 'relative', aspectRatio: '1/1' }}>
+              {Array.isArray(stage.anhNghiemThu) && [...stage.anhNghiemThu].reverse().map((url, revIdx) => {
+                // Tính toán lại index gốc để xử lý xóa ảnh chính xác
+                const originalIdx = stage.anhNghiemThu.length - 1 - revIdx;
+                return (
+                <div key={originalIdx} style={{ position: 'relative', aspectRatio: '1/1' }}>
                   <img 
                     src={url} 
-                    alt={`Nghiệm thu ${idx}`} 
+                    alt={`Nghiệm thu ${originalIdx}`} 
                     style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} 
-                    onClick={() => setGallery({ images: stage.anhNghiemThu, index: idx })}
+                    onClick={() => setGallery({ images: [...stage.anhNghiemThu].reverse(), index: revIdx })}
                   />
                   <button
-                    onClick={() => handleDeleteImage(stage, idx)}
+                    onClick={() => handleDeleteImage(stage, originalIdx)}
                     style={{
                       position: 'absolute',
                       top: '0',
@@ -197,7 +201,7 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
                     <FiX size={11} />
                   </button>
                 </div>
-              ))}
+              )})}
 
               {/* Ảnh đang chờ upload */}
               {pendingFiles[stage.id] && (
