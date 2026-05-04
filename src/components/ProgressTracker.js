@@ -147,8 +147,12 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
     <div className="progress-tracker-section chart-card">
       <h3 className="chart-title">Theo dõi tiến độ thi công</h3>
       <div className="stages-grid" style={{ maxHeight: "80vh", overflowY: "auto", paddingRight: "10px" }}>
-        {/* Đảo ngược danh sách stages để hạng mục mới nhất lên trên */}
-        {[...stages].reverse().map((stage) => (
+        {/* Sắp xếp: Ưu tiên hạng mục "Đang thi công" lên đầu, sau đó đến mới nhất */}
+        {[...stages].sort((a, b) => {
+          if (a.status === 'Đang thi công' && b.status !== 'Đang thi công') return -1;
+          if (b.status === 'Đang thi công' && a.status !== 'Đang thi công') return 1;
+          return (b.appSheetId || 0) - (a.appSheetId || 0);
+        }).map((stage) => (
           <div key={stage.id} className="stage-card">
             <span className="stage-name">{stage.name.replace(/^\d+\.\s*/, "")}</span>
             <select
