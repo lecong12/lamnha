@@ -40,9 +40,9 @@ function ConstructionContracts({ showToast, contracts, loading, fetchAllData }) 
       const data = new FormData();
       data.append("file", file);
       data.append("upload_preset", UPLOAD_PRESET);
-      data.append("resource_type", "raw"); // Đảm bảo đẩy vào kho 'raw' để trình duyệt đọc được
+      data.append("resource_type", "auto");
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`, {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
         method: "POST",
         body: data,
       });
