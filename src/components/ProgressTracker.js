@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiCamera, FiLoader, FiSave, FiX } from 'react-icons/fi';
+import { FiCamera, FiLoader, FiSave, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 // Cấu hình Cloudinary
 const CLOUD_NAME = (process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "").replace(/['"]/g, '');
@@ -8,7 +8,42 @@ const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").rep
 function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
   const [uploadingStageId, setUploadingStageId] = useState(null);
   const [pendingFiles, setPendingFiles] = useState({});
-  const [selectedImage, setSelectedImage] = useState(null);
+  // gallery: { images: string[], index: number }
+  const [gallery, setGallery] = useState(null);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const handlePrevImage = (e) => {
+    if (e) e.stopPropagation();
+    if (!gallery) return;
+    setGallery(prev => ({
+      ...prev,
+      index: (prev.index - 1 + prev.images.length) % prev.list.length // Dùng length của mảng ảnh
+    }));
+    // Thực tế mảng ảnh nằm trong prev.images
+    setGallery(prev => {
+      const newIdx = (prev.index - 1 + prev.images.length) % prev.images.length;
+      return { ...prev, index: newIdx };
+    });
+  };
+
+  const handleNextImage = (e) => {
+    if (e) e.stopPropagation();
+    if (!gallery) return;
+    setGallery(prev => {
+      const newIdx = (prev.index + 1) % prev.images.length;
+      return { ...prev, index: newIdx };
+    });
+  };
+
+  const handleSwipeEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 70) handleNextImage(); // Lướt sang trái -> Xem ảnh tiếp
+    if (distance < -70) handlePrevImage(); // Lướt sang phải -> Xem ảnh trước
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
 
   const handleUpdateStatus = async (stageId, newStatus) => {
     await onUpdateStage(stageId, { status: newStatus });
@@ -138,7 +173,7 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
                     src={url} 
                     alt={`Nghiệm thu ${idx}`} 
                     style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} 
-                    onClick={() => setSelectedImage(url)}
+                    onClick={() => setGallery({ images: stage.anhNghiemThu, index: idx })}
                   />
                   <button
                     onClick={() => handleDeleteImage(stage, idx)}
@@ -173,7 +208,7 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
                     src={pendingFiles[stage.id].preview} 
                     alt="Preview" 
                     style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6, cursor: 'pointer' }} 
-                    onClick={() => setSelectedImage(pendingFiles[stage.id].preview)}
+                    onClick={() => setGallery({ images: [pendingFiles[stage.id].preview], index: 0 })}
                   />
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', background: 'rgba(0,0,0,0.2)' }}>
                     {uploadingStageId === stage.id ? (
@@ -218,18 +253,46 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
       </div>
 
       {/* Lightbox hiển thị ảnh phóng to */}
-      {selectedImage && (
+      {gallery && (
         <div 
           style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} 
-          onClick={() => setSelectedImage(null)}
+          onClick={() => setGallery(null)}
+          onTouchStart={(e) => setTouchStart(e.targetTouches[0].clientX)}
+          onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
+          onTouchEnd={handleSwipeEnd}
         >
           <button 
-            style={{ position: 'absolute', top: '20px', right: '20px', background: 'var(--accent-color, #2d8e2b)', color: '#fff', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
-            onClick={() => setSelectedImage(null)}
+            style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2100 }} 
+            onClick={() => setGallery(null)}
           >
             <FiX size={24} />
           </button>
-          <img src={selectedImage} alt="Phóng to" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+
+          {gallery.images.length > 1 && (
+            <>
+              <button 
+                onClick={handlePrevImage}
+                style={{ position: 'absolute', left: '10px', background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '10px' }}
+              >
+                <FiChevronLeft size={40} />
+              </button>
+              <button 
+                onClick={handleNextImage}
+                style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '10px' }}
+              >
+                <FiChevronRight size={40} />
+              </button>
+              <div style={{ position: 'absolute', bottom: '30px', color: 'white', fontSize: '14px', background: 'rgba(0,0,0,0.5)', padding: '5px 15px', borderRadius: '20px' }}>
+                {gallery.index + 1} / {gallery.images.length}
+              </div>
+            </>
+          )}
+
+          <img 
+            src={gallery.images[gallery.index]} 
+            alt="Phóng to" 
+            style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '8px', transition: 'transform 0.3s ease' }} 
+          />
         </div>
       )}
     </div>
