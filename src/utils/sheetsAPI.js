@@ -1,5 +1,8 @@
 // AppSheet API Configuration
 import { toSafeDate, toInputString } from './dateUtils';
+
+const TABLE_BANVE = process.env.REACT_APP_APPSHEET_TABLE_BANVE || "BanVe";
+const TABLE_HOPDONG = process.env.REACT_APP_APPSHEET_TABLE_HOPDONG || "HopDong";
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 
 // Helper để chuẩn hóa ID: loại bỏ tiền tố (GC_, GD_) và chuyển thành số nếu có thể
@@ -237,12 +240,18 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     const formattedDate = toInputString(dateObj);
     formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
 
-    // 3. Map các trường dữ liệu quan trọng khác (Hỗ trợ BanVe, HopDong)
+    // 3. Map các trường dữ liệu quan trọng khác (Hỗ trợ BanVe, HopDong, GiaoDich)
     const nameCol = getBestColumnName(tableName, 'name', ['Tên', 'name', 'Tên bản vẽ', 'Tên hợp đồng']);
     if (nameCol && payload.name) formattedPayload[nameCol] = payload.name;
 
     const urlCol = getBestColumnName(tableName, 'url', ['url', 'URL', 'Đường dẫn', 'Link']);
     if (urlCol && payload.url) formattedPayload[urlCol] = payload.url;
+
+    const sizeCol = getBestColumnName(tableName, 'size', ['size', 'Dung lượng']);
+    if (sizeCol && payload.size !== undefined) formattedPayload[sizeCol] = payload.size;
+
+    const categoryCol = getBestColumnName(tableName, 'category', ['category', 'Phân loại']);
+    if (categoryCol && payload.category) formattedPayload[categoryCol] = payload.category;
 
     const noiDungVal = payload.noiDung || "";
     formattedPayload[getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung'])] = noiDungVal;
@@ -330,11 +339,18 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const normGiaoDichEnv = normalizeTableName(TABLE_GIAODICH_ENV);
     let formattedPayload = {};
     
-    // 1. Map ID/Key: AppSheet yêu cầu Number, nên ta bỏ hoàn toàn tiền tố GD_/GC_
-    // Sử dụng timestamp (Date.now()) làm ID số duy nhất
+    // 1. Map ID/Key: AppSheet yêu cầu Number cho cột ID chính, nên ta cần đảm bảo gửi số.
     const rawId = payload.id || payload.keyId;
-    const isInvalidId = !rawId || (!isNaN(rawId) && String(rawId).length < 5);
-    const finalKey = !isInvalidId ? rawId : Date.now();
+    let finalKey;
+
+    // For BanVe and HopDong, or if the rawId is not a valid number, use Date.now() for the primary ID.
+    if (normTableName === normalizeTableName(TABLE_BANVE) || normTableName === normalizeTableName(TABLE_HOPDONG)) {
+        finalKey = Date.now(); 
+    } else if (!isNaN(Number(rawId))) { // If rawId is a number (e.g., from GiaoDich)
+        finalKey = Number(rawId);
+    } else { // Fallback for other cases, use Date.now()
+        finalKey = Date.now();
+    }
     
     formattedPayload[getBestColumnName(tableName, 'id', ['ID', 'id', 'Mã GD', 'MaGD', 'TT', 'STT', 'Mã'])] = finalKey;
     
