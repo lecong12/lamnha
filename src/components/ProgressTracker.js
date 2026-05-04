@@ -179,20 +179,22 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
                     onClick={() => handleDeleteImage(stage, idx)}
                     style={{
                       position: 'absolute',
-                      top: '2px',    // Điều chỉnh vị trí lên trên
-                      right: '2px',  // Điều chỉnh vị trí sang phải
+                      top: '0',
+                      right: '0',
                       background: 'none', // Bỏ nền đỏ
                       color: '#ef4444', // Chữ X màu đỏ
                       border: 'none', // Bỏ viền trắng
+                      padding: '3px', // Tạo vùng đệm nhỏ để dễ bấm nhưng không lộ
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
-                      zIndex: 2
+                      zIndex: 2,
+                      lineHeight: 0
                     }}
                     title="Xóa ảnh"
                   >
-                    <FiX size={14} /> {/* Tăng kích thước icon X một chút để dễ nhìn hơn */}
+                    <FiX size={11} />
                   </button>
                 </div>
               ))}
