@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiUpload, FiTrash2, FiEye, FiDownload, FiLoader, FiMap, FiX, FiFileText } from 'react-icons/fi';
+import { FiUpload, FiTrash2, FiFileText, FiDownload, FiLoader, FiMap, FiEye, FiX } from 'react-icons/fi';
 import { addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
 import './DesignDrawings.css';
 
@@ -10,7 +10,7 @@ const UPLOAD_PRESET = (process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "").rep
 const DRAWING_CATEGORIES = [
   { id: 'kientruc', label: 'Bản vẽ Kiến trúc' },
   { id: 'ketcau', label: 'Bản vẽ Kết cấu' },
-  { id: 'diennuoc', label: 'Bản vẽ Điện nước (ME)' },
+  { id: 'diennuoc', label: 'Bản vẽ Điện nước' },
   { id: 'noithat', label: 'Bản vẽ Nội thất' }
 ];
 
@@ -31,11 +31,8 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
       return;
     }
 
-    const isPdf = file.type === "application/pdf";
-    const isImage = file.type.startsWith("image/");
-
-    if (!isPdf && !isImage) {
-      showToast("Vui lòng chỉ chọn file ảnh hoặc PDF.", "warning");
+    if (file.type !== "application/pdf") {
+      showToast("Vui lòng chỉ chọn file PDF.", "warning");
       return;
     }
 
@@ -51,24 +48,24 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
         body: data
       });
       
-      // Kiểm tra phản hồi trước khi parse JSON
       const text = await res.text();
       if (!res.ok) {
         throw new Error(text || `Lỗi Cloudinary (${res.status})`);
       }
 
       let fileData;
-      try { fileData = text ? JSON.parse(text) : {}; } 
+      try { fileData = text ? JSON.parse(text) : {}; }
       catch (e) { throw new Error("Lỗi định dạng phản hồi từ server."); }
       
       if (fileData.secure_url) {
+        // Chuẩn bị dữ liệu ghi xuống Google Sheets (AppSheet)
         const rowData = {
-            id: `BV_${Date.now()}`,
-            name: file.name, // Lấy từ file input
-            url: fileData.secure_url, // Lấy từ Cloudinary
-            ngay: new Date().toISOString().split('T')[0], // Định dạng YYYY-MM-DD
+            id: `BV_${Date.now()}`, // Tiền tố BV_ cho Bản vẽ
+            name: file.name,
+            url: fileData.secure_url,
+            ngay: new Date().toISOString().split('T')[0],
             size: parseFloat((file.size / 1024 / 1024).toFixed(2)), // Gửi dưới dạng số
-            category: activeCategory // Lấy từ state
+            category: activeCategory
         };
         
         const sheetRes = await addRowToSheet("BanVe", rowData, APP_ID);       
@@ -85,7 +82,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
        showToast("Lỗi upload: " + error.message, "error");
     } finally {
       setUploading(false);
-      e.target.value = null; 
+      e.target.value = null;
     }
   };
 
@@ -133,25 +130,26 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
       {loading ? (
         <div className="loading-text">Đang đồng bộ dữ liệu...</div>
       ) : (
-      <div className="drawings-grid">
-        {currentList.length === 0 && <div className="no-data-text">Chưa có bản vẽ nào.</div>}
+      <div className="drawings-list">
+        {currentList.length === 0 && <div className="no-drawings">Chưa có bản vẽ nào.</div>}
+        
         {currentList.map(drawing => (
-          <div key={drawing.id || drawing._RowNumber} className="drawing-card">
+          <div key={drawing.id || drawing._RowNumber} className="drawing-item">
             <div className="drawing-icon">
               <FiFileText size={24} />
             </div>
             <div className="drawing-info">
-              <span className="drawing-name" title={drawing.name}>{drawing.name}</span>
-              <span className="drawing-meta">{drawing.ngay || drawing.date} &bull; {drawing.size} MB</span>
+              <span className="drawing-name">{drawing.name}</span>
+              <span className="drawing-meta">{drawing.date || drawing.ngay} &bull; {drawing.size} MB</span>
             </div>
             <div className="drawing-actions">
-              <button className="icon-btn view" onClick={() => setViewingPdf(drawing)} title="Xem ngay">
+              <button className="action-icon view" onClick={() => setViewingPdf(drawing)} title="Xem ngay">
                 <FiEye />
               </button>
-              <a href={drawing.url} target="_blank" rel="noreferrer" className="icon-btn download" title="Tải về">
+              <a href={drawing.url} target="_blank" rel="noreferrer" className="action-icon download" title="Tải về">
                 <FiDownload />
               </a>
-              <button className="icon-btn delete" onClick={() => handleDelete(drawing.id || drawing._RowNumber)} title="Xóa">
+              <button className="action-icon delete" onClick={() => handleDelete(drawing.id || drawing._RowNumber)} title="Xóa">
                 <FiTrash2 />
               </button>
             </div>
@@ -160,7 +158,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
       </div>
       )}
 
-      {/* Modal Trình xem PDF */}
+      {/* Modal Xem PDF - Tối ưu tương tự Hợp đồng */}
       {viewingPdf && (
         <div className="pdf-viewer-overlay" onClick={() => setViewingPdf(null)}>
           <div className="pdf-viewer-container" onClick={e => e.stopPropagation()}>
@@ -169,11 +167,15 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
               <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
             </div>
             <div className="pdf-body">
-              <iframe 
-                src={viewingPdf.url}
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                title="Drawing Viewer"
-              />
+              {viewingPdf.url ? (
+                <iframe 
+                  src={viewingPdf.url}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  title="Drawing Viewer"
+                />
+              ) : (
+                <div className="no-pdf-error">Không tìm thấy đường dẫn tệp tin.</div>
+              )}
             </div>
           </div>
         </div>
