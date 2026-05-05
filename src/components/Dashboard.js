@@ -183,11 +183,11 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           <table className="budget-table">
             <thead>
               <tr>
-                <th>Hạng mục</th>
-                <th style={{ textAlign: 'right', width: '120px' }}>Dự kiến</th>
-                <th style={{ textAlign: 'right', width: '120px' }}>Thực tế</th>
-                <th style={{ textAlign: 'right', width: '120px' }}>Còn lại</th>
-                <th style={{ textAlign: 'center', width: '120px' }}>Tình trạng</th>
+                <th style={{ textAlign: 'left' }}>Hạng mục</th>
+                <th style={{ textAlign: 'right', width: '135px' }}>Dự kiến</th>
+                <th style={{ textAlign: 'right', width: '135px' }}>Thực tế</th>
+                <th style={{ textAlign: 'right', width: '135px' }}>Còn lại</th>
+                <th style={{ textAlign: 'center', width: '130px' }}>Tình trạng</th>
               </tr>
             </thead>
             <tbody>

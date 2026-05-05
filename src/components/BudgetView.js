@@ -55,11 +55,11 @@ function BudgetView({ budget = [], onUpdateBudget, showToast }) {
           <thead>
             <tr>
               <th style={{ textAlign: 'left' }}>Hạng mục</th>
-              <th style={{ textAlign: 'right', width: '125px' }}>Dự kiến</th>
-              <th style={{ textAlign: 'right', width: '125px' }}>Thực tế chi</th>
-              <th style={{ textAlign: 'right', width: '125px' }}>Còn lại</th>
-              <th style={{ textAlign: 'center', width: '115px' }}>Tình trạng</th>
-              <th style={{ textAlign: 'center', width: '50px' }}></th>
+              <th style={{ textAlign: 'right', width: '135px' }}>Dự kiến</th>
+              <th style={{ textAlign: 'right', width: '135px' }}>Thực tế chi</th>
+              <th style={{ textAlign: 'right', width: '135px' }}>Còn lại</th>
+              <th style={{ textAlign: 'center', width: '130px' }}>Tình trạng</th>
+              <th style={{ textAlign: 'center', width: '60px' }}></th>
             </tr>
           </thead>
           <tbody>
