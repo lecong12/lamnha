@@ -171,18 +171,11 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
             </div>
             <div className="pdf-body">
               {viewingPdf.url ? (
-                <object 
-                  data={viewingPdf.url} 
-                  type="application/pdf" 
-                  width="100%" 
-                  height="100%"
-                >
-                  <div className="pdf-fallback">
-                    <FiFileText size={50} color="#94a3b8" />
-                    <p>Trình duyệt không thể hiển thị PDF trực tiếp.</p>
-                    <a href={viewingPdf.url} target="_blank" rel="noreferrer" className="fallback-download-btn">Mở tệp trong tab mới <FiDownload /></a>
-                  </div>
-                </object>
+                <iframe 
+                  src={viewingPdf.url}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  title="PDF Viewer"
+                />
               ) : (
                 <div className="no-pdf-error">Không tìm thấy đường dẫn tệp tin.</div>
               )}

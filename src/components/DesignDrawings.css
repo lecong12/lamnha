@@ -108,6 +108,23 @@
   padding: 20px;
 }
 
+/* Tối ưu hiển thị PDF cho điện thoại */
+@media (max-width: 768px) {
+  .pdf-viewer-overlay {
+    padding: 0; /* Loại bỏ khoảng cách viền trên mobile */
+  }
+
+  .pdf-viewer-container {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0; /* Chiếm toàn màn hình */
+  }
+  
+  .pdf-header {
+    padding: 10px 15px;
+  }
+}
+
 .pdf-viewer-container {
   background: var(--bg-card);
   width: 90%;
