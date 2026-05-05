@@ -138,17 +138,17 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
         {currentList.map(drawing => (
           <div key={drawing.id || drawing._RowNumber} className="drawing-card">
             <div className="drawing-icon">
-              {drawing.url && drawing.url.toLowerCase().includes('.pdf') ? <FiFileText size={24} /> : <FiMap size={24} />}
+              {drawing.url?.toLowerCase().includes('.pdf') ? <FiFileText size={24} /> : <FiMap size={24} />}
             </div>
             <div className="drawing-info">
               <span className="drawing-name" title={drawing.name}>{drawing.name}</span>
-              <span className="drawing-meta">{drawing.ngay || drawing.date} &bull; {drawing.size} MB</span>
+              <span className="drawing-meta">{drawing.ngay || drawing.date || "Không rõ ngày"} &bull; {drawing.size} MB</span>
             </div>
             <div className="drawing-actions">
               <button className="icon-btn view" onClick={() => setViewingPdf(drawing)} title="Xem ngay">
                 <FiEye />
               </button>
-              <a href={drawing.url} target="_blank" rel="noreferrer" className="icon-btn download" title="Tải về">
+              <a href={drawing.url} target="_blank" rel="noreferrer" className="icon-btn download" title="Mở tệp">
                 <FiDownload />
               </a>
               <button className="icon-btn delete" onClick={() => handleDelete(drawing.id || drawing._RowNumber)} title="Xóa">
@@ -169,7 +169,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
               <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
             </div>
             <div className="pdf-body">
-              {viewingPdf.url && viewingPdf.url.toLowerCase().includes('.pdf') ? (
+              {viewingPdf.url?.toLowerCase().includes('.pdf') ? (
                 <iframe 
                   src={viewingPdf.url}
                   style={{ width: '100%', height: '100%', border: 'none' }}
@@ -177,9 +177,9 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
                 />
               ) : (
                 <img 
-                  src={viewingPdf.url} 
+                  src={viewingPdf.url}
                   alt={viewingPdf.name} 
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }} 
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
                 />
               )}
             </div>

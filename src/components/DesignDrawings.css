@@ -22,8 +22,13 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
+.drawing-card:hover {
+  background-color: var(--hover-bg);
+  transform: none; /* Giữ phẳng giống contract-item */
+}
+
 .drawing-icon {
-  color: #2563eb;
+  color: #2563eb; /* Màu xanh bản vẽ */
   margin-right: 12px;
   display: flex;
   align-items: center;
