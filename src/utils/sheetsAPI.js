@@ -346,14 +346,20 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     // 1. Map ID/Key: AppSheet yêu cầu Number cho cột ID chính, nên ta cần đảm bảo gửi số.
     const rawId = payload.id || payload.keyId;
     let finalKey;
-
-    // For BanVe and HopDong, or if the rawId is not a valid number, use Date.now() for the primary ID.
+    
+    // Đối với BanVe và HopDong, giữ nguyên ID dạng chuỗi đã có tiền tố
     if (normTableName === normalizeTableName(TABLE_BANVE) || normTableName === normalizeTableName(TABLE_HOPDONG)) {
-        finalKey = Date.now(); 
-    } else if (!isNaN(Number(rawId))) { // If rawId is a number (e.g., from GiaoDich)
+        finalKey = rawId;
+        // Nếu rawId không tồn tại, tạo một ID mới có tiền tố
+        if (!finalKey) {
+            finalKey = (normTableName === normalizeTableName(TABLE_BANVE) ? "BV_" : "HD_") + Date.now();
+        }
+    } 
+    // Đối với các bảng khác (như GiaoDich, GhiChu) hoặc nếu ID là số, chuyển thành số
+    else if (!isNaN(Number(rawId))) { 
         finalKey = Number(rawId);
-    } else { // Fallback for other cases, use Date.now()
-        finalKey = Date.now();
+    } else { // Fallback nếu không có ID hợp lệ, dùng timestamp
+        finalKey = Date.now(); 
     }
     
     formattedPayload[getBestColumnName(tableName, 'id', ['id', 'ID', 'Mã GD', 'MaGD', 'TT', 'STT', 'Mã'])] = finalKey;
