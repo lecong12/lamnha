@@ -62,7 +62,10 @@ export const normalizeKey = (str) => {
 // Biến lưu trữ mapping tên cột thực tế từ AppSheet
 const columnMapping = {
   "GhiChu": {},
-  "GiaoDich": {}
+  "GiaoDich": {},
+  "BanVe": {},
+  "HopDong": {},
+  "NganSach": {}
 };
 
 // Helper để lấy tên cột AppSheet thực tế hoặc danh sách fallback
@@ -167,7 +170,8 @@ export const fetchTableData = async (tableName, appId) => {
 
     // Chuẩn hóa dữ liệu trả về để các thành phần như QuickNotes có thể đọc được ngay, noiDung
     const currentMapping = {};
-    const data = (Array.isArray(rawData) ? rawData : []).map(row => {
+    const rows = Array.isArray(rawData) ? rawData : [];
+    const data = rows.map(row => {
       const normalizedRow = {};
       Object.keys(row).forEach(key => {
         const normKey = normalizeKey(key);
@@ -181,9 +185,7 @@ export const fetchTableData = async (tableName, appId) => {
     columnMapping[tableName] = currentMapping;
 
     // Log để kiểm tra mapping thực tế từ AppSheet
-    if (data.length > 0) {
-      console.log(`[Mapping] Bảng ${tableName}:`, currentMapping);
-    }
+    console.log(`[Mapping] Bảng ${tableName}:`, currentMapping);
 
     // AppSheet trả về mảng object hoặc object rỗng nếu lỗi/không có dữ liệu
     return { success: true, data };
