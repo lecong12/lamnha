@@ -66,7 +66,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
             id: `BV_${Date.now()}`,
             name: file.name, // Lấy từ file input
             url: fileData.secure_url, // Lấy từ Cloudinary
-            ngay: new Date().toISOString().split('T')[0],
+            ngay: new Date().toISOString().split('T')[0], // Định dạng YYYY-MM-DD
             size: parseFloat((file.size / 1024 / 1024).toFixed(2)), // Gửi dưới dạng số
             category: activeCategory // Lấy từ state
         };
@@ -125,30 +125,30 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
       <div className="upload-box">
         <label className={`upload-btn ${uploading ? 'disabled' : ''}`}>
           {uploading ? <FiLoader className="spin" /> : <FiUpload />}
-          <span>{uploading ? "Đang xử lý..." : `Tải lên cho ${DRAWING_CATEGORIES.find(c => c.id === activeCategory)?.label}`}</span>
-          <input type="file" accept="application/pdf,image/*" onChange={handleFileUpload} disabled={uploading} hidden />
+          <span>{uploading ? "Đang xử lý..." : `Tải PDF cho ${DRAWING_CATEGORIES.find(c => c.id === activeCategory)?.label}`}</span>
+          <input type="file" accept="application/pdf" onChange={handleFileUpload} disabled={uploading} hidden />
         </label>
       </div>
 
       {loading ? (
-        <div className="loading-text">Đang đồng bộ dữ liệu bản vẽ...</div>
+        <div className="loading-text">Đang đồng bộ dữ liệu...</div>
       ) : (
       <div className="drawings-grid">
-        {currentList.length === 0 && <div className="no-data-text">Chưa có bản vẽ nào trong mục này.</div>}
+        {currentList.length === 0 && <div className="no-data-text">Chưa có bản vẽ nào.</div>}
         {currentList.map(drawing => (
           <div key={drawing.id || drawing._RowNumber} className="drawing-card">
             <div className="drawing-icon">
-              {drawing.url?.toLowerCase().includes('.pdf') ? <FiFileText size={24} /> : <FiMap size={24} />}
+              <FiFileText size={24} />
             </div>
             <div className="drawing-info">
               <span className="drawing-name" title={drawing.name}>{drawing.name}</span>
-              <span className="drawing-meta">{drawing.ngay || drawing.date || "Không rõ ngày"} &bull; {drawing.size} MB</span>
+              <span className="drawing-meta">{drawing.ngay || drawing.date} &bull; {drawing.size} MB</span>
             </div>
             <div className="drawing-actions">
               <button className="icon-btn view" onClick={() => setViewingPdf(drawing)} title="Xem ngay">
                 <FiEye />
               </button>
-              <a href={drawing.url} target="_blank" rel="noreferrer" className="icon-btn download" title="Mở tệp">
+              <a href={drawing.url} target="_blank" rel="noreferrer" className="icon-btn download" title="Tải về">
                 <FiDownload />
               </a>
               <button className="icon-btn delete" onClick={() => handleDelete(drawing.id || drawing._RowNumber)} title="Xóa">
@@ -169,19 +169,11 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
               <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
             </div>
             <div className="pdf-body">
-              {viewingPdf.url?.toLowerCase().includes('.pdf') ? (
-                <iframe 
-                  src={viewingPdf.url}
-                  style={{ width: '100%', height: '100%', border: 'none' }}
-                  title="Drawing Viewer"
-                />
-              ) : (
-                <img 
-                  src={viewingPdf.url}
-                  alt={viewingPdf.name} 
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
-                />
-              )}
+              <iframe 
+                src={viewingPdf.url}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                title="Drawing Viewer"
+              />
             </div>
           </div>
         </div>
