@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { toDisplayString } from "../utils/dateUtils";
 import {
   FiChevronLeft,
@@ -34,7 +34,12 @@ function DataTable({ data, onEdit, onDelete }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRow, setExpandedRow] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: "ngay", direction: "desc" }); // Mặc định sắp xếp theo ngày giảm dần
-  const itemsPerPage = 10;
+  const itemsPerPage = 20; // Tăng lên 20 để xem được nhiều giao dịch mới hơn cùng lúc
+
+  // Tự động quay về trang 1 khi dữ liệu thay đổi hoặc có lọc mới
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [data]);
 
   // Logic sắp xếp dữ liệu
   const sortedData = useMemo(() => {
@@ -54,7 +59,11 @@ function DataTable({ data, onEdit, onDelete }) {
         if (aValue > bValue) {
           return sortConfig.direction === "asc" ? 1 : -1;
         }
-        return 0;
+        
+        // SẮP XẾP PHỤ: Nếu cùng ngày, ưu tiên bản ghi có ID hoặc RowNumber lớn hơn (mới được thêm vào)
+        const aId = Number(a.appSheetId || String(a.id).replace(/\D/g, '') || 0);
+        const bId = Number(b.appSheetId || String(b.id).replace(/\D/g, '') || 0);
+        return sortConfig.direction === "asc" ? aId - bId : bId - aId;
       });
     }
     return sortableItems;
@@ -82,7 +91,8 @@ function DataTable({ data, onEdit, onDelete }) {
     setSortConfig({ key, direction });
   };
 
-  const pageTotalChi = currentData
+  // Tính tổng chi dựa trên toàn bộ dữ liệu ĐÃ LỌC, không chỉ trên trang hiện tại
+  const totalChiFiltered = sortedData
     .reduce((sum, item) => sum + item.soTien, 0);
 
   const chiList = currentData; // Tất cả dữ liệu giờ là chi phí
@@ -108,7 +118,7 @@ function DataTable({ data, onEdit, onDelete }) {
             <h4 className="section-title chi-title">Bảng Chi Phí</h4>
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <span className="summary-item chi">
-                Tổng Chi: {formatCurrency(pageTotalChi)}
+                Tổng Chi: {formatCurrency(totalChiFiltered)}
               </span>
             </div>
           </div>

@@ -77,11 +77,15 @@ export const useAppData = (isLoggedIn) => {
                     nguoiCapNhat: row.nguoiCapNhat || ""
                 };
             });
-            // SẮP XẾP: t2 - t1 để giao dịch mới nhất (thời gian lớn hơn) luôn nằm trên đầu
+            // SẮP XẾP: Ngày mới nhất lên đầu. Nếu cùng ngày, ưu tiên dòng có RowNumber lớn hơn (vừa mới thêm vào sheet)
             setData(cleanGD.sort((a, b) => {
                 const t1 = a.ngay instanceof Date ? a.ngay.getTime() : 0;
                 const t2 = b.ngay instanceof Date ? b.ngay.getTime() : 0;
-                return t2 - t1;
+                if (t2 !== t1) return t2 - t1;
+                
+                const r1 = Number(a.appSheetId || 0);
+                const r2 = Number(b.appSheetId || 0);
+                return r2 - r1;
             }));
 
             // 2. Xử lý Ngân Sách
