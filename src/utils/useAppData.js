@@ -12,6 +12,15 @@ const TABLE_NGANSACH = process.env.REACT_APP_APPSHEET_TABLE_NGANSACH || "NganSac
 const TABLE_HOPDONG = process.env.REACT_APP_APPSHEET_TABLE_HOPDONG || "HopDong";
 const TABLE_BANVE = process.env.REACT_APP_APPSHEET_TABLE_BANVE || "BanVe";
 
+// Helper để tối ưu ảnh từ Cloudinary giúp load cực nhanh
+const optimizeCloudinary = (url) => {
+    if (!url || typeof url !== 'string' || !url.includes("res.cloudinary.com")) return url;
+    // Nếu link đã có tham số tối ưu thì không chèn thêm
+    if (url.includes("/upload/f_auto")) return url;
+    // f_auto: tự định dạng, q_auto: tự nén, w_600: thu nhỏ chiều rộng phù hợp thumbnail/mobile
+    return url.replace("/upload/", "/upload/f_auto,q_auto,w_600,c_limit/");
+};
+
 export const useAppData = (isLoggedIn) => {
     const [data, setData] = useState([]);
     const [nganSach, setNganSach] = useState([]);
@@ -64,7 +73,7 @@ export const useAppData = (isLoggedIn) => {
                     noiDung: row.noiDung || "",
                     doiTuongThuChi: row.doiTuongThuChi || "",
                     soTien: Number(String(row.soTien || 0).replace(/\D/g, "")),
-                    hinhAnh: row.hinhAnh || "",
+                    hinhAnh: optimizeCloudinary(row.hinhAnh || ""),
                     nguoiCapNhat: row.nguoiCapNhat || ""
                 };
             });
@@ -101,7 +110,9 @@ export const useAppData = (isLoggedIn) => {
                     ngayBatDau: dS,
                     ngayKetThuc: dE,
                     displayNgayBatDau: toDisplayString(dS),
-                    displayNgayKetThuc: toDisplayString(dE)
+                    displayNgayKetThuc: toDisplayString(dE),
+                    // Tối ưu toàn bộ danh sách ảnh nghiệm thu trong phần Tiến độ
+                    anhNghiemThu: (stage.anhNghiemThu || []).map(img => optimizeCloudinary(img))
                 };
             });
             setTienDo(cleanTD);
