@@ -42,10 +42,10 @@ export const normalizeKey = (str) => {
     if (sClean.includes('batdau') || sClean.includes('start')) return 'ngayBatDau';
     if (sClean.includes('ketthuc') || sClean.includes('end')) return 'ngayKetThuc';
     
-    if (sClean === 'dukien' || sClean === 'kehoach' || sClean === 'dutoan') return 'duKien';
-    if (sClean === 'thucte' || sClean === 'thucchi' || sClean === 'dachi') return 'thucTe';
-    if (sClean.includes('conlai')) return 'conLai';
-    if (sClean.includes('tinhtrang')) return 'tinhTrang';
+    if (sClean.includes('dukien') || sClean.includes('kehoach') || sClean.includes('dutoan')) return 'duKien';
+    if (sClean.includes('thucte') || sClean.includes('thucchi') || sClean.includes('dachi')) return 'thucTe';
+    if (sClean.includes('conlai') || sClean.includes('sodu')) return 'conLai';
+    if (sClean.includes('tinhtrang') || sClean.includes('trangthai')) return 'tinhTrang';
 
     if (sClean === 'sotien' || sClean === 'amount' || sClean === 'thanhtien') return 'soTien';
     if (sClean.includes('loaithuchi') || sClean.includes('loai') || sClean.includes('type')) return 'loaiThuChi';
