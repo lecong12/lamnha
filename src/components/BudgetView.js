@@ -95,7 +95,15 @@ function BudgetView({ budget = [], onUpdateBudget, showToast }) {
                   {formatCurrency(safeNumber(item.conLai))}
                 </td>
                 <td className="status-cell" style={{ textAlign: 'center' }}>
-                  <span className={`status-badge ${safeNumber(item.conLai) < 0 ? 'over' : 'ok'}`}>
+                  <span
+                    className={`status-badge ${safeNumber(item.conLai) < 0 ? 'over' : 'ok'}`}
+                    style={safeNumber(item.conLai) < 0 ? {
+                      backgroundColor: 'rgba(239, 68, 68, 0.2)', // Nền đỏ nhạt
+                      color: '#dc2626', // Chữ đỏ đậm
+                      fontWeight: '600', // Chữ đậm hơn
+                      border: '1px solid #ef4444' // Viền đỏ
+                    } : {}}
+                  >
                     {item.tinhTrang}
                   </span>
                 </td>

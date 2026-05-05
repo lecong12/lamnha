@@ -177,7 +177,11 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
             <div className="pdf-body">
               {viewingPdf.url ? (
                 <iframe 
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewingPdf.url)}&embedded=true`}
+                  src={
+                    window.innerWidth <= 768 
+                      ? `https://docs.google.com/viewer?url=${encodeURIComponent(viewingPdf.url)}&embedded=true`
+                      : viewingPdf.url
+                  }
                   style={{ width: '100%', height: '100%', border: 'none' }}
                   title="PDF Viewer"
                 />
