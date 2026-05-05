@@ -167,12 +167,17 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
           <div className="pdf-viewer-container" onClick={e => e.stopPropagation()}>
             <div className="pdf-header">
               <h3>{viewingPdf.name}</h3>
-              <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
+              <div className="pdf-header-actions">
+                <a href={viewingPdf.url} target="_blank" rel="noreferrer" className="open-external-btn" title="Mở trong tab mới">
+                  <FiDownload size={20} />
+                </a>
+                <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
+              </div>
             </div>
             <div className="pdf-body">
               {viewingPdf.url ? (
                 <iframe 
-                  src={viewingPdf.url}
+                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewingPdf.url)}&embedded=true`}
                   style={{ width: '100%', height: '100%', border: 'none' }}
                   title="PDF Viewer"
                 />
