@@ -75,10 +75,10 @@ const getBestColumnName = (tableName, normalizedKey, defaultNames) => {
   
   // Fallback thông minh dựa trên normalizedKey cho các bảng BanVe, HopDong
   const smartFallbacks = {
-    'url': 'url',
-    'name': 'name',
-    'size': 'size',
-    'category': 'category'
+    'url': 'Đường dẫn',
+    'name': 'Tên',
+    'size': 'Dung lượng',
+    'category': 'Phân loại'
   };
   return smartFallbacks[normalizedKey] || defaultNames;
 };
@@ -238,19 +238,19 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     const dateObj = toSafeDate(payload.ngay) || new Date();
     // Gửi định dạng ISO YYYY-MM-DD để AppSheet nhận diện chính xác tuyệt đối
     const formattedDate = toInputString(dateObj);
-    formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
+    formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay', 'Date'])] = formattedDate;
 
     // 3. Map các trường dữ liệu quan trọng khác (Hỗ trợ BanVe, HopDong, GiaoDich)
-    const nameCol = getBestColumnName(tableName, 'name', ['Tên', 'name', 'Tên bản vẽ', 'Tên hợp đồng']);
+    const nameCol = getBestColumnName(tableName, 'name', ['Tên', 'Tên bản vẽ', 'Tên hợp đồng', 'name']);
     if (nameCol && payload.name) formattedPayload[nameCol] = payload.name;
 
-    const urlCol = getBestColumnName(tableName, 'url', ['url', 'URL', 'Đường dẫn', 'Link']);
+    const urlCol = getBestColumnName(tableName, 'url', ['Đường dẫn', 'url', 'URL', 'Link']);
     if (urlCol && payload.url) formattedPayload[urlCol] = payload.url;
 
-    const sizeCol = getBestColumnName(tableName, 'size', ['size', 'Dung lượng']);
+    const sizeCol = getBestColumnName(tableName, 'size', ['Dung lượng', 'size', 'Size']);
     if (sizeCol && payload.size !== undefined) formattedPayload[sizeCol] = payload.size;
 
-    const categoryCol = getBestColumnName(tableName, 'category', ['category', 'Phân loại']);
+    const categoryCol = getBestColumnName(tableName, 'category', ['Phân loại', 'category', 'Category']);
     if (categoryCol && payload.category) formattedPayload[categoryCol] = payload.category;
 
     const noiDungVal = payload.noiDung || "";
@@ -260,7 +260,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
     Object.keys(payload).forEach(key => {
       const normKey = normalizeKey(key);
       // Bỏ qua các trường đã xử lý thủ công ở trên
-      if (['id', 'keyId', 'appSheetId', 'ngay', 'date', 'noiDung', '_RowNumber'].includes(normKey)) return;
+      if (['id', 'keyId', 'appSheetId', 'ngay', 'date', 'noiDung', '_RowNumber', 'name', 'url', 'size', 'category'].includes(normKey)) return;
       
       const realCol = getBestColumnName(tableName, normKey, key);
       if (realCol) {
@@ -358,17 +358,23 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     const dateObj = toSafeDate(payload.ngay) || new Date();
     // Gửi định dạng ISO YYYY-MM-DD
     const formattedDate = toInputString(dateObj);
-    formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay'])] = formattedDate;
+    formattedPayload[getBestColumnName(tableName, 'ngay', ['Ngày', 'ngay', 'Date'])] = formattedDate;
 
     // 3. Map các trường dữ liệu quan trọng khác (Hỗ trợ BanVe, HopDong)
-    const nameCol = getBestColumnName(tableName, 'name', ['Tên', 'name', 'Tên bản vẽ', 'Tên hợp đồng']);
+    const nameCol = getBestColumnName(tableName, 'name', ['Tên', 'Tên bản vẽ', 'Tên hợp đồng', 'name']);
     if (nameCol && payload.name) formattedPayload[nameCol] = payload.name;
 
-    const urlCol = getBestColumnName(tableName, 'url', ['url', 'URL', 'Đường dẫn', 'Link']);
+    const urlCol = getBestColumnName(tableName, 'url', ['Đường dẫn', 'url', 'URL', 'Link']);
     if (urlCol && payload.url) formattedPayload[urlCol] = payload.url;
 
-    const noiDungCol = getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung']);
-    if (noiDungCol && (payload.noiDung || normTableName === "ghi chu" || normTableName === "giaodich")) {
+    const sizeCol = getBestColumnName(tableName, 'size', ['Dung lượng', 'size', 'Size']);
+    if (sizeCol && payload.size !== undefined) formattedPayload[sizeCol] = payload.size;
+
+    const categoryCol = getBestColumnName(tableName, 'category', ['Phân loại', 'category', 'Category']);
+    if (categoryCol && payload.category) formattedPayload[categoryCol] = payload.category;
+
+    const noiDungCol = getBestColumnName(tableName, 'noiDung', ['Nội dung', 'noiDung', 'Description']);
+    if (noiDungCol && (payload.noiDung || normTableName === "ghichu" || normTableName === "giaodich")) {
       formattedPayload[noiDungCol] = payload.noiDung || "";
     }
 
@@ -376,7 +382,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
     Object.keys(payload).forEach(key => {
       const normKey = normalizeKey(key);
       // Bỏ qua các trường đã xử lý thủ công ở trên
-      if (['id', 'keyId', 'appSheetId', 'ngay', 'date', 'noiDung', '_RowNumber'].includes(normKey)) return;
+      if (['id', 'keyId', 'appSheetId', 'ngay', 'date', 'noiDung', '_RowNumber', 'name', 'url', 'size', 'category'].includes(normKey)) return;
       
       const realCol = getBestColumnName(tableName, normKey, key);
       if (realCol) {
