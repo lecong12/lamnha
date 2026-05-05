@@ -54,7 +54,11 @@ function DataTable({ data, onEdit, onDelete }) {
         if (aValue > bValue) {
           return sortConfig.direction === "asc" ? 1 : -1;
         }
-        return 0;
+        
+        // Sắp xếp phụ: Nếu ngày bằng nhau, ưu tiên ID/RowNumber lớn hơn (mới hơn) lên đầu
+        const aId = Number(a.appSheetId || String(a.id).replace(/\D/g, '') || 0);
+        const bId = Number(b.appSheetId || String(b.id).replace(/\D/g, '') || 0);
+        return sortConfig.direction === "asc" ? aId - bId : bId - aId;
       });
     }
     return sortableItems;
