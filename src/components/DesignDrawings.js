@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiUpload, FiTrash2, FiFileText, FiDownload, FiLoader, FiMap, FiEye, FiX } from 'react-icons/fi';
+import { FiUpload, FiTrash2, FiFileText, FiDownload, FiLoader, FiBriefcase, FiEye, FiX, FiMap } from 'react-icons/fi';
 import { addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
 import './DesignDrawings.css';
 
@@ -48,6 +48,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
         body: data
       });
       
+      // Xử lý phản hồi an toàn
       const text = await res.text();
       if (!res.ok) {
         throw new Error(text || `Lỗi Cloudinary (${res.status})`);
@@ -60,16 +61,17 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
       if (fileData.secure_url) {
         // Chuẩn bị dữ liệu ghi xuống Google Sheets (AppSheet)
         const rowData = {
-            id: `BV_${Date.now()}`, // Tiền tố BV_ cho Bản vẽ
+            id: `BV_${Date.now()}`, // Thêm tiền tố BV_ nhất quán cho Bản vẽ
             name: file.name,
-            url: fileData.secure_url,
-            ngay: new Date().toISOString().split('T')[0],
+            url: fileData.secure_url, // Cột 'url' theo yêu cầu
+            ngay: new Date().toISOString().split('T')[0], // Gửi định dạng YYYY-MM-DD chuẩn
             size: parseFloat((file.size / 1024 / 1024).toFixed(2)), // Gửi dưới dạng số
-            category: activeCategory
+            category: activeCategory // Cột 'category' theo yêu cầu
         };
         
         const sheetRes = await addRowToSheet("BanVe", rowData, APP_ID);       
         if (sheetRes.success) {
+          // Sau khi thêm thành công, gọi fetchAllData để cập nhật dữ liệu từ App.js
           await fetchAllData();
           showToast("Upload và lưu bản vẽ thành công!", "success");
         } else {
@@ -89,7 +91,8 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa bản vẽ này?")) {
       const res = await deleteRowFromSheet("BanVe", id, APP_ID);
-      if (res.success) {
+      if (res.success) { 
+        // Sau khi xóa thành công, gọi fetchAllData để cập nhật dữ liệu từ App.js
         await fetchAllData();
       }
     }
@@ -167,15 +170,21 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
               <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
             </div>
             <div className="pdf-body">
-              {viewingPdf.url ? (
-                <iframe 
-                  src={viewingPdf.url}
-                  style={{ width: '100%', height: '100%', border: 'none' }}
-                  title="Drawing Viewer"
-                />
-              ) : (
-                <div className="no-pdf-error">Không tìm thấy đường dẫn tệp tin.</div>
-              )}
+              {/* Dùng object để nhúng PDF, có nút tải về nếu lỗi, giống Hợp đồng */}
+              <object 
+                data={viewingPdf.url} 
+                type="application/pdf" 
+                width="100%" 
+                height="100%"
+              >
+                <div className="pdf-fallback">
+                   <FiFileText size={50} color="#94a3b8" />
+                   <p>Không thể hiển thị PDF trực tiếp trong khung này.</p>
+                   <a href={viewingPdf.url} target="_blank" rel="noreferrer" className="btn-open-new">
+                     Mở tệp trong tab mới <FiDownload />
+                   </a>
+                </div>
+              </object>
             </div>
           </div>
         </div>

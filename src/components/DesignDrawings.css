@@ -26,7 +26,7 @@
 }
 
 .drawing-icon {
-  color: #2563eb;
+  color: #2563eb; /* Blue color for drawings */
   margin-right: 16px;
   display: flex;
   align-items: center;
@@ -40,8 +40,14 @@
 .drawing-name {
   font-weight: 500;
   color: var(--text-main);
+  text-decoration: none;
   margin-bottom: 4px;
   display: block;
+}
+
+.drawing-name:hover {
+  color: #2563eb;
+  text-decoration: underline;
 }
 
 .drawing-meta {
@@ -51,32 +57,41 @@
 
 .drawing-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
-.icon-btn {
+.action-icon {
+  background: none;
   border: none;
-  background: var(--bg-card);
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
+}
+
+.action-icon:hover {
+  background-color: var(--hover-bg);
+}
+
+.action-icon.delete:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.action-icon.download:hover {
+  background-color: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.no-drawings {
+  text-align: center;
   color: var(--text-muted);
-  border: 1px solid var(--border-color);
-  transition: all 0.2s;
+  padding: 40px;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
 }
-
-.icon-btn:hover {
-  background: var(--hover-bg);
-  color: var(--text-main);
-}
-
-.icon-btn.view:hover { color: #3b82f6; border-color: #3b82f6; }
-.icon-btn.download:hover { color: #16a34a; border-color: #16a34a; }
-.icon-btn.delete:hover { color: #ef4444; border-color: #ef4444; }
 
 /* PDF Viewer Modal */
 .pdf-viewer-overlay {
@@ -119,15 +134,6 @@
   border: none;
   width: 100%;
   height: 100%;
-}
-
-.no-data-text {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 40px;
-  color: var(--text-muted);
-  border: 1px dashed var(--border-color);
-  border-radius: 8px;
 }
 
 .pdf-fallback {
