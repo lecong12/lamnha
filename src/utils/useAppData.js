@@ -123,15 +123,17 @@ export const useAppData = (isLoggedIn) => {
             // 5. Xử lý Bản Vẽ
             const resBanVe = resBanVeResult.success ? resBanVeResult.data : [];
             const cleanBanVe = resBanVe.map((row, index) => {
+                const d = toSafeDate(row.date || row.ngay);
                 return {
+                    ...row,
                     id: row._RowNumber || row.id || `bv_${index}`,
                     appSheetId: row._RowNumber,
                     keyId: row.id || row.keyId || row._RowNumber,
                     name: row.name || `Bản vẽ ${index + 1}`,
                     url: row.url || row.hinhAnh || "",
-                    date: toDisplayString(toSafeDate(row.date || row.ngay)),
+                    date: toDisplayString(d),
+                    ngay: d,
                     size: Number(row.size || 0),
-                    category: row.category || row.doiTuongThuChi || "Khác"
                 };
             });
             setDrawings(cleanBanVe.sort((a, b) => (b.appSheetId || 0) - (a.appSheetId || 0)));

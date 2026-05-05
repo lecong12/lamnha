@@ -142,7 +142,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
             <div className="drawing-icon"><FiFileText size={24} /></div>
             <div className="drawing-info">
               <span className="drawing-name">{drawing.name}</span>
-              <span className="drawing-meta">{drawing.date || drawing.ngay} &bull; {drawing.size} MB</span>
+              <span className="drawing-meta">{drawing.date} &bull; {drawing.size} MB</span>
             </div>
             <div className="drawing-actions">
               <button className="action-icon view" onClick={() => setViewingPdf(drawing)} title="Xem ngay">
@@ -171,11 +171,18 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
             </div>
             <div className="pdf-body">
               {viewingPdf.url ? (
-                <iframe 
-                  src={viewingPdf.url}
-                  style={{ width: '100%', height: '100%', border: 'none' }}
-                  title="PDF Viewer"
-                />
+                <object 
+                  data={viewingPdf.url} 
+                  type="application/pdf" 
+                  width="100%" 
+                  height="100%"
+                >
+                  <div className="pdf-fallback">
+                    <FiFileText size={50} color="#94a3b8" />
+                    <p>Trình duyệt không thể hiển thị PDF trực tiếp.</p>
+                    <a href={viewingPdf.url} target="_blank" rel="noreferrer" className="fallback-download-btn">Mở tệp trong tab mới <FiDownload /></a>
+                  </div>
+                </object>
               ) : (
                 <div className="no-pdf-error">Không tìm thấy đường dẫn tệp tin.</div>
               )}
