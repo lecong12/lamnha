@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiUpload, FiTrash2, FiFileText, FiDownload, FiLoader, FiBriefcase, FiEye, FiX, FiMap } from 'react-icons/fi';
+import { FiUpload, FiTrash2, FiFileText, FiDownload, FiLoader, FiMap, FiEye, FiX } from 'react-icons/fi';
 import { addRowToSheet, deleteRowFromSheet } from '../utils/sheetsAPI';
 import './DesignDrawings.css';
 
@@ -122,6 +122,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
         ))}
       </div>
 
+      <div className="drawings-content">
       <div className="upload-box">
         <label className={`upload-btn ${uploading ? 'disabled' : ''}`}>
           {uploading ? <FiLoader className="spin" /> : <FiUpload />}
@@ -138,9 +139,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
         
         {currentList.map(drawing => (
           <div key={drawing.id || drawing._RowNumber} className="drawing-item">
-            <div className="drawing-icon">
-              <FiFileText size={24} />
-            </div>
+            <div className="drawing-icon"><FiFileText size={24} /></div>
             <div className="drawing-info">
               <span className="drawing-name">{drawing.name}</span>
               <span className="drawing-meta">{drawing.date || drawing.ngay} &bull; {drawing.size} MB</span>
@@ -160,8 +159,9 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
         ))}
       </div>
       )}
+      </div>
 
-      {/* Modal Xem PDF - Tối ưu tương tự Hợp đồng */}
+      {/* Modal Xem PDF - Đồng bộ theo Hợp đồng */}
       {viewingPdf && (
         <div className="pdf-viewer-overlay" onClick={() => setViewingPdf(null)}>
           <div className="pdf-viewer-container" onClick={e => e.stopPropagation()}>
@@ -170,21 +170,15 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
               <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
             </div>
             <div className="pdf-body">
-              {/* Dùng object để nhúng PDF, có nút tải về nếu lỗi, giống Hợp đồng */}
-              <object 
-                data={viewingPdf.url} 
-                type="application/pdf" 
-                width="100%" 
-                height="100%"
-              >
-                <div className="pdf-fallback">
-                   <FiFileText size={50} color="#94a3b8" />
-                   <p>Không thể hiển thị PDF trực tiếp trong khung này.</p>
-                   <a href={viewingPdf.url} target="_blank" rel="noreferrer" className="btn-open-new">
-                     Mở tệp trong tab mới <FiDownload />
-                   </a>
-                </div>
-              </object>
+              {viewingPdf.url ? (
+                <iframe 
+                  src={viewingPdf.url}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  title="PDF Viewer"
+                />
+              ) : (
+                <div className="no-pdf-error">Không tìm thấy đường dẫn tệp tin.</div>
+              )}
             </div>
           </div>
         </div>
