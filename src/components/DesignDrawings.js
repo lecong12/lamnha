@@ -41,14 +41,12 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
 
     try {
       setUploading(true);
-      const resourceType = isPdf ? "raw" : "image"; // Khai báo rõ ràng loại tài nguyên
       const data = new FormData();
       data.append("file", file);
       data.append("upload_preset", UPLOAD_PRESET);
-      data.append("resource_type", resourceType); // Sử dụng loại tài nguyên đã xác định
-      console.log(`[Cloudinary Upload] Uploading as resource_type: ${resourceType} for file: ${file.name}`);
+      data.append("resource_type", "auto");
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { // URL cũng phải khớp với loại tài nguyên
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
         method: "POST",
         body: data
       });
@@ -65,16 +63,16 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
       
       if (fileData.secure_url) {
         const rowData = {
-            id: `BV_${Date.now()}`, // Thêm tiền tố BV_ nhất quán cho Bản vẽ
+            id: `BV_${Date.now()}`,
             name: file.name, // Lấy từ file input
             url: fileData.secure_url, // Lấy từ Cloudinary
-            ngay: new Date().toISOString().split('T')[0], // Gửi định dạng YYYY-MM-DD chuẩn
+            ngay: new Date().toISOString().split('T')[0],
             size: parseFloat((file.size / 1024 / 1024).toFixed(2)), // Gửi dưới dạng số
             category: activeCategory // Lấy từ state
         };
         
         const sheetRes = await addRowToSheet("BanVe", rowData, APP_ID);       
-        if (sheetRes.success) { // Sau khi thêm thành công, gọi fetchAllData để cập nhật dữ liệu từ App.js
+        if (sheetRes.success) {
           await fetchAllData();
           showToast("Upload và lưu bản vẽ thành công!", "success");
         } else {
@@ -87,7 +85,7 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
        showToast("Lỗi upload: " + error.message, "error");
     } finally {
       setUploading(false);
-      e.target.value = null;
+      e.target.value = null; 
     }
   };
 
@@ -103,7 +101,6 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
   const currentList = [...drawings]
     .filter(d => d.category === activeCategory)
     .sort((a, b) => {
-      // Sắp xếp theo _RowNumber hoặc timestamp từ ID để tệp mới nhất lên đầu
       const valA = Number(a.appSheetId || a._RowNumber || String(a.id).replace(/\D/g, '') || 0);
       const valB = Number(b.appSheetId || b._RowNumber || String(b.id).replace(/\D/g, '') || 0);
       return valB - valA;
@@ -141,16 +138,22 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
         {currentList.map(drawing => (
           <div key={drawing.id || drawing._RowNumber} className="drawing-card">
             <div className="drawing-icon">
-              {drawing.url && drawing.url.toLowerCase().endsWith('.pdf') ? <FiFileText size={32} /> : <FiMap size={32} />}
+              {drawing.url && drawing.url.toLowerCase().includes('.pdf') ? <FiFileText size={24} /> : <FiMap size={24} />}
             </div>
             <div className="drawing-info">
-              <div className="drawing-name" title={drawing.name}>{drawing.name}</div>
-              <div className="drawing-meta">{drawing.date} • {drawing.size} MB</div>
+              <span className="drawing-name" title={drawing.name}>{drawing.name}</span>
+              <span className="drawing-meta">{drawing.ngay || drawing.date} &bull; {drawing.size} MB</span>
             </div>
             <div className="drawing-actions">
-              <button className="icon-btn view" onClick={() => setViewingPdf(drawing)} title="Xem ngay"><FiEye /></button>
-              <a href={drawing.url} target="_blank" rel="noreferrer" className="icon-btn download" title="Tải về"><FiDownload /></a>
-              <button className="icon-btn delete" onClick={() => handleDelete(drawing.id || drawing._RowNumber)} title="Xóa"><FiTrash2 /></button>
+              <button className="icon-btn view" onClick={() => setViewingPdf(drawing)} title="Xem ngay">
+                <FiEye />
+              </button>
+              <a href={drawing.url} target="_blank" rel="noreferrer" className="icon-btn download" title="Tải về">
+                <FiDownload />
+              </a>
+              <button className="icon-btn delete" onClick={() => handleDelete(drawing.id || drawing._RowNumber)} title="Xóa">
+                <FiTrash2 />
+              </button>
             </div>
           </div>
         ))}
@@ -166,17 +169,17 @@ function DesignDrawings({ showToast, drawings, loading, fetchAllData }) {
               <button className="close-pdf-btn" onClick={() => setViewingPdf(null)}><FiX size={24} /></button>
             </div>
             <div className="pdf-body">
-              {viewingPdf.url && viewingPdf.url.toLowerCase().endsWith('.pdf') ? (
+              {viewingPdf.url && viewingPdf.url.toLowerCase().includes('.pdf') ? (
                 <iframe 
                   src={viewingPdf.url}
                   style={{ width: '100%', height: '100%', border: 'none' }}
-                  title="PDF Viewer"
+                  title="Drawing Viewer"
                 />
               ) : (
                 <img 
                   src={viewingPdf.url} 
                   alt={viewingPdf.name} 
-                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', background: '#333' }} 
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }} 
                 />
               )}
             </div>

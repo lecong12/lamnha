@@ -7,8 +7,8 @@
 }
 
 .drawings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   margin-top: 20px;
 }
@@ -19,18 +19,11 @@
   padding: 16px;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--hover-bg);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.drawing-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
-  background: var(--bg-card);
-}
-
 .drawing-icon {
-  color: #3b82f6;
+  color: #2563eb;
   margin-right: 12px;
   display: flex;
   align-items: center;
@@ -44,10 +37,8 @@
 .drawing-name {
   font-weight: 600;
   color: var(--text-main);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   margin-bottom: 4px;
+  display: block;
 }
 
 .drawing-meta {
