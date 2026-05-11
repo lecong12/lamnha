@@ -122,7 +122,6 @@ export const getCleanLink = (rawLink) => {
       // Lấy phần từ "/v<timestamp>/" trở đi
       const suffix = cleanUrl.substring(versionIndex); 
       cleanUrl = prefix + suffix; // Ghép lại để loại bỏ các tham số tối ưu
-      }
     }
 
     // 3. Sửa lỗi thiếu dấu gạch chéo (https:/ thay vì https://) thường gặp khi parse JSON lỗi
