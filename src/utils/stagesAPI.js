@@ -1,4 +1,5 @@
 import { toSafeDate as baseToSafeDate } from './dateUtils';
+import { getCleanLink } from './sheetsAPI';
 const APPSHEET_ACCESS_KEY = process.env.REACT_APP_APPSHEET_ACCESS_KEY;
 const STAGES_TABLE_NAME = process.env.REACT_APP_APPSHEET_TABLE_TIENDO || "TienDo"; // Tên bảng chứa dữ liệu tiến độ
 
@@ -120,10 +121,10 @@ export const fetchStages = async (appId) => {
         status: row[statusKey] || row.status || "Chưa bắt đầu",
         ngayBatDau: toSafeDate(row[startKey] || row.ngayBatDau), 
         ngayKetThuc: toSafeDate(row[endKey] || row.ngayKetThuc),
-        // Chuyển chuỗi URL (ngăn cách bởi dấu phẩy hoặc chấm phẩy) thành mảng sạch
+        // Sử dụng Regex Lookahead để tách link chính xác kể cả khi có tham số f_auto,q_auto
         anhNghiemThu: (row[finalImgKey] ? String(row[finalImgKey]) : "")
-          .split(/[;,]/)
-          .map(url => url.trim())
+          .split(/,?\s*(?=https?:\/\/)/)
+          .map(url => getCleanLink(url.trim()))
           .filter(url => url && url.startsWith('http'))
           .slice(0, 6),
         // Add other fields from AppSheet if needed, e.g., 'status'
@@ -165,6 +166,7 @@ export const updateStageInSheet = async (stage, appId) => {
       [statusColumnName]: stage.status,
       // Chuyển mảng ảnh thành chuỗi ngăn cách bởi dấu phẩy để lưu vào Sheet
       [imgColumnName]: (Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu : [])
+        .map(img => typeof img === 'string' ? getCleanLink(img) : img) // Làm sạch trước khi lưu
         .filter(img => img && String(img).startsWith('http'))
         .join(','),
     }];

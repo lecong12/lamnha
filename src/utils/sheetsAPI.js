@@ -89,7 +89,7 @@ const getBestColumnName = (tableName, normalizedKey, defaultNames) => {
 };
 
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
-const getCleanLink = (rawLink) => {
+export const getCleanLink = (rawLink) => {
   if (!rawLink) return "";
   let current = String(rawLink).trim();
 
@@ -110,6 +110,21 @@ const getCleanLink = (rawLink) => {
   if (startIndex !== -1) {
     let cleanUrl = current.substring(startIndex);
     
+    // --- Cải tiến: Gỡ bỏ tham số tối ưu hóa (f_auto, q_auto...) ---
+    // Tìm kiếm pattern: /upload/<optimization_params>/v<timestamp>/
+    const uploadIndex = cleanUrl.indexOf("/upload/");
+    // Tìm vị trí của "/v" sau "/upload/" để xác định phần chứa tham số tối ưu
+    const versionIndex = cleanUrl.indexOf("/v", uploadIndex + "/upload/".length); 
+    
+    if (uploadIndex !== -1 && versionIndex !== -1) {
+      // Lấy phần trước "/upload/"
+      const prefix = cleanUrl.substring(0, uploadIndex + "/upload/".length); 
+      // Lấy phần từ "/v<timestamp>/" trở đi
+      const suffix = cleanUrl.substring(versionIndex); 
+      cleanUrl = prefix + suffix; // Ghép lại để loại bỏ các tham số tối ưu
+      }
+    }
+
     // 3. Sửa lỗi thiếu dấu gạch chéo (https:/ thay vì https://) thường gặp khi parse JSON lỗi
     if (cleanUrl.startsWith("https:/res.cloudinary.com") && !cleanUrl.startsWith("https://res.cloudinary.com")) {
       cleanUrl = cleanUrl.replace("https:/", "https://");
@@ -210,7 +225,10 @@ export const fetchFileData = async (tableName, appId) => {
         const rawUrl = row.url || row.hinhAnh || "";
         return {
           ...row,
-          url: rawUrl ? getCleanLink(rawUrl) : ""
+          // Tách theo dấu phẩy CHỈ KHI đứng trước http để không ngắt giữa chừng tham số Cloudinary
+          url: rawUrl 
+            ? rawUrl.split(/,?\s*(?=https?:\/\/)/).map(u => getCleanLink(u.trim())).filter(Boolean).join(',')
+            : ""
         };
       })
     };

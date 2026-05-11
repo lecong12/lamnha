@@ -13,12 +13,9 @@ const TABLE_HOPDONG = process.env.REACT_APP_APPSHEET_TABLE_HOPDONG || "HopDong";
 const TABLE_BANVE = process.env.REACT_APP_APPSHEET_TABLE_BANVE || "BanVe";
 
 // Helper để tối ưu ảnh từ Cloudinary giúp load cực nhanh
-const optimizeCloudinary = (url) => {
-    if (!url || typeof url !== 'string' || !url.includes("res.cloudinary.com")) return url;
-    // Nếu link đã có tham số tối ưu thì không chèn thêm
-    if (url.includes("/upload/f_auto")) return url;
-    // f_auto: tự định dạng, q_auto: tự nén, w_600: thu nhỏ chiều rộng phù hợp thumbnail/mobile
-    return url.replace("/upload/", "/upload/f_auto,q_auto,w_600,c_limit/");
+export const optimizeCloudinary = (url) => {
+    // Theo yêu cầu của người dùng, không thêm các tham số tối ưu hóa vào URL.
+    return url; // Trả về URL gốc.
 };
 
 export const useAppData = (isLoggedIn) => {
