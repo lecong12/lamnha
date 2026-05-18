@@ -271,7 +271,7 @@ function ProgressTracker({ stages = [], onUpdateStage, showToast }) {
 
             {/* Hiển thị số lượng */}
             <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '8px', textAlign: 'right' }}>
-              Số ảnh: {Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu.length : 0}/6 ảnh
+              Số lượng: {Array.isArray(stage.anhNghiemThu) ? stage.anhNghiemThu.length : 0}/6 ảnh
             </div>
           </div>
         ))}
