@@ -86,7 +86,7 @@ function DataTable({ data, onEdit, onDelete }) {
     setSortConfig({ key, direction });
   };
 
-  const pageTotalChi = currentData
+  const totalChi = data
     .reduce((sum, item) => sum + item.soTien, 0);
 
   const chiList = currentData; // Tất cả dữ liệu giờ là chi phí
@@ -112,7 +112,7 @@ function DataTable({ data, onEdit, onDelete }) {
             <h4 className="section-title chi-title">Bảng Chi Phí</h4>
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <span className="summary-item chi">
-                Tổng Chi: {formatCurrency(pageTotalChi)}
+                Tổng Chi: {formatCurrency(totalChi)}
               </span>
             </div>
           </div>
