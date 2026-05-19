@@ -83,10 +83,21 @@
 }
 
 .summary-item.chi {
-  background: #ef4444 !important;
-  color: #ffffff !important;
+  background-color: #ef4444; /* Đỏ tươi cho chế độ sáng */
+  color: #ffffff;
   border: none;
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+/* Chế độ tối cho mục Tổng Chi */
+.dark-theme .summary-item.chi {
+  background-color: #dc2626; /* Đỏ đậm hơn, giống màu chữ "Bảng Chi Phí" */
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); /* Đổ bóng tương ứng */
+}
+
+.dark-theme .chi-title {
+  color: #ef4444; /* Đảm bảo chữ "Bảng Chi Phí" vẫn nổi bật trong dark mode */
 }
 
 .section-header {
