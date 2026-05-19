@@ -1,2 +1,2 @@
 chuyển app...ổn định
-gg
+ggy
