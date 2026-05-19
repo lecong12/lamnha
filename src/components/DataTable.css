@@ -91,9 +91,9 @@
 
 /* Chế độ tối cho mục Tổng Chi */
 .dark-theme .summary-item.chi {
-  background-color: #dc2626; /* Đỏ đậm hơn, giống màu chữ "Bảng Chi Phí" */
+  background-color: #ef4444; /* Đổi sang đỏ tươi để đồng bộ và nổi bật */
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); /* Đổ bóng tương ứng */
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 .dark-theme .chi-title {
