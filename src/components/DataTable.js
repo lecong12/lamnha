@@ -112,13 +112,13 @@ function DataTable({ data, onEdit, onDelete }) {
             <h4 className="section-title chi-title">Bảng Chi Phí</h4>
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <span className="summary-item chi" style={{ 
-                backgroundColor: '#dc2626', // Đỏ đậm để tạo sự chú ý
-                color: '#ffffff', // Chữ trắng để tương phản cực tốt
+                backgroundColor: '#ef4444', // Đỏ tươi
+                color: '#ffffff', // Chữ trắng
                 padding: '6px 14px',
                 borderRadius: '8px',
                 fontWeight: '700',
                 fontSize: '0.95rem',
-                boxShadow: '0 2px 5px rgba(220, 38, 38, 0.25)'
+                boxShadow: '0 2px 5px rgba(239, 68, 68, 0.25)'
               }}>
                 Tổng Chi: {formatCurrency(totalChi)}
               </span>
