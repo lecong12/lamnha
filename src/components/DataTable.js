@@ -112,13 +112,13 @@ function DataTable({ data, onEdit, onDelete }) {
             <h4 className="section-title chi-title">Bảng Chi Phí</h4>
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <span className="summary-item chi" style={{ 
-                backgroundColor: '#ef4444', // Đỏ tươi
-                color: '#ffffff', // Chữ trắng
+                backgroundColor: '#ef4444', 
+                color: '#ffffff',
                 padding: '6px 14px',
                 borderRadius: '8px',
                 fontWeight: '700',
                 fontSize: '0.95rem',
-                boxShadow: '0 2px 5px rgba(239, 68, 68, 0.25)'
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.35)'
               }}>
                 Tổng Chi: {formatCurrency(totalChi)}
               </span>
@@ -156,7 +156,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     <td className="amount-cell chi" style={{ textAlign: 'right' }}>
                       {formatCurrency(item.soTien)}
                     </td>
-                    <td className="center-cell">{item.nguoiCapNhat || "-"}</td>
+                    <td className="center-cell">{item.nguoiChi || "-"}</td>
                     <td className="center-cell">
                       {item.hinhAnh ? (
                         <a href={item.hinhAnh} target="_blank" rel="noreferrer" className="view-image-link" title="Xem ảnh">
@@ -251,7 +251,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     <div className="detail-item">
                       <FiUser size={14} />
                       <span className="detail-label">Người chi:</span>
-                      <span className="detail-value">{item.nguoiCapNhat || "-"}</span>
+                      <span className="detail-value">{item.nguoiChi || "-"}</span>
                     </div>
                     <div className="card-actions">
                       <button

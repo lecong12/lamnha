@@ -83,8 +83,10 @@
 }
 
 .summary-item.chi {
-  background: #fef2f2;
-  color: #dc2626;
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border: none;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
 }
 
 .section-header {

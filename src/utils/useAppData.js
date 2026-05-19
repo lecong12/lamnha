@@ -69,9 +69,10 @@ export const useAppData = (isLoggedIn) => {
                     date: toDisplayString(d), 
                     noiDung: row.noiDung || "",
                     doiTuongThuChi: row.doiTuongThuChi || "",
+                    loaiThuChi: row.loaiThuChi || "Chi",
                     soTien: Number(String(row.soTien || 0).replace(/\D/g, "")),
                     hinhAnh: optimizeCloudinary(row.hinhAnh || ""),
-                    nguoiCapNhat: row.nguoiCapNhat || ""
+                    nguoiChi: row.nguoiChi || ""
                 };
             });
             // SẮP XẾP: Ngày mới nhất lên đầu. Nếu cùng ngày, ưu tiên dòng có RowNumber lớn hơn (vừa mới thêm vào sheet)

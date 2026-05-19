@@ -54,7 +54,7 @@ export const normalizeKey = (str) => {
     // Ưu tiên map các cột chứa File/Link vào 'url'
     if (sClean === 'url' || sClean === 'link' || sClean === 'file' || sClean.includes('banve') || sClean.includes('hopdong') || sClean.includes('tailieu')) return 'url';
     if (sClean.includes('hinhanh') || sClean.includes('minhchung') || sClean.includes('anh') || sClean.includes('chungtu')) return 'hinhAnh';
-    if (sClean.includes('nguoi') || sClean.includes('user')) return 'nguoiCapNhat';
+    if (sClean.includes('nguoi') || sClean.includes('user') || sClean.includes('nguoichi')) return 'nguoiChi';
     
     return s.replace(/\s+/g, '');
 };
@@ -299,7 +299,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'Phân loại', 'doiTuongThuChi'])] = catVal;
       
       formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh'])] = payload.hinhAnh || "";
-      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người chi', 'nguoiCapNhat'])] = payload.nguoiCapNhat || "Ba";
+      formattedPayload[getBestColumnName(tableName, 'nguoiChi', ['Người chi', 'nguoiChi'])] = payload.nguoiChi || "Ba";
     }
 
     // Làm sạch: Chỉ giữ lại các cột đã map thành công
