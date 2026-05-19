@@ -34,7 +34,7 @@ function DataTable({ data, onEdit, onDelete }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRow, setExpandedRow] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: "ngay", direction: "desc" }); // Mặc định sắp xếp theo ngày giảm dần
-  const itemsPerPage = 10;
+  const itemsPerPage = 15;
 
   // Logic sắp xếp dữ liệu
   const sortedData = useMemo(() => {
