@@ -130,7 +130,7 @@
   color: #6b7280;
   font-weight: 600;
   text-align: left;
-  padding: 10px 16px;
+  padding: 8px 12px;
   white-space: nowrap;
   border-bottom: 2px solid #e5e7eb;
 }
@@ -142,7 +142,7 @@
 }
 
 .data-table td {
-  padding: 8px 16px;
+  padding: 6px 12px;
   color: #1f2937;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
@@ -384,13 +384,13 @@
   .mobile-cards {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .transaction-card {
     background: #f9fafb;
     border-radius: 12px;
-    padding: 14px;
+    padding: 10px 12px;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -502,18 +502,18 @@
   }
 
   .card-details {
-    margin-top: 12px;
-    padding-top: 12px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid #e5e7eb;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
 
   .detail-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-size: 12px;
     color: #6b7280;
   }
@@ -543,18 +543,18 @@
 
   .card-actions {
     display: flex;
-    gap: 8px;
-    margin-top: 8px;
-    padding-top: 12px;
+    gap: 6px;
+    margin-top: 6px;
+    padding-top: 10px;
     border-top: 1px solid #e5e7eb;
   }
 
   .card-actions .action-btn {
     flex: 1;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     font-size: 13px;
-    padding: 8px 12px;
+    padding: 6px 10px;
   }
 
   .pagination {
