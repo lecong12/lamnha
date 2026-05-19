@@ -142,7 +142,7 @@ function DataTable({ data, onEdit, onDelete }) {
                   >
                     Số tiền {sortConfig.key === "soTien" && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
-                  <th style={{ textAlign: 'center' }}>Người cập nhật</th>
+                  <th style={{ textAlign: 'center' }}>Người chi</th>
                   <th style={{ textAlign: 'center' }}>Chứng từ</th>
                   <th>Thao tác</th>
                 </tr>
@@ -250,7 +250,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     )}
                     <div className="detail-item">
                       <FiUser size={14} />
-                      <span className="detail-label">Người cập nhật:</span>
+                      <span className="detail-label">Người chi:</span>
                       <span className="detail-value">{item.nguoiCapNhat || "-"}</span>
                     </div>
                     <div className="card-actions">
