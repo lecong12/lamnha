@@ -54,7 +54,7 @@ export const normalizeKey = (str) => {
     // Ưu tiên map các cột chứa File/Link vào 'url'
     if (sClean === 'url' || sClean === 'link' || sClean === 'file' || sClean.includes('banve') || sClean.includes('hopdong') || sClean.includes('tailieu')) return 'url';
     if (sClean.includes('hinhanh') || sClean.includes('minhchung') || sClean.includes('anh') || sClean.includes('chungtu')) return 'hinhAnh';
-    if (sClean.includes('nguoi') || sClean.includes('user') || sClean.includes('nguoichi')) return 'nguoiChi';
+    if (sClean.includes('nguoi') || sClean.includes('user') || sClean.includes('nguoichi')) return 'nguoiCapNhat';
     
     return s.replace(/\s+/g, '');
 };
@@ -299,7 +299,7 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'Phân loại', 'doiTuongThuChi'])] = catVal;
       
       formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh'])] = payload.hinhAnh || "";
-      formattedPayload[getBestColumnName(tableName, 'nguoiChi', ['Người chi', 'nguoiChi'])] = payload.nguoiChi || "Ba";
+      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'Người chi', 'nguoiCapNhat'])] = payload.nguoiCapNhat || "Ba";
     }
 
     // Làm sạch: Chỉ giữ lại các cột đã map thành công
@@ -424,7 +424,7 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       formattedPayload[getBestColumnName(tableName, 'soTien', ['Số tiền', 'Số tiền (VNĐ)', 'soTien', 'Thành tiền'])] = cleanAmount;
       formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'Phân loại', 'doiTuongThuChi'])] = payload.doiTuongThuChi || payload.hangMuc || "";
       formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh', 'Chứng từ'])] = payload.hinhAnh || "";
-      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người chi', 'nguoiCapNhat', 'User'])] = payload.nguoiCapNhat || "Ba";
+      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'Người chi', 'nguoiCapNhat', 'User'])] = payload.nguoiCapNhat || "Ba";
     }
     
     // Làm sạch: Loại bỏ các cột không được định nghĩa rõ ràng

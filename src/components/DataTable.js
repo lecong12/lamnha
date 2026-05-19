@@ -139,7 +139,7 @@ function DataTable({ data, onEdit, onDelete }) {
                   >
                     Số tiền {sortConfig.key === "soTien" && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
-                  <th style={{ textAlign: 'center' }}>Người chi</th>
+                  <th style={{ textAlign: 'center' }}>Người cập nhật</th>
                   <th style={{ textAlign: 'center' }}>Chứng từ</th>
                   <th>Thao tác</th>
                 </tr>
@@ -153,7 +153,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     <td className="amount-cell chi" style={{ textAlign: 'right' }}>
                       {formatCurrency(item.soTien)}
                     </td>
-                    <td className="center-cell">{item.nguoiChi || "-"}</td>
+                    <td className="center-cell">{item.nguoiCapNhat || "-"}</td>
                     <td className="center-cell">
                       {item.hinhAnh ? (
                         <a href={item.hinhAnh} target="_blank" rel="noreferrer" className="view-image-link" title="Xem ảnh">
@@ -247,8 +247,8 @@ function DataTable({ data, onEdit, onDelete }) {
                     )}
                     <div className="detail-item">
                       <FiUser size={14} />
-                      <span className="detail-label">Người chi:</span>
-                      <span className="detail-value">{item.nguoiChi || "-"}</span>
+                      <span className="detail-label">Người cập nhật:</span>
+                      <span className="detail-value">{item.nguoiCapNhat || "-"}</span>
                     </div>
                     <div className="card-actions">
                       <button

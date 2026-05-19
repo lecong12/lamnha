@@ -72,7 +72,7 @@ export const useAppData = (isLoggedIn) => {
                     loaiThuChi: row.loaiThuChi || "Chi",
                     soTien: Number(String(row.soTien || 0).replace(/\D/g, "")),
                     hinhAnh: optimizeCloudinary(row.hinhAnh || ""),
-                    nguoiChi: row.nguoiChi || ""
+                    nguoiCapNhat: row.nguoiCapNhat || ""
                 };
             });
             // SẮP XẾP: Ngày mới nhất lên đầu. Nếu cùng ngày, ưu tiên dòng có RowNumber lớn hơn (vừa mới thêm vào sheet)
