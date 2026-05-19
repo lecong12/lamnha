@@ -106,41 +106,46 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
         </div>
       )}
 
-      <div className="stats-grid">
-        <div className="stat-card" style={{ borderLeft: '4px solid #3b82f6' }}>
-          <div className="stat-icon"><FiActivity color="#3b82f6" /></div>
+      <div className="stats-grid" style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
+        gap: '12px',
+        marginBottom: '20px'
+      }}>
+        <div className="stat-card" style={{ borderLeft: '4px solid #3b82f6', padding: '12px 15px' }}>
+          <div className="stat-icon" style={{ transform: 'scale(0.8)' }}><FiActivity color="#3b82f6" /></div>
           <div className="stat-info">
-            <span className="stat-label">Đang thực hiện</span>
-            <span className="stat-value">{currentStage?.name?.toString().replace(/^\d+\.\s*/, "") || "---"}</span>
+            <span className="stat-label" style={{ fontSize: '0.85rem' }}>Đang thực hiện</span>
+            <span className="stat-value" style={{ fontSize: '1rem' }}>{currentStage?.name?.toString().replace(/^\d+\.\s*/, "") || "---"}</span>
             <div className="progress-bar-container">
               <div className="progress-bar" style={{ width: `${completionPercentage}%` }}></div>
             </div>
-            <div style={{ fontSize: '11px', marginTop: '4px', color: '#64748b', fontWeight: '500' }}>Hoàn thành: {completionPercentage}%</div>
+            <div style={{ fontSize: '10px', marginTop: '4px', color: '#64748b', fontWeight: '500' }}>Hoàn thành: {completionPercentage}%</div>
           </div>
         </div>
 
-        <div className="stat-card" style={{ borderLeft: '4px solid #f59e0b' }}>
-          <div className="stat-icon"><FiCalendar color="#f59e0b" /></div>
+        <div className="stat-card" style={{ borderLeft: '4px solid #f59e0b', padding: '12px 15px' }}>
+          <div className="stat-icon" style={{ transform: 'scale(0.8)' }}><FiCalendar color="#f59e0b" /></div>
           <div className="stat-info">
-            <span className="stat-label">Thời gian thi công</span>
-            <span className="stat-value">{daysElapsed > 0 ? `Ngày thứ ${daysElapsed}` : 'Sắp khởi công'}</span>
-            <small>Khởi công: {toDisplayString(firstDate)}</small>
+            <span className="stat-label" style={{ fontSize: '0.85rem' }}>Thời gian thi công</span>
+            <span className="stat-value" style={{ fontSize: '1rem' }}>{daysElapsed > 0 ? `Ngày thứ ${daysElapsed}` : 'Sắp khởi công'}</span>
+            <small style={{ fontSize: '0.75rem' }}>Khởi công: {toDisplayString(firstDate)}</small>
           </div>
         </div>
 
-        <div className="stat-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
-          <div className="stat-icon"><FiFileText color="#8b5cf6" /></div>
+        <div className="stat-card" style={{ borderLeft: '4px solid #8b5cf6', padding: '12px 15px' }}>
+          <div className="stat-icon" style={{ transform: 'scale(0.8)' }}><FiFileText color="#8b5cf6" /></div>
           <div className="stat-info">
-            <span className="stat-label">Hồ sơ & Bản vẽ</span>
-            <span className="stat-value">{totalFiles || 0} tệp tin</span>
+            <span className="stat-label" style={{ fontSize: '0.85rem' }}>Hồ sơ & Bản vẽ</span>
+            <span className="stat-value" style={{ fontSize: '1rem' }}>{totalFiles || 0} tệp tin</span>
           </div>
         </div>
 
-        <div className="stat-card" style={{ borderLeft: budgetAlert ? '4px solid #ef4444' : '4px solid #16a34a' }}>
-          <div className="stat-icon">{budgetAlert ? <FiAlertCircle color="#ef4444" /> : <FiTrendingDown color="#16a34a" />}</div>
+        <div className="stat-card" style={{ borderLeft: budgetAlert ? '4px solid #f87171' : '4px solid #16a34a', padding: '12px 15px', backgroundColor: budgetAlert ? 'rgba(239, 68, 68, 0.02)' : 'transparent' }}>
+          <div className="stat-icon" style={{ transform: 'scale(0.8)' }}>{budgetAlert ? <FiAlertCircle color="#f87171" /> : <FiTrendingDown color="#16a34a" />}</div>
           <div className="stat-info">
-            <span className="stat-label">Tổng Chi Phí</span>
-            <span className="stat-value">{formatCurrency(stats.tongChi)}</span>
+            <span className="stat-label" style={{ fontSize: '0.85rem' }}>Tổng Chi Phí</span>
+            <span className="stat-value" style={{ fontSize: '1rem', color: budgetAlert ? '#b91c1c' : 'inherit' }}>{formatCurrency(stats.tongChi)}</span>
           </div>
         </div>
       </div>
