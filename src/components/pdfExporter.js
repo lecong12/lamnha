@@ -60,6 +60,7 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
       head: [tableColumn],
       body: tableRows,
       foot: [["", "", "", "Tổng cộng chi tiêu:", "", `${new Intl.NumberFormat('vi-VN').format(totalChi)} VNĐ`]],
+      showFoot: 'lastPage',
       startY: 26,
       styles: { 
         font: fontName, 
