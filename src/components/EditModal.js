@@ -192,7 +192,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
               </select>
             </div>
             <div className="form-group">
-              <label>Người cập nhật</label>
+              <label>Người chi</label>
               <select name="nguoiCapNhat" value={formData.nguoiCapNhat} onChange={handleChange}>
                 {UPDATER_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
               </select>

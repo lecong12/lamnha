@@ -96,9 +96,9 @@ function FilterBar({ filters, filterOptions, onFilterChange, onReset, isExpanded
             </select>
           </div>
 
-          {/* Người cập nhật - Bổ sung */}
+          {/* Người chi - Bổ sung */}
           <div className="filter-group">
-            <label className="filter-label">Người cập nhật</label>
+            <label className="filter-label">Người chi</label>
             <select
               value={filters.nguoiCapNhat}
               onChange={(e) => onFilterChange("nguoiCapNhat", e.target.value)}
