@@ -39,6 +39,10 @@ function App() {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
+    document.title = "Sổ Tay Làm Nhà";
+  }, []);
+
+  useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
       setWindowWidth(width);
