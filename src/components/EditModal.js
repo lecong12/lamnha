@@ -165,13 +165,24 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
         <form onSubmit={handleSubmit} className="edit-form">
           <div className="form-grid">
-            <div className="form-group">
-              <label>Ngày</label>
-              <input type="date" name="ngay" value={formData.ngay} onChange={handleChange} required />
+            <div className="form-group full-width">
+              <label>Nội dung</label>
+              <input type="text" name="noiDung" value={formData.noiDung} onChange={handleChange} required />
+              <div className="suggestion-list" style={{display:'flex', gap:'5px', flexWrap:'wrap', marginTop:'5px'}}>
+                {activeSuggestions.map(s => (
+                  <button key={s.label} type="button" className="sugg-btn" onClick={() => setFormData(p => ({...p, noiDung: s.label, soTien: s.amount ? new Intl.NumberFormat('vi-VN').format(s.amount) : p.soTien}))} style={{fontSize:'11px', padding:'2px 8px', borderRadius:'10px', border:'1px solid #ddd', cursor:'pointer'}}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="form-group">
               <label>Số tiền (VNĐ)</label>
               <input type="text" name="soTien" value={formData.soTien} onChange={handleChange} required placeholder="0" />
+            </div>
+            <div className="form-group">
+              <label>Ngày</label>
+              <input type="date" name="ngay" value={formData.ngay} onChange={handleChange} required />
             </div>
             <div className="form-group">
               <label>Hạng mục</label>
@@ -185,17 +196,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
               <select name="nguoiCapNhat" value={formData.nguoiCapNhat} onChange={handleChange}>
                 {UPDATER_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
-            </div>
-            <div className="form-group full-width">
-              <label>Nội dung</label>
-              <input type="text" name="noiDung" value={formData.noiDung} onChange={handleChange} required />
-              <div className="suggestion-list" style={{display:'flex', gap:'5px', flexWrap:'wrap', marginTop:'5px'}}>
-                {activeSuggestions.map(s => (
-                  <button key={s.label} type="button" className="sugg-btn" onClick={() => setFormData(p => ({...p, noiDung: s.label, soTien: s.amount ? new Intl.NumberFormat('vi-VN').format(s.amount) : p.soTien}))} style={{fontSize:'11px', padding:'2px 8px', borderRadius:'10px', border:'1px solid #ddd', cursor:'pointer'}}>
-                    {s.label}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
           <div className="modal-actions">
