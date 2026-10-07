@@ -82,18 +82,23 @@
   color: #16a34a;
 }
 
-.summary-item.chi {
-  background-color: #ef4444; /* Đỏ tươi cho chế độ sáng */
-  color: #ffffff;
+.summary-item.chi,
+.summary-chi-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ef4444;
+  background: transparent;
   border: none;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+  box-shadow: none;
+  padding: 0;
 }
 
 /* Chế độ tối cho mục Tổng Chi */
-.dark-theme .summary-item.chi {
-  background-color: #ef4444; /* Đổi sang đỏ tươi để đồng bộ và nổi bật */
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+.dark-theme .summary-item.chi,
+.dark-theme .summary-chi-text {
+  color: #ef4444;
+  background: transparent;
+  box-shadow: none;
 }
 
 .dark-theme .chi-title {
