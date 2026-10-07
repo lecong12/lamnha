@@ -144,19 +144,29 @@
   position: sticky;
   top: 0;
   z-index: 1; /* Đảm bảo header luôn nằm trên nội dung cuộn */
-  background: #f9fafb;
-  color: #6b7280;
-  font-weight: 600;
+  background: #e2e8f0; /* Nền xám xanh sáng, tách bạch rõ ràng với các dòng dữ liệu trắng */
+  color: #0f172a; /* Chữ than đen đậm, sắc nét */
+  font-weight: 700;
   text-align: left;
-  padding: 8px 12px;
+  padding: 10px 12px;
   white-space: nowrap;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid #94a3b8;
+  letter-spacing: 0.2px;
+}
+
+.data-table th[title]:hover {
+  background: #cbd5e1;
 }
 
 .dark-theme .data-table th {
-  background: #374151;
-  color: #d1d5db;
-  border-bottom-color: #4b5563;
+  background: #0f172a !important; /* Nền tối sâu phân biệt hẳn với màu nền các dòng bên dưới */
+  color: #60a5fa !important; /* Chữ màu xanh dương sáng nổi bật, hiện đại */
+  font-weight: 700;
+  border-bottom: 2px solid #3b82f6 !important;
+}
+
+.dark-theme .data-table th[title]:hover {
+  background: #1e293b !important;
 }
 
 .data-table td {
