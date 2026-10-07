@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FiFilter,
   FiSearch,
@@ -12,7 +12,21 @@ import {
 import "./FilterBar.css";
 
 function FilterBar({ filters, filterOptions, onFilterChange, onReset, isExpanded, onToggleExpand, onAdd, onExport, onExportPDF }) {
+  const [localExpanded, setLocalExpanded] = useState(false);
+  const isExpandedActive = isExpanded !== undefined ? isExpanded : localExpanded;
+  const toggleExpand = () => {
+    if (onToggleExpand) {
+      onToggleExpand();
+    } else {
+      setLocalExpanded((prev) => !prev);
+    }
+  };
+
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
+  const hasSubFilters = Boolean(
+    filters.doiTuongThuChi || filters.nguoiCapNhat || filters.startDate || filters.endDate
+  );
+  const showExpanded = isExpandedActive || hasSubFilters;
 
   return (
     <div className="filter-bar">
@@ -25,11 +39,12 @@ function FilterBar({ filters, filterOptions, onFilterChange, onReset, isExpanded
           </div>
           <button
             className="toggle-btn"
-            onClick={onToggleExpand}
+            type="button"
+            onClick={toggleExpand}
           >
-            {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+            {showExpanded ? <FiChevronUp /> : <FiChevronDown />}
             <span className="toggle-text">
-              {isExpanded ? "Thu gọn" : "Mở rộng"}
+              {showExpanded ? "Thu gọn" : "Mở rộng"}
             </span>
           </button>
         </div>
@@ -77,7 +92,7 @@ function FilterBar({ filters, filterOptions, onFilterChange, onReset, isExpanded
       </div>
 
       {/* Expanded filters */}
-      <div className={`filter-content ${isExpanded ? "expanded" : ""}`}>
+      <div className={`filter-content ${showExpanded ? "expanded" : ""}`}>
         <div className="filter-grid">
           {/* Đối tượng thu chi */}
           <div className="filter-group">

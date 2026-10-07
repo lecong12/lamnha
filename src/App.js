@@ -18,7 +18,9 @@ import { useAppData } from "./utils/useAppData";
 import Toast from "./components/Toast"; 
 import { updateRowInSheet, addRowToSheet, deleteRowFromSheet } from "./utils/sheetsAPI";
 import Sidebar from "./components/Sidebar"; 
-import { getTodayInputString } from "./utils/dateUtils";
+import { getTodayInputString, toInputString } from "./utils/dateUtils";
+import exportToPDF from "./components/pdfExporter";
+import Papa from "papaparse";
 import "./App.css";
 import "./DarkMode.css";
 
@@ -145,6 +147,12 @@ function App() {
   };
 
   const [filters, setFilters] = useState({ loaiThuChi: "", nguoiCapNhat: "", doiTuongThuChi: "", startDate: "", endDate: "", searchText: "" });
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+
+  const cleanCategory = (str) => {
+    if (!str) return "";
+    return String(str).split("(")[0].trim().replace(/^\d+\.\s*/, "").toLowerCase();
+  };
 
   const filterOptions = useMemo(() => ({
     doiTuongThuChi: [...new Set(data.map(i => i.doiTuongThuChi || i["Hạng mục"]).filter(Boolean))],
@@ -158,15 +166,90 @@ function App() {
       const nguoiCap = item.nguoiCapNhat || item["Người cập nhật"];
       const noiDung = item.noiDung || item["Nội dung"];
 
-      if (filters.nguoiCapNhat && nguoiCap !== filters.nguoiCapNhat) return false;
-      if (filters.doiTuongThuChi && hangMuc !== filters.doiTuongThuChi) return false;
-      if (filters.searchText) {
-        const t = filters.searchText.toLowerCase();
-        return (noiDung || "").toLowerCase().includes(t) || (hangMuc || "").toLowerCase().includes(t);
+      // 1. Lọc theo Người chi
+      if (filters.nguoiCapNhat) {
+        const filterUser = filters.nguoiCapNhat.trim().toLowerCase();
+        const itemUser = String(nguoiCap || "").trim().toLowerCase();
+        if (filterUser && itemUser !== filterUser) return false;
       }
+
+      // 2. Lọc theo Hạng mục (so khớp linh hoạt cả tên rút gọn và tên đầy đủ)
+      if (filters.doiTuongThuChi) {
+        const filterVal = filters.doiTuongThuChi.trim().toLowerCase();
+        const rawItemVal = String(hangMuc || "").trim().toLowerCase();
+        const cleanFilterVal = cleanCategory(filters.doiTuongThuChi);
+        const cleanItemVal = cleanCategory(hangMuc);
+
+        const isMatch = (
+          rawItemVal === filterVal ||
+          cleanItemVal === cleanFilterVal ||
+          rawItemVal.includes(filterVal) ||
+          filterVal.includes(rawItemVal)
+        );
+        if (!isMatch) return false;
+      }
+
+      // 3. Lọc theo Khoảng thời gian (Từ ngày - Đến ngày)
+      if (filters.startDate || filters.endDate) {
+        const itemDateStr = toInputString(item.ngay);
+        if (!itemDateStr) return false;
+        if (filters.startDate && itemDateStr < filters.startDate) return false;
+        if (filters.endDate && itemDateStr > filters.endDate) return false;
+      }
+
+      // 4. Lọc theo từ khóa tìm kiếm
+      if (filters.searchText) {
+        const t = filters.searchText.trim().toLowerCase();
+        const noiDungLower = String(noiDung || "").toLowerCase();
+        const hangMucLower = String(hangMuc || "").toLowerCase();
+        const nguoiLower = String(nguoiCap || "").toLowerCase();
+        const soTienStr = String(item.soTien || "");
+        const isMatch = (
+          noiDungLower.includes(t) ||
+          hangMucLower.includes(t) ||
+          nguoiLower.includes(t) ||
+          soTienStr.includes(t)
+        );
+        if (!isMatch) return false;
+      }
+
       return true;
     });
   }, [data, filters]);
+
+  const handleExportCSV = () => {
+    try {
+      const csvData = filteredData.map((item, idx) => ({
+        "STT": idx + 1,
+        "Ngày": item.date || (item.ngay instanceof Date ? item.ngay.toLocaleDateString("vi-VN") : ""),
+        "Hạng mục": item.doiTuongThuChi || "",
+        "Nội dung": item.noiDung || "",
+        "Số tiền (VNĐ)": item.soTien || 0,
+        "Người chi": item.nguoiCapNhat || "",
+      }));
+      const csvString = "\uFEFF" + Papa.unparse(csvData);
+      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `giao_dich_${getTodayInputString()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("Xuất file Excel/CSV thành công!", "success");
+    } catch (e) {
+      showToast("Lỗi khi xuất file Excel", "error");
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      exportToPDF(filteredData);
+      showToast("Xuất file PDF thành công!", "success");
+    } catch (e) {
+      showToast("Lỗi khi xuất PDF", "error");
+    }
+  };
 
   const renderContent = () => {
     // Thống kê tổng chi từ cột "Số tiền" hoặc "soTien"
@@ -181,7 +264,17 @@ function App() {
       case 'dashboard': return <Dashboard stats={stats} data={filteredData} extraData={extraData} isDarkMode={isDarkMode} />;
       case 'list': return (
         <>
-          <FilterBar filters={filters} filterOptions={filterOptions} onFilterChange={(k, v) => setFilters(p => ({ ...p, [k]: v }))} onReset={() => setFilters({ loaiThuChi: "", nguoiCapNhat: "", doiTuongThuChi: "", startDate: "", endDate: "", searchText: "" })} onAdd={handleAddNew} />
+          <FilterBar 
+            filters={filters} 
+            filterOptions={filterOptions} 
+            onFilterChange={(k, v) => setFilters(p => ({ ...p, [k]: v }))} 
+            onReset={() => setFilters({ loaiThuChi: "", nguoiCapNhat: "", doiTuongThuChi: "", startDate: "", endDate: "", searchText: "" })} 
+            onAdd={handleAddNew}
+            isExpanded={isFilterExpanded}
+            onToggleExpand={() => setIsFilterExpanded(p => !p)}
+            onExport={handleExportCSV}
+            onExportPDF={handleExportPDF}
+          />
           <DataTable data={filteredData} onEdit={setEditingItem} onDelete={setItemToDelete} />
         </>
       );

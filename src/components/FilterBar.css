@@ -188,8 +188,11 @@
 }
 
 .filter-input::-webkit-calendar-picker-indicator {
-  filter: invert(1);
   cursor: pointer;
+}
+
+.dark-theme .filter-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
 
 /* Responsive */
