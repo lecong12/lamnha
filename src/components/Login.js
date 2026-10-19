@@ -1,33 +1,27 @@
 import React, { useState } from "react";
-import { FiLock, FiHome, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiLock, FiUser, FiHome, FiEye, FiEyeOff } from "react-icons/fi";
+import { authService } from "../utils/authService";
 import "./Login.css";
 
-// THAY ĐỔI MẬT KHẨU CỦA BẠN TẠI ĐÂY
-const PASSCODE = "081212";
-
 function Login({ onLogin }) {
-  const [passcode, setPasscode] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [showPasscode, setShowPasscode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (passcode === PASSCODE) {
-      localStorage.setItem("isLoggedIn", "true");
-      onLogin();
+    const result = authService.login(username, password);
+
+    if (result.success) {
+      if (onLogin) onLogin(result.user);
     } else {
-      setError("Mật mã không đúng!");
+      setError(result.message || "Tên tài khoản hoặc mật khẩu không đúng!");
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
-      setPasscode("");
     }
-  };
-
-  const handleChange = (e) => {
-    setPasscode(e.target.value);
-    if (error) setError("");
   };
 
   return (
@@ -37,35 +31,66 @@ function Login({ onLogin }) {
           <div className="login-icon">
             <FiHome />
           </div>
-          <h1 className="login-title">Quản lý thu chi & tiến độ</h1>
-          <p className="login-subtitle">Dự án xây nhà</p>
+          <h1 className="login-title">Sổ Tay Làm Nhà</h1>
+          <p className="login-subtitle">Đăng nhập hệ thống quản lý</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
           className={`login-form ${isShaking ? "shake" : ""}`}
         >
+          {/* Tên tài khoản */}
           <div className="input-group">
             <label className="input-label">
-              <FiLock />
-              <span>Nhập mật mã để tiếp tục</span>
+              <FiUser />
+              <span>Tên tài khoản</span>
             </label>
             <div className="input-wrapper">
               <input
-                type={showPasscode ? "text" : "password"}
-                value={passcode}
-                onChange={handleChange}
-                placeholder="••••••"
-                className={`passcode-input ${error ? "error" : ""}`}
+                type="text"
+                name="username"
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="Nhập tên tài khoản (mặc định: admin)"
+                className={`login-input ${error ? "error" : ""}`}
                 autoFocus
-                maxLength={10}
+                autoComplete="username"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Mật khẩu */}
+          <div className="input-group">
+            <label className="input-label">
+              <FiLock />
+              <span>Mật khẩu</span>
+            </label>
+            <div className="input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="Nhập mật khẩu (mặc định: 123)"
+                className={`login-input password-input ${error ? "error" : ""}`}
+                autoComplete="current-password"
+                required
               />
               <button
                 type="button"
                 className="toggle-visibility"
-                onClick={() => setShowPasscode(!showPasscode)}
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
-                {showPasscode ? <FiEyeOff /> : <FiEye />}
+                {showPassword ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>
             {error && <span className="error-message">{error}</span>}
@@ -76,7 +101,7 @@ function Login({ onLogin }) {
           </button>
         </form>
 
-        <p className="login-footer">© 2025 Quản Lý Thu Chi Xây Nhà</p>
+        <p className="login-footer">© Sổ Tay Làm Nhà</p>
       </div>
     </div>
   );

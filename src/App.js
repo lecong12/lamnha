@@ -21,6 +21,7 @@ import Sidebar from "./components/Sidebar";
 import { getTodayInputString, toInputString } from "./utils/dateUtils";
 import exportToPDF from "./components/pdfExporter";
 import Papa from "papaparse";
+import { authService } from "./utils/authService";
 import "./App.css";
 import "./DarkMode.css";
 
@@ -28,7 +29,7 @@ const APP_ID = process.env.REACT_APP_APPSHEET_APP_ID;
 const TABLE_GIAODICH = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDich";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("isLoggedIn") === "true");
+  const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
   const [activeTab, setActiveTab] = useState('progress_tracker'); 
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -146,8 +147,9 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
+    authService.logout();
     setIsLoggedIn(false);
+    showToast("Đã đăng xuất!", "info");
   };
 
   const [filters, setFilters] = useState({ loaiThuChi: "", nguoiCapNhat: "", doiTuongThuChi: "", startDate: "", endDate: "", searchText: "" });
@@ -293,7 +295,16 @@ function App() {
     }
   };
 
-  if (!isLoggedIn) return <Login onLogin={() => { localStorage.setItem("isLoggedIn", "true"); setIsLoggedIn(true); }} />;
+  if (!isLoggedIn) {
+    return (
+      <Login 
+        onLogin={(user) => { 
+          setIsLoggedIn(true); 
+          showToast(`Xin chào, ${user?.username || "Admin"}!`, "success");
+        }} 
+      />
+    );
+  }
 
   return (
     <div className={`app ${isDarkMode ? 'dark-theme' : ''}`}>

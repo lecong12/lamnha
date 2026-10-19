@@ -94,17 +94,33 @@
   position: relative;
 }
 
-.passcode-input {
+.passcode-input,
+.login-input {
   width: 100%;
-  padding: 16px 50px 16px 18px;
-  font-size: 18px;
-  letter-spacing: 4px;
+  padding: 14px 16px;
+  font-size: 15px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   background: #f9fafb;
   color: #1f2937;
   transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.login-input.password-input {
+  padding-right: 48px;
+}
+
+.passcode-input {
+  padding: 16px 50px 16px 18px;
+  font-size: 18px;
+  letter-spacing: 4px;
   text-align: center;
+}
+
+.login-input::placeholder {
+  color: #9ca3af;
+  font-size: 13.5px;
 }
 
 .passcode-input::placeholder {
@@ -112,19 +128,22 @@
   color: #d1d5db;
 }
 
-.passcode-input:focus {
+.passcode-input:focus,
+.login-input:focus {
   outline: none;
   border-color: #2d8e2b;
   background: white;
   box-shadow: 0 0 0 4px rgba(45, 142, 43, 0.1);
 }
 
-.passcode-input.error {
+.passcode-input.error,
+.login-input.error {
   border-color: #dc2626;
   background: #fef2f2;
 }
 
-.passcode-input.error:focus {
+.passcode-input.error:focus,
+.login-input.error:focus {
   box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
 }
 
