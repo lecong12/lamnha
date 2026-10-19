@@ -20,16 +20,18 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
       doc.setFont('Roboto', 'normal');
     }
 
-    // 2. Thêm tiêu đề và thông tin ngày xuất
-    doc.setFont('Roboto', 'normal');
+    // 2. Thêm tiêu đề (in đậm, canh giữa) và thông tin ngày xuất
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(30, 41, 59);
-    doc.text(title, 14, 15);
+    doc.text(title, pageWidth / 2, 15, { align: 'center' });
 
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
     const dateStr = new Date().toLocaleDateString("vi-VN");
-    doc.text(`Ngày lập báo cáo: ${dateStr}  |  Tổng số giao dịch: ${data.length}`, 14, 21);
+    doc.text(`Ngày lập báo cáo: ${dateStr}  |  Tổng số giao dịch: ${data.length}`, pageWidth / 2, 21, { align: 'center' });
 
     const tableColumn = ["STT", "Ngày", "Hạng mục", "Nội dung chi tiết", "Người chi", "Số tiền (VNĐ)"];
     const tableRows = [];
@@ -73,10 +75,10 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
       },
       headStyles: { 
         font: fontName, 
-        fontStyle: 'normal', 
+        fontStyle: 'bold', 
         fillColor: [45, 142, 43], 
         textColor: [255, 255, 255],
-        halign: 'left',
+        halign: 'center',
       },
       footStyles: {
         font: fontName,
