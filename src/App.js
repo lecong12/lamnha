@@ -30,7 +30,7 @@ const TABLE_GIAODICH = process.env.REACT_APP_APPSHEET_TABLE_GIAODICH || "GiaoDic
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
-  const [activeTab, setActiveTab] = useState('progress_tracker'); 
+  const [activeTab, setActiveTab] = useState('dashboard'); 
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("theme") === "dark");

@@ -33,7 +33,16 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
     const dateStr = new Date().toLocaleDateString("vi-VN");
     doc.text(`Ngày lập báo cáo: ${dateStr}  |  Tổng số giao dịch: ${data.length}`, pageWidth / 2, 21, { align: 'center' });
 
-    const tableColumn = ["STT", "Ngày", "Hạng mục", "Nội dung chi tiết", "Người chi", "Số tiền (VNĐ)"];
+    // Khai báo rõ ràng từng ô tiêu đề cột canh giữa và in đậm
+    const tableColumn = [
+      { content: "STT", styles: { halign: "center", fontStyle: "bold" } },
+      { content: "Ngày", styles: { halign: "center", fontStyle: "bold" } },
+      { content: "Hạng mục", styles: { halign: "center", fontStyle: "bold" } },
+      { content: "Nội dung chi tiết", styles: { halign: "center", fontStyle: "bold" } },
+      { content: "Người chi", styles: { halign: "center", fontStyle: "bold" } },
+      { content: "Số tiền (VNĐ)", styles: { halign: "center", fontStyle: "bold" } },
+    ];
+
     const tableRows = [];
     let totalChi = 0;
 
@@ -88,12 +97,25 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
         halign: 'left',
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 12 },
+        0: { cellWidth: 12 },
         1: { cellWidth: 24 },
         2: { cellWidth: 28 },
         3: { cellWidth: 'auto' },
         4: { cellWidth: 22 },
-        5: { halign: 'right', cellWidth: 32 },
+        5: { cellWidth: 32 },
+      },
+      didParseCell: (hookData) => {
+        // Đảm bảo tuyệt đối 100% tất cả tiêu đề cột ở hàng head đều canh giữa và in đậm
+        if (hookData.section === 'head') {
+          hookData.cell.styles.halign = 'center';
+          hookData.cell.styles.fontStyle = 'bold';
+        } else if (hookData.section === 'body') {
+          if (hookData.column.index === 0) {
+            hookData.cell.styles.halign = 'center';
+          } else if (hookData.column.index === 5) {
+            hookData.cell.styles.halign = 'right';
+          }
+        }
       }
     });
 
