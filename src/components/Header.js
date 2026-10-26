@@ -23,15 +23,17 @@ function Header({ onRefresh, loading, onLogout, onToggleSidebar, onAdd }) {
               <span>Thêm mới</span>
             </button>
           )}
-          <button
-            className={`refresh-btn ${loading ? "loading" : ""}`}
-            onClick={onRefresh}
-            disabled={loading}
-            title="Làm mới dữ liệu"
-          >
-            <FiRefreshCw />
-            <span>Làm mới</span>
-          </button>
+          {onRefresh && (
+            <button
+              className={`refresh-btn ${loading ? "loading" : ""}`}
+              onClick={onRefresh}
+              disabled={loading}
+              title="Làm mới dữ liệu"
+            >
+              <FiRefreshCw />
+              <span>Làm mới</span>
+            </button>
+          )}
           {onLogout && (
             <button className="logout-btn" onClick={onLogout} title="Đăng xuất">
               <FiLogOut />

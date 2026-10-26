@@ -329,9 +329,9 @@ function App() {
         flexDirection: 'column' 
       }}>
         <Header 
-          onRefresh={fetchAllData} 
+          onRefresh={activeTab === 'camera' ? undefined : fetchAllData} 
           loading={loading} 
-          onAdd={handleAddNew} 
+          onAdd={activeTab === 'camera' ? undefined : handleAddNew} 
           onLogout={handleLogout} 
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
           isDarkMode={isDarkMode} 
