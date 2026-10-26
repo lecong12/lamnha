@@ -173,7 +173,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
         <form onSubmit={handleSubmit} className="edit-form">
           <div className="form-grid">
-            <div className={`form-group${isIncome ? " full-width" : ""}`}>
+            <div className="form-group">
               <label>Nội dung</label>
               <input type="text" name="noiDung" value={formData.noiDung} onChange={handleChange} required />
               <div className="suggestion-list" style={{display:'flex', gap:'5px', flexWrap:'wrap', marginTop:'5px'}}>
@@ -183,6 +183,13 @@ function EditModal({ item, onClose, onSave, showToast }) {
                   </button>
                 ))}
               </div>
+            </div>
+            <div className="form-group">
+              <label>Loại giao dịch</label>
+              <select name="loaiThuChi" value={formData.loaiThuChi} onChange={handleChange}>
+                <option value="Chi">Chi</option>
+                <option value="Thu">Thu</option>
+              </select>
             </div>
             {!isIncome && (
               <div className="form-group">
@@ -200,13 +207,6 @@ function EditModal({ item, onClose, onSave, showToast }) {
             <div className="form-group">
               <label>Ngày</label>
               <input type="date" name="ngay" value={formData.ngay} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label>Loại giao dịch</label>
-              <select name="loaiThuChi" value={formData.loaiThuChi} onChange={handleChange}>
-                <option value="Chi">Chi</option>
-                <option value="Thu">Thu</option>
-              </select>
             </div>
             {!isIncome && (
               <div className="form-group">
