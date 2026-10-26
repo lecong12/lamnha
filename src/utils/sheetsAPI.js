@@ -88,6 +88,12 @@ const getBestColumnName = (tableName, normalizedKey, defaultNames) => {
   return smartFallbacks[normalizedKey] || defaultNames;
 };
 
+const getMappedColumnName = (tableName, normalizedKey) =>
+  columnMapping[tableName]?.[normalizedKey] || null;
+
+const missingTransactionTypeColumnMessage =
+  'Chưa thể lưu khoản Thu: bảng AppSheet chưa có cột Loại giao dịch. Hãy thêm cột "Loại giao dịch" vào bảng GiaoDich trong Google Sheets, cập nhật cấu trúc bảng trong AppSheet, rồi tải lại ứng dụng.';
+
 // Hàm giải mã và làm sạch link từ AppSheet (Xử lý dứt điểm lỗi link bị bọc JSON hoặc dính Domain Vercel)
 export const getCleanLink = (rawLink) => {
   if (!rawLink) return "";
@@ -244,6 +250,13 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
   try {
     const normTableName = normalizeTableName(tableName);
     const normGiaoDichEnv = normalizeTableName(TABLE_GIAODICH_ENV);
+    if (
+      (normTableName === "giaodich" || normTableName === normGiaoDichEnv) &&
+      payload.loaiThuChi === "Thu" &&
+      !getMappedColumnName(tableName, 'loaiThuChi')
+    ) {
+      throw new Error(missingTransactionTypeColumnMessage);
+    }
     let formattedPayload = {};
     
     // 1. Đồng bộ Key dứt điểm (Bắt buộc để Edit)
@@ -283,6 +296,8 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       // Bỏ qua các trường đã xử lý thủ công ở trên
       if (['id', 'keyId', 'appSheetId', 'ngay', 'date', 'noiDung', '_RowNumber', 'name', 'url', 'size', 'category'].includes(normKey)) return;
       
+      if (normKey === 'loaiThuChi' && !getMappedColumnName(tableName, normKey)) return;
+
       const realCol = getBestColumnName(tableName, normKey, key);
       if (realCol) {
         formattedPayload[realCol] = payload[key];
@@ -411,6 +426,8 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       // Bỏ qua các trường đã xử lý thủ công ở trên
       if (['id', 'keyId', 'appSheetId', 'ngay', 'date', 'noiDung', '_RowNumber', 'name', 'url', 'size', 'category'].includes(normKey)) return;
       
+      if (normKey === 'loaiThuChi' && !getMappedColumnName(tableName, normKey)) return;
+
       const realCol = getBestColumnName(tableName, normKey, key);
       if (realCol) {
         formattedPayload[realCol] = payload[key];
@@ -425,6 +442,15 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'Phân loại', 'doiTuongThuChi'])] = payload.doiTuongThuChi || payload.hangMuc || "";
       formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh', 'Chứng từ'])] = payload.hinhAnh || "";
       formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'Người chi', 'nguoiCapNhat', 'User'])] = payload.nguoiCapNhat || "Ba";
+
+      if (payload.loaiThuChi === "Thu" && !getMappedColumnName(tableName, 'loaiThuChi')) {
+        throw new Error(missingTransactionTypeColumnMessage);
+      }
+
+      const transactionTypeColumn = getMappedColumnName(tableName, 'loaiThuChi');
+      if (transactionTypeColumn && payload.loaiThuChi) {
+        formattedPayload[transactionTypeColumn] = payload.loaiThuChi;
+      }
     }
     
     // Làm sạch: Loại bỏ các cột không được định nghĩa rõ ràng
