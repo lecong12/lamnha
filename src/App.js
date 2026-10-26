@@ -118,9 +118,9 @@ function App() {
         ngay: updatedItem.ngay,
         loaiThuChi: updatedItem.loaiThuChi || "Chi",
         noiDung: updatedItem.noiDung?.trim() || "",
-        doiTuongThuChi: updatedItem.doiTuongThuChi,
+        doiTuongThuChi: updatedItem.loaiThuChi === "Thu" ? "" : updatedItem.doiTuongThuChi,
         soTien: parseInt(String(updatedItem.soTien).replace(/\D/g, "")) || 0,
-        nguoiCapNhat: updatedItem.nguoiCapNhat,
+        nguoiCapNhat: updatedItem.loaiThuChi === "Thu" ? "" : updatedItem.nguoiCapNhat,
         hinhAnh: updatedItem.hinhAnh,
       };
 
@@ -233,10 +233,10 @@ function App() {
         "STT": idx + 1,
         "Ngày": item.date || (item.ngay instanceof Date ? item.ngay.toLocaleDateString("vi-VN") : ""),
         "Loại giao dịch": getTransactionType(item),
-        "Hạng mục": item.doiTuongThuChi || "",
+        "Hạng mục": getTransactionType(item) === "Thu" ? "" : item.doiTuongThuChi || "",
         "Nội dung": item.noiDung || "",
         "Số tiền (VNĐ)": item.soTien || 0,
-        "Người chi": item.nguoiCapNhat || "",
+        "Người chi": getTransactionType(item) === "Thu" ? "" : item.nguoiCapNhat || "",
       }));
       const csvString = "\uFEFF" + Papa.unparse(csvData);
       const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });

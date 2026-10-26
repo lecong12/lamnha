@@ -310,11 +310,12 @@ export const updateRowInSheet = async (tableName, payload, appId) => {
       
       formattedPayload[getBestColumnName(tableName, 'soTien', ['Số tiền', 'Số tiền (VNĐ)', 'soTien', 'Thành tiền'])] = cleanAmount;
       
-      const catVal = payload.doiTuongThuChi || payload.hangMuc || "";
+      const catVal = payload.loaiThuChi === "Thu" ? "" : payload.doiTuongThuChi || payload.hangMuc || "";
       formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'Phân loại', 'doiTuongThuChi'])] = catVal;
       
       formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh'])] = payload.hinhAnh || "";
-      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'Người chi', 'nguoiCapNhat'])] = payload.nguoiCapNhat || "Ba";
+      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'Người chi', 'nguoiCapNhat'])] =
+        payload.loaiThuChi === "Thu" ? "" : payload.nguoiCapNhat || "Ba";
     }
 
     // Làm sạch: Chỉ giữ lại các cột đã map thành công
@@ -439,9 +440,11 @@ export const addRowToSheet = async (tableName, payload, appId) => {
       const cleanAmount = parseInt(String(rawAmount).replace(/\D/g, "")) || 0;
 
       formattedPayload[getBestColumnName(tableName, 'soTien', ['Số tiền', 'Số tiền (VNĐ)', 'soTien', 'Thành tiền'])] = cleanAmount;
-      formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'Phân loại', 'doiTuongThuChi'])] = payload.doiTuongThuChi || payload.hangMuc || "";
+      formattedPayload[getBestColumnName(tableName, 'doiTuongThuChi', ['Hạng mục', 'Phân loại', 'doiTuongThuChi'])] =
+        payload.loaiThuChi === "Thu" ? "" : payload.doiTuongThuChi || payload.hangMuc || "";
       formattedPayload[getBestColumnName(tableName, 'hinhAnh', ['Hình ảnh', 'hinhAnh', 'Chứng từ'])] = payload.hinhAnh || "";
-      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'Người chi', 'nguoiCapNhat', 'User'])] = payload.nguoiCapNhat || "Ba";
+      formattedPayload[getBestColumnName(tableName, 'nguoiCapNhat', ['Người cập nhật', 'Người chi', 'nguoiCapNhat', 'User'])] =
+        payload.loaiThuChi === "Thu" ? "" : payload.nguoiCapNhat || "Ba";
 
       if (payload.loaiThuChi === "Thu" && !getMappedColumnName(tableName, 'loaiThuChi')) {
         throw new Error(missingTransactionTypeColumnMessage);

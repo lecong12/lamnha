@@ -42,8 +42,8 @@ function EditModal({ item, onClose, onSave, showToast }) {
       setFormData({
         ngay: dateStr,
         noiDung: item.noiDung || item["Nội dung"] || "",
-        doiTuongThuChi: item.doiTuongThuChi || item["Hạng mục"] || "",
-        nguoiCapNhat: item.nguoiCapNhat || item["Người cập nhật"] || "Ba",
+        doiTuongThuChi: item.loaiThuChi === "Thu" ? "" : item.doiTuongThuChi || item["Hạng mục"] || "",
+        nguoiCapNhat: item.loaiThuChi === "Thu" ? "" : item.nguoiCapNhat || item["Người cập nhật"] || "Ba",
         soTien: (rawAmount !== undefined && rawAmount !== null) ? new Intl.NumberFormat('vi-VN').format(rawAmount) : "",
         hinhAnh: item.hinhAnh || item["Chứng từ"] || "",
         loaiThuChi: item.loaiThuChi || "Chi",
@@ -60,6 +60,13 @@ function EditModal({ item, onClose, onSave, showToast }) {
       const rawValue = value.replace(/\D/g, "");
       const formattedValue = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
       setFormData(prev => ({ ...prev, [name]: formattedValue }));
+    } else if (name === "loaiThuChi") {
+      setFormData(prev => ({
+        ...prev,
+        loaiThuChi: value,
+        doiTuongThuChi: value === "Thu" ? "" : prev.doiTuongThuChi,
+        nguoiCapNhat: value === "Thu" ? "" : prev.nguoiCapNhat || "Ba",
+      }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -138,6 +145,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
   };
 
   const activeSuggestions = SUGGESTION_MAP[formData.doiTuongThuChi] || [];
+  const isIncome = formData.loaiThuChi === "Thu";
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -185,25 +193,29 @@ function EditModal({ item, onClose, onSave, showToast }) {
               <input type="date" name="ngay" value={formData.ngay} onChange={handleChange} required />
             </div>
             <div className="form-group">
-              <label>Hạng mục</label>
-              <select name="doiTuongThuChi" value={formData.doiTuongThuChi} onChange={handleChange} required>
-                <option value="">-- Chọn --</option>
-                {BUDGET_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
               <label>Loại giao dịch</label>
               <select name="loaiThuChi" value={formData.loaiThuChi} onChange={handleChange}>
                 <option value="Chi">Chi</option>
                 <option value="Thu">Thu</option>
               </select>
             </div>
-            <div className="form-group">
-              <label>Người chi</label>
-              <select name="nguoiCapNhat" value={formData.nguoiCapNhat} onChange={handleChange}>
-                {UPDATER_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
-            </div>
+            {!isIncome && (
+              <>
+                <div className="form-group">
+                  <label>Hạng mục</label>
+                  <select name="doiTuongThuChi" value={formData.doiTuongThuChi} onChange={handleChange} required>
+                    <option value="">-- Chọn --</option>
+                    {BUDGET_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Người chi</label>
+                  <select name="nguoiCapNhat" value={formData.nguoiCapNhat} onChange={handleChange}>
+                    {UPDATER_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+              </>
+            )}
           </div>
           <div className="modal-actions">
             <button type="button" className="btn-ocr" onClick={() => handleOCR()} disabled={ocrScanning || uploading}>

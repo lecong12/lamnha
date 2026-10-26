@@ -150,13 +150,13 @@ function DataTable({ data, onEdit, onDelete }) {
                 {transactionList.map((item) => (
                   <tr key={item.id} className={`row-${getTransactionType(item).toLowerCase()}`}>
                     <td style={{whiteSpace: 'nowrap'}}>{formatDate(item.ngay)}</td>
-                    <td>{formatStageName(item.doiTuongThuChi)}</td>
+                    <td>{getTransactionType(item) === "Thu" ? "-" : formatStageName(item.doiTuongThuChi)}</td>
                     <td>{getTransactionType(item)}</td>
                     <td className="content-cell">{item.noiDung || "-"}</td>
                     <td className={`amount-cell ${getTransactionType(item).toLowerCase()}`} style={{ textAlign: 'right' }}>
                       {formatCurrency(item.soTien)}
                     </td>
-                    <td className="center-cell">{item.nguoiCapNhat || "-"}</td>
+                    <td className="center-cell">{getTransactionType(item) === "Thu" ? "-" : item.nguoiCapNhat || "-"}</td>
                     <td className="center-cell">
                       {item.hinhAnh ? (
                         <a href={item.hinhAnh} target="_blank" rel="noreferrer" className="view-image-link" title="Xem ảnh">
@@ -236,7 +236,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     <div className="detail-item">
                       <FiInfo size={14} />
                       <span className="detail-label">Hạng mục:</span>
-                      <span className="detail-value">{formatStageName(item.doiTuongThuChi)}</span>
+                      <span className="detail-value">{getTransactionType(item) === "Thu" ? "-" : formatStageName(item.doiTuongThuChi)}</span>
                     </div>
                     {item.hinhAnh && (
                       <div className="detail-item" style={{ alignItems: 'flex-start' }}>
@@ -256,7 +256,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     <div className="detail-item">
                       <FiUser size={14} />
                       <span className="detail-label">Người cập nhật:</span>
-                      <span className="detail-value">{item.nguoiCapNhat || "-"}</span>
+                      <span className="detail-value">{getTransactionType(item) === "Thu" ? "-" : item.nguoiCapNhat || "-"}</span>
                     </div>
                     <div className="card-actions">
                       <button

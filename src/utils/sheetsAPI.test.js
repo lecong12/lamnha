@@ -48,4 +48,25 @@ describe("AppSheet transaction type columns", () => {
     expect(requestBody.Rows[0]["Loại giao dịch"]).toBe("Thu");
     expect(requestBody.Rows[0]).not.toHaveProperty("loaiThuChi");
   });
+
+  test("does not assign a category or updater to income transactions", async () => {
+    global.fetch
+      .mockResolvedValueOnce(
+        mockResponse([{ ID: 1, "Loại giao dịch": "Chi", "Hạng mục": "Nhân công", "Người cập nhật": "Ba" }])
+      )
+      .mockResolvedValueOnce(mockResponse({ Rows: [{ ID: 7 }] }));
+    await fetchTableData("GiaoDich", "app-id");
+
+    await addRowToSheet(
+      "GiaoDich",
+      { ...transaction, doiTuongThuChi: "Nhân công", nguoiCapNhat: "Ba" },
+      "app-id"
+    );
+    const requestBody = JSON.parse(global.fetch.mock.calls[1][1].body);
+    const row = requestBody.Rows[0];
+
+    expect(row["Hạng mục"]).toBe("");
+    expect(row["Người cập nhật"]).toBe("");
+    expect(row["Loại giao dịch"]).toBe("Thu");
+  });
 });

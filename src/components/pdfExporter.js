@@ -52,9 +52,10 @@ const exportToPDF = (data, title = "Báo cáo thu chi xây nhà") => {
     data.forEach((item, index) => {
       const amount = Number(item.soTien || item["Số tiền"]) || 0;
       const dateDisplay = item.date || (item.ngay instanceof Date ? item.ngay.toLocaleDateString("vi-VN") : String(item.ngay || "---"));
-      const hangMuc = item.doiTuongThuChi || item["Hạng mục"] || "-";
+      const isIncome = getTransactionType(item) === "Thu";
+      const hangMuc = isIncome ? "-" : item.doiTuongThuChi || item["Hạng mục"] || "-";
       const noiDung = item.noiDung || item["Nội dung"] || "-";
-      const nguoiChi = item.nguoiCapNhat || item["Người chi"] || item["Người cập nhật"] || "-";
+      const nguoiChi = isIncome ? "-" : item.nguoiCapNhat || item["Người chi"] || item["Người cập nhật"] || "-";
 
       tableRows.push([
         index + 1,
