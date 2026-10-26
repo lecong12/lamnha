@@ -28,10 +28,9 @@ function Header({ onRefresh, loading, onLogout, onToggleSidebar, onAdd }) {
               className={`refresh-btn ${loading ? "loading" : ""}`}
               onClick={onRefresh}
               disabled={loading}
-              title="Làm mới dữ liệu"
+              aria-label="Tải lại dữ liệu"
             >
               <FiRefreshCw />
-              <span>Làm mới</span>
             </button>
           )}
           {onLogout && (
