@@ -337,7 +337,7 @@ function App() {
         <Header 
           onRefresh={activeTab === 'camera' ? undefined : fetchAllData} 
           loading={loading} 
-          onAdd={activeTab === 'camera' ? undefined : handleAddNew} 
+          onAdd={activeTab === 'camera' || activeTab === 'list' ? undefined : handleAddNew}
           onLogout={handleLogout} 
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
           isDarkMode={isDarkMode} 
