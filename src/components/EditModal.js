@@ -173,7 +173,7 @@ function EditModal({ item, onClose, onSave, showToast }) {
 
         <form onSubmit={handleSubmit} className="edit-form">
           <div className="form-grid">
-            <div className="form-group full-width">
+            <div className={`form-group${isIncome ? " full-width" : ""}`}>
               <label>Nội dung</label>
               <input type="text" name="noiDung" value={formData.noiDung} onChange={handleChange} required />
               <div className="suggestion-list" style={{display:'flex', gap:'5px', flexWrap:'wrap', marginTop:'5px'}}>
@@ -184,6 +184,15 @@ function EditModal({ item, onClose, onSave, showToast }) {
                 ))}
               </div>
             </div>
+            {!isIncome && (
+              <div className="form-group">
+                <label>Hạng mục</label>
+                <select name="doiTuongThuChi" value={formData.doiTuongThuChi} onChange={handleChange} required>
+                  <option value="">-- Chọn --</option>
+                  {BUDGET_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            )}
             <div className="form-group">
               <label>Số tiền (VNĐ)</label>
               <input type="text" name="soTien" value={formData.soTien} onChange={handleChange} required placeholder="0" />
@@ -200,21 +209,12 @@ function EditModal({ item, onClose, onSave, showToast }) {
               </select>
             </div>
             {!isIncome && (
-              <>
-                <div className="form-group">
-                  <label>Hạng mục</label>
-                  <select name="doiTuongThuChi" value={formData.doiTuongThuChi} onChange={handleChange} required>
-                    <option value="">-- Chọn --</option>
-                    {BUDGET_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Người chi</label>
-                  <select name="nguoiCapNhat" value={formData.nguoiCapNhat} onChange={handleChange}>
-                    {UPDATER_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
-                  </select>
-                </div>
-              </>
+              <div className="form-group">
+                <label>Người chi</label>
+                <select name="nguoiCapNhat" value={formData.nguoiCapNhat} onChange={handleChange}>
+                  {UPDATER_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
             )}
           </div>
           <div className="modal-actions">
