@@ -22,6 +22,7 @@ import { getTodayInputString, toInputString } from "./utils/dateUtils";
 import exportToPDF from "./components/pdfExporter";
 import Papa from "papaparse";
 import { authService } from "./utils/authService";
+import { getTransactionType, sumTransactionsByType } from "./utils/transactionUtils";
 import "./App.css";
 import "./DarkMode.css";
 
@@ -115,6 +116,7 @@ function App() {
         keyId: finalId,
         id: finalId,
         ngay: updatedItem.ngay,
+        loaiThuChi: updatedItem.loaiThuChi || "Chi",
         noiDung: updatedItem.noiDung?.trim() || "",
         doiTuongThuChi: updatedItem.doiTuongThuChi,
         soTien: parseInt(String(updatedItem.soTien).replace(/\D/g, "")) || 0,
@@ -172,6 +174,8 @@ function App() {
       const nguoiCap = item.nguoiCapNhat || item["Người cập nhật"];
       const noiDung = item.noiDung || item["Nội dung"];
 
+      if (filters.loaiThuChi && getTransactionType(item) !== filters.loaiThuChi) return false;
+
       // 1. Lọc theo Người chi
       if (filters.nguoiCapNhat) {
         const filterUser = filters.nguoiCapNhat.trim().toLowerCase();
@@ -228,6 +232,7 @@ function App() {
       const csvData = filteredData.map((item, idx) => ({
         "STT": idx + 1,
         "Ngày": item.date || (item.ngay instanceof Date ? item.ngay.toLocaleDateString("vi-VN") : ""),
+        "Loại giao dịch": getTransactionType(item),
         "Hạng mục": item.doiTuongThuChi || "",
         "Nội dung": item.noiDung || "",
         "Số tiền (VNĐ)": item.soTien || 0,
@@ -259,9 +264,10 @@ function App() {
 
   const renderContent = () => {
     // Thống kê tổng chi từ cột "Số tiền" hoặc "soTien"
-    const stats = { 
-      tongThu: 0, 
-      tongChi: filteredData.reduce((s, i) => s + (Number(i.soTien || i["Số tiền"]) || 0), 0), 
+    const transactionTotals = sumTransactionsByType(filteredData);
+    const stats = {
+      tongThu: transactionTotals.Thu,
+      tongChi: transactionTotals.Chi,
       soGiaoDich: filteredData.length 
     };
     const extraData = { top5: [], chartData: [], nganSach, tienDo, contracts, drawings };
@@ -367,6 +373,8 @@ function App() {
               if (result.success) { 
                 showToast("Đã xóa giao dịch!", "success"); 
                 await fetchAllData(); 
+              } else {
+                showToast(`Lỗi xóa giao dịch: ${result.message || "Không thể xóa dữ liệu."}`, "error");
               }
             }
             setItemToDelete(null);

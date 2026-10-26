@@ -1,5 +1,5 @@
 import React from "react";
-import { FiTrendingDown, FiActivity, FiCalendar, FiFileText, FiCamera, FiAlertCircle } from "react-icons/fi";
+import { FiTrendingDown, FiTrendingUp, FiActivity, FiCalendar, FiFileText, FiCamera, FiAlertCircle } from "react-icons/fi";
 import { toDisplayString } from "../utils/dateUtils";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart,
@@ -9,6 +9,7 @@ import {
   Tooltip
 } from "recharts";
 import "./Dashboard.css";
+import { getTransactionType } from "../utils/transactionUtils";
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat("vi-VN", {
@@ -57,7 +58,8 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
   const completedStagesCount = stages.filter(s => s.status?.toLowerCase().trim() === 'hoàn thành').length;
   const completionPercentage = stages.length > 0 ? Math.round((completedStagesCount / stages.length) * 100) : 0;
 
-  const groupByDoiTuong = (data || []).reduce((acc, item) => {
+  const expenses = (data || []).filter(item => getTransactionType(item) === "Chi");
+  const groupByDoiTuong = expenses.reduce((acc, item) => {
     if (safeNumber(item.soTien) > 0) {
       const key = item.doiTuongThuChi || "Khác";
       acc[key] = (acc[key] || 0) + safeNumber(item.soTien);
@@ -69,7 +71,7 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
-  const expenseItems = (data || []).reduce((acc, item) => {
+  const expenseItems = expenses.reduce((acc, item) => {
     if (safeNumber(item.soTien) > 0) {
       const key = item.noiDung || "Hạng mục khác";
       acc[key] = (acc[key] || 0) + safeNumber(item.soTien);
@@ -138,6 +140,14 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
           <div className="stat-info">
             <span className="stat-label" style={{ fontSize: '0.85rem' }}>Hồ sơ & Bản vẽ</span>
             <span className="stat-value" style={{ fontSize: '1rem' }}>{totalFiles || 0} tệp tin</span>
+          </div>
+        </div>
+
+        <div className="stat-card" style={{ borderLeft: '4px solid #16a34a', padding: '12px 15px' }}>
+          <div className="stat-icon" style={{ transform: 'scale(0.8)' }}><FiTrendingUp color="#16a34a" /></div>
+          <div className="stat-info">
+            <span className="stat-label" style={{ fontSize: '0.85rem' }}>Tổng Thu</span>
+            <span className="stat-value" style={{ fontSize: '1rem' }}>{formatCurrency(stats.tongThu)}</span>
           </div>
         </div>
 

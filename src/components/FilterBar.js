@@ -24,7 +24,7 @@ function FilterBar({ filters, filterOptions, onFilterChange, onReset, isExpanded
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
   const hasSubFilters = Boolean(
-    filters.doiTuongThuChi || filters.nguoiCapNhat || filters.startDate || filters.endDate
+    filters.loaiThuChi || filters.doiTuongThuChi || filters.nguoiCapNhat || filters.startDate || filters.endDate
   );
   const showExpanded = isExpandedActive || hasSubFilters;
 
@@ -94,6 +94,19 @@ function FilterBar({ filters, filterOptions, onFilterChange, onReset, isExpanded
       {/* Expanded filters */}
       <div className={`filter-content ${showExpanded ? "expanded" : ""}`}>
         <div className="filter-grid">
+          <div className="filter-group">
+            <label className="filter-label">Loại giao dịch</label>
+            <select
+              value={filters.loaiThuChi}
+              onChange={(e) => onFilterChange("loaiThuChi", e.target.value)}
+              className="filter-select"
+            >
+              <option value="">Tất cả</option>
+              <option value="Thu">Thu</option>
+              <option value="Chi">Chi</option>
+            </select>
+          </div>
+
           {/* Đối tượng thu chi */}
           <div className="filter-group">
             <label className="filter-label">Hạng mục</label>

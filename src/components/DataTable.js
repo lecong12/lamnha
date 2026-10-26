@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { toDisplayString } from "../utils/dateUtils";
 import {
   FiChevronLeft,
@@ -11,6 +11,7 @@ import {
   FiImage
 } from "react-icons/fi";
 import "./DataTable.css";
+import { getTransactionType, sumTransactionsByType } from "../utils/transactionUtils";
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat("vi-VN", {
@@ -69,6 +70,11 @@ function DataTable({ data, onEdit, onDelete }) {
   const endIndex = startIndex + itemsPerPage;
   const currentData = sortedData.slice(startIndex, endIndex);
 
+  useEffect(() => {
+    setCurrentPage(1);
+    setExpandedRow(null);
+  }, [data]);
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
     setExpandedRow(null);
@@ -86,10 +92,8 @@ function DataTable({ data, onEdit, onDelete }) {
     setSortConfig({ key, direction });
   };
 
-  const totalChi = data
-    .reduce((sum, item) => sum + item.soTien, 0);
-
-  const chiList = currentData; // Tất cả dữ liệu giờ là chi phí
+  const totals = sumTransactionsByType(data);
+  const transactionList = currentData;
 
   if (data.length === 0) {
     return (
@@ -105,14 +109,16 @@ function DataTable({ data, onEdit, onDelete }) {
   return (
     <div className="data-table-container">
 
-      {/* Bảng Chi Phí */}
-      {chiList.length > 0 && (
+      {transactionList.length > 0 && (
         <div className="section-container">
           <div className="section-header">
-            <h4 className="section-title chi-title">Bảng Chi Phí</h4>
+            <h4 className="section-title">Bảng Giao Dịch</h4>
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              <span className="summary-chi-text">
-                Tổng Chi: {formatCurrency(totalChi)}
+              <span className="summary-item thu">
+                Tổng Thu: {formatCurrency(totals.Thu)}
+              </span>
+              <span className="summary-item chi">
+                Tổng Chi: {formatCurrency(totals.Chi)}
               </span>
             </div>
           </div>
@@ -126,6 +132,7 @@ function DataTable({ data, onEdit, onDelete }) {
                   <th onClick={() => requestSort("doiTuongThuChi")} style={{cursor: 'pointer', userSelect: 'none'}} title="Click để sắp xếp">
                     Hạng mục {sortConfig.key === "doiTuongThuChi" && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
+                  <th>Loại</th>
                   <th>Nội dung giao dịch</th>
                   <th 
                     onClick={() => requestSort("soTien")} 
@@ -134,18 +141,19 @@ function DataTable({ data, onEdit, onDelete }) {
                   >
                     Số tiền {sortConfig.key === "soTien" && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
-                  <th style={{ textAlign: 'center' }}>Người chi</th>
+                  <th style={{ textAlign: 'center' }}>Người cập nhật</th>
                   <th style={{ textAlign: 'center' }}>Chứng từ</th>
                   <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
-                {chiList.map((item) => (
-                  <tr key={item.id} className="row-chi">
+                {transactionList.map((item) => (
+                  <tr key={item.id} className={`row-${getTransactionType(item).toLowerCase()}`}>
                     <td style={{whiteSpace: 'nowrap'}}>{formatDate(item.ngay)}</td>
                     <td>{formatStageName(item.doiTuongThuChi)}</td>
+                    <td>{getTransactionType(item)}</td>
                     <td className="content-cell">{item.noiDung || "-"}</td>
-                    <td className="amount-cell chi" style={{ textAlign: 'right' }}>
+                    <td className={`amount-cell ${getTransactionType(item).toLowerCase()}`} style={{ textAlign: 'right' }}>
                       {formatCurrency(item.soTien)}
                     </td>
                     <td className="center-cell">{item.nguoiCapNhat || "-"}</td>
@@ -191,12 +199,12 @@ function DataTable({ data, onEdit, onDelete }) {
             </table>
           </div>
 
-          {/* Mobile Cards cho Chi */}
+          {/* Mobile transaction cards */}
           <div className="mobile-cards">
-            {chiList.map((item) => (
+            {transactionList.map((item) => (
               <div
                 key={item.id}
-                className={`transaction-card chi ${
+                className={`transaction-card ${getTransactionType(item).toLowerCase()} ${
                   expandedRow === item.id ? "expanded" : ""
                 }`}
                 onClick={() => toggleRow(item.id)}
@@ -213,13 +221,18 @@ function DataTable({ data, onEdit, onDelete }) {
                       </span>
                     </div>
                   </div>
-                  <div className="card-amount chi">
+                  <div className={`card-amount ${getTransactionType(item).toLowerCase()}`}>
                     {formatCurrency(item.soTien)}
                   </div>
                 </div>
 
                 {expandedRow === item.id && (
                   <div className="card-details">
+                    <div className="detail-item">
+                      <FiInfo size={14} />
+                      <span className="detail-label">Loại:</span>
+                      <span className="detail-value">{getTransactionType(item)}</span>
+                    </div>
                     <div className="detail-item">
                       <FiInfo size={14} />
                       <span className="detail-label">Hạng mục:</span>
@@ -242,7 +255,7 @@ function DataTable({ data, onEdit, onDelete }) {
                     )}
                     <div className="detail-item">
                       <FiUser size={14} />
-                      <span className="detail-label">Người chi:</span>
+                      <span className="detail-label">Người cập nhật:</span>
                       <span className="detail-value">{item.nguoiCapNhat || "-"}</span>
                     </div>
                     <div className="card-actions">

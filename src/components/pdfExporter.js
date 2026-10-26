@@ -1,8 +1,9 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { robotoFont } from './robotoFont.js';
+import { getTransactionType, sumTransactionsByType } from "../utils/transactionUtils";
 
-const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
+const exportToPDF = (data, title = "Báo cáo thu chi xây nhà") => {
   try {
     if (!data || data.length === 0) {
       alert("Không có dữ liệu để xuất file PDF.");
@@ -37,6 +38,7 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
     const tableColumn = [
       { content: "STT", styles: { halign: "center", fontStyle: "bold" } },
       { content: "Ngày", styles: { halign: "center", fontStyle: "bold" } },
+      { content: "Loại", styles: { halign: "center", fontStyle: "bold" } },
       { content: "Hạng mục", styles: { halign: "center", fontStyle: "bold" } },
       { content: "Nội dung chi tiết", styles: { halign: "center", fontStyle: "bold" } },
       { content: "Người chi", styles: { halign: "center", fontStyle: "bold" } },
@@ -44,13 +46,11 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
     ];
 
     const tableRows = [];
-    let totalChi = 0;
+    const totals = sumTransactionsByType(data);
 
     // 3. Chuẩn bị dữ liệu cho bảng
     data.forEach((item, index) => {
       const amount = Number(item.soTien || item["Số tiền"]) || 0;
-      totalChi += amount;
-
       const dateDisplay = item.date || (item.ngay instanceof Date ? item.ngay.toLocaleDateString("vi-VN") : String(item.ngay || "---"));
       const hangMuc = item.doiTuongThuChi || item["Hạng mục"] || "-";
       const noiDung = item.noiDung || item["Nội dung"] || "-";
@@ -59,6 +59,7 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
       tableRows.push([
         index + 1,
         dateDisplay,
+        getTransactionType(item),
         hangMuc,
         noiDung,
         nguoiChi,
@@ -70,7 +71,10 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      foot: [["", "", "", "Tổng cộng chi tiêu:", "", `${new Intl.NumberFormat('vi-VN').format(totalChi)} VNĐ`]],
+      foot: [
+        ["", "", "", "", "Tổng thu:", "", `${new Intl.NumberFormat('vi-VN').format(totals.Thu)} VNĐ`],
+        ["", "", "", "", "Tổng chi:", "", `${new Intl.NumberFormat('vi-VN').format(totals.Chi)} VNĐ`],
+      ],
       showFoot: 'lastPage',
       startY: 26,
       styles: { 
@@ -99,20 +103,23 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
       columnStyles: {
         0: { cellWidth: 12 },
         1: { cellWidth: 24 },
-        2: { cellWidth: 28 },
-        3: { cellWidth: 'auto' },
-        4: { cellWidth: 22 },
-        5: { cellWidth: 32 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 28 },
+        4: { cellWidth: 'auto' },
+        5: { cellWidth: 22 },
+        6: { cellWidth: 32 },
       },
       didParseCell: (hookData) => {
         // Đảm bảo tuyệt đối 100% tất cả tiêu đề cột ở hàng head đều canh giữa và in đậm
         if (hookData.section === 'head') {
           hookData.cell.styles.halign = 'center';
           hookData.cell.styles.fontStyle = 'bold';
+        } else if (hookData.section === 'foot' && hookData.row.index === 0) {
+          hookData.cell.styles.textColor = [22, 163, 74];
         } else if (hookData.section === 'body') {
           if (hookData.column.index === 0) {
             hookData.cell.styles.halign = 'center';
-          } else if (hookData.column.index === 5) {
+          } else if (hookData.column.index === 6) {
             hookData.cell.styles.halign = 'right';
           }
         }
@@ -120,7 +127,7 @@ const exportToPDF = (data, title = "Báo cáo chi tiêu xây nhà") => {
     });
 
     // 5. Tải file PDF về máy
-    doc.save(`bao_cao_chi_tieu_${new Date().toISOString().slice(0, 10)}.pdf`);
+    doc.save(`bao_cao_thu_chi_${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (error) {
     console.error("Lỗi khi tạo PDF:", error);
     alert("Đã xảy ra lỗi khi tạo file PDF: " + error.message);
