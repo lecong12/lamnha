@@ -24,7 +24,7 @@ function FilterBar({ filters, filterOptions, onFilterChange, onReset, isExpanded
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
   const hasSubFilters = Boolean(
-    filters.loaiThuChi || filters.doiTuongThuChi || filters.nguoiCapNhat || filters.startDate || filters.endDate
+    filters.doiTuongThuChi || filters.nguoiCapNhat || filters.startDate || filters.endDate
   );
   const showExpanded = isExpandedActive || hasSubFilters;
 
@@ -91,22 +91,27 @@ function FilterBar({ filters, filterOptions, onFilterChange, onReset, isExpanded
         )}
       </div>
 
+      <div className="transaction-type-filter" role="group" aria-label="Lọc loại giao dịch">
+        {[
+          { value: "", label: "Tất cả" },
+          { value: "Thu", label: "Khoản thu" },
+          { value: "Chi", label: "Khoản chi" },
+        ].map(({ value, label }) => (
+          <button
+            key={value || "all"}
+            type="button"
+            className={`transaction-type-button${filters.loaiThuChi === value ? " active" : ""}`}
+            aria-pressed={filters.loaiThuChi === value}
+            onClick={() => onFilterChange("loaiThuChi", value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Expanded filters */}
       <div className={`filter-content ${showExpanded ? "expanded" : ""}`}>
         <div className="filter-grid">
-          <div className="filter-group">
-            <label className="filter-label">Loại giao dịch</label>
-            <select
-              value={filters.loaiThuChi}
-              onChange={(e) => onFilterChange("loaiThuChi", e.target.value)}
-              className="filter-select"
-            >
-              <option value="">Tất cả</option>
-              <option value="Thu">Thu</option>
-              <option value="Chi">Chi</option>
-            </select>
-          </div>
-
           {/* Đối tượng thu chi */}
           <div className="filter-group">
             <label className="filter-label">Hạng mục</label>
