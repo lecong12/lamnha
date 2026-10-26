@@ -71,42 +71,44 @@ function FilterBar({ filters, filterOptions, onFilterChange, onReset, isExpanded
         </div>
       </div>
 
-      {/* Search bar - always visible */}
-      <div className="search-container">
-        <FiSearch className="search-icon" />
-        <input
-          type="text"
-          placeholder="Tìm hạng mục, vật tư..."
-          value={filters.searchText}
-          onChange={(e) => onFilterChange("searchText", e.target.value)}
-          className="search-input"
-        />
-        {filters.searchText && (
-          <button
-            className="clear-search"
-            onClick={() => onFilterChange("searchText", "")}
-          >
-            <FiX />
-          </button>
-        )}
-      </div>
+      <div className="search-filter-row">
+        {/* Search bar - always visible */}
+        <div className="search-container">
+          <FiSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Tìm hạng mục, vật tư..."
+            value={filters.searchText}
+            onChange={(e) => onFilterChange("searchText", e.target.value)}
+            className="search-input"
+          />
+          {filters.searchText && (
+            <button
+              className="clear-search"
+              onClick={() => onFilterChange("searchText", "")}
+            >
+              <FiX />
+            </button>
+          )}
+        </div>
 
-      <div className="transaction-type-filter" role="group" aria-label="Lọc loại giao dịch">
-        {[
-          { value: "", label: "Tất cả" },
-          { value: "Thu", label: "Khoản thu" },
-          { value: "Chi", label: "Khoản chi" },
-        ].map(({ value, label }) => (
-          <button
-            key={value || "all"}
-            type="button"
-            className={`transaction-type-button${filters.loaiThuChi === value ? " active" : ""}`}
-            aria-pressed={filters.loaiThuChi === value}
-            onClick={() => onFilterChange("loaiThuChi", value)}
-          >
-            {label}
-          </button>
-        ))}
+        <div className="transaction-type-filter" role="group" aria-label="Lọc loại giao dịch">
+          {[
+            { value: "", label: "Tất cả" },
+            { value: "Thu", label: "Khoản thu" },
+            { value: "Chi", label: "Khoản chi" },
+          ].map(({ value, label }) => (
+            <button
+              key={value || "all"}
+              type="button"
+              className={`transaction-type-button${filters.loaiThuChi === value ? " active" : ""}`}
+              aria-pressed={filters.loaiThuChi === value}
+              onClick={() => onFilterChange("loaiThuChi", value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Expanded filters */}
