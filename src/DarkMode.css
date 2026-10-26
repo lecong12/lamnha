@@ -101,14 +101,55 @@ body.dark-theme {
   font-weight: 700;
 }
 
-.dark-theme .budget-table th,
+.dark-theme .budget-table-title {
+  color: #60a5fa !important;
+  font-weight: 700 !important;
+}
+
+.dark-theme .budget-table-wrapper {
+  border-color: #334155 !important;
+  background-color: #0f172a !important;
+}
+
+.dark-theme .budget-table th {
+  background-color: #0f172a !important;
+  color: #60a5fa !important;
+  font-weight: 700 !important;
+  border-bottom: 2px solid #3b82f6 !important;
+}
+
 .dark-theme th {
   background-color: #334155 !important;
   color: #e2e8f0 !important;
   border-bottom: 1px solid #475569 !important;
 }
+
+.dark-theme .budget-table td {
+  background-color: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-bottom: 1px solid #334155 !important;
+}
+
+.dark-theme .budget-table td.item-name {
+  color: #f8fafc !important;
+}
+
+.dark-theme .budget-total-row td {
+  background-color: #0f172a !important;
+  border-top: 2px solid #3b82f6 !important;
+  border-bottom: 2px solid #3b82f6 !important;
+  color: #f8fafc !important;
+}
+
+.dark-theme .budget-table .negative-val {
+  color: #f87171 !important;
+}
+
+.dark-theme .budget-table .positive-val {
+  color: #4ade80 !important;
+}
+
 .dark-theme .data-table td,
-.dark-theme .budget-table td,
 .dark-theme td {
   background-color: #1e293b !important;
   color: #cbd5e1 !important;

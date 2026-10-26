@@ -183,43 +183,66 @@ function Dashboard({ stats, data, extraData, isDarkMode }) {
 
       {/* Bảng chi tiết Ngân sách với Cảnh báo âm */}
       <div className="chart-card" style={{ marginTop: '20px' }}>
-        <h3 className="chart-title">Chi tiết Ngân sách & Cảnh báo</h3>
+        <h3 className="chart-title budget-table-title">Chi tiết Ngân sách & Cảnh báo</h3>
         <div className="budget-table-wrapper">
           <table className="budget-table">
             <thead>
               <tr>
-                <th style={{ textAlign: 'left' }}>Hạng mục</th>
-                <th style={{ textAlign: 'right', width: '135px' }}>Dự kiến</th>
-                <th style={{ textAlign: 'right', width: '135px' }}>Thực tế</th>
-                <th style={{ textAlign: 'right', width: '135px' }}>Còn lại</th>
-                <th style={{ textAlign: 'center', width: '130px' }}>Tình trạng</th>
+                <th style={{ textAlign: 'left', minWidth: '180px' }}>Hạng mục</th>
+                <th style={{ textAlign: 'right', width: '150px' }}>Dự kiến</th>
+                <th style={{ textAlign: 'right', width: '150px' }}>Thực tế</th>
+                <th style={{ textAlign: 'right', width: '150px' }}>Còn lại</th>
+                <th style={{ textAlign: 'center', width: '180px' }}>Tình trạng</th>
               </tr>
             </thead>
             <tbody>
               {budget.length > 0 ? budget.map((item, idx) => (
                 <tr key={idx} style={{ backgroundColor: item.conLai < 0 ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
-                  <td>{item.hangMuc}</td>
+                  <td className="item-name">{item.hangMuc}</td>
                   <td style={{ textAlign: 'right' }}>{formatCurrency(item.duKien)}</td>
                   <td style={{ textAlign: 'right' }}>{formatCurrency(item.thucTe)}</td>
-                  <td style={{ 
-                    textAlign: 'right', 
-                    color: item.conLai < 0 ? '#dc2626' : 'inherit', 
-                    fontWeight: item.conLai < 0 ? '700' : '500' 
-                  }}>
+                  <td 
+                    className={safeNumber(item.conLai) < 0 ? 'negative-val' : 'positive-val'}
+                    style={{ textAlign: 'right', fontWeight: '600' }}
+                  >
                     {formatCurrency(item.conLai)}
                   </td>
                   <td className="status-cell">
-                    <span className={`status-badge ${item.conLai < 0 ? 'over' : 'ok'}`}>
-                      {item.conLai < 0 ? 'Vượt định mức' : 'Ổn định'}
+                    <span className={`status-badge ${safeNumber(item.conLai) < 0 ? 'over' : 'ok'}`}>
+                      {item.tinhTrang || (safeNumber(item.conLai) < 0 ? 'Vượt định mức' : 'Ổn định')}
                     </span>
                   </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>Chưa có dữ liệu ngân sách</td>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>Chưa có dữ liệu ngân sách</td>
                 </tr>
               )}
             </tbody>
+            {budget.length > 0 && (
+              <tfoot>
+                <tr className="budget-total-row">
+                  <td style={{ textAlign: 'left', fontWeight: '700' }}>TỔNG CỘNG</td>
+                  <td style={{ textAlign: 'right', fontWeight: '700' }}>
+                    {formatCurrency(budget.reduce((s, i) => s + safeNumber(i.duKien), 0))}
+                  </td>
+                  <td style={{ textAlign: 'right', fontWeight: '700' }}>
+                    {formatCurrency(budget.reduce((s, i) => s + safeNumber(i.thucTe), 0))}
+                  </td>
+                  <td 
+                    className={budget.reduce((s, i) => s + safeNumber(i.conLai), 0) < 0 ? 'negative-val' : 'positive-val'}
+                    style={{ textAlign: 'right', fontWeight: '700' }}
+                  >
+                    {formatCurrency(budget.reduce((s, i) => s + safeNumber(i.conLai), 0))}
+                  </td>
+                  <td className="status-cell">
+                    <span className={`status-badge ${budget.reduce((s, i) => s + safeNumber(i.conLai), 0) < 0 ? 'over' : 'ok'}`}>
+                      {budget.reduce((s, i) => s + safeNumber(i.conLai), 0) < 0 ? 'Vượt định mức' : 'Trong định mức'}
+                    </span>
+                  </td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>
